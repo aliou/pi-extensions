@@ -1,0 +1,27 @@
+{
+  "name": "@aliou/pi-extensions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@mariozechner/pi-ai": "0.37.8",
+    "@mariozechner/pi-coding-agent": "0.37.8",
+    "@mariozechner/pi-tui": "0.37.8",
+    "@sinclair/typebox": "^0.34.41",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@mariozechner/pi-agent-core": "$@mariozechner/pi-coding-agent",
+      "@mariozechner/pi-ai": "$@mariozechner/pi-coding-agent",
+      "@mariozechner/pi-tui": "$@mariozechner/pi-coding-agent"
+    }
+  },
+  "packageManager": "pnpm@10.26.1"
+}
