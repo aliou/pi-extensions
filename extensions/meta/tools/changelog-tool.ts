@@ -288,7 +288,7 @@ export function setupChangelogTool(pi: ExtensionAPI) {
     renderCall(args: ChangelogParamsType, theme: Theme): Text {
       let text = theme.fg("toolTitle", theme.bold("pi_changelog"));
       if (args.version) {
-        text += " " + theme.fg("muted", `v${args.version}`);
+        text += ` ${theme.fg("muted", `v${args.version}`)}`;
       }
       return new Text(text, 0, 0);
     },

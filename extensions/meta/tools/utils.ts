@@ -9,7 +9,7 @@ export function findPiInstallation(): string | null {
       "@mariozechner/pi-coding-agent/package.json",
     );
     return path.dirname(piModulePath);
-  } catch (error) {
+  } catch (_error) {
     // Fallback: check process.argv to find the running script path
     const scriptPath = process.argv[1];
     if (scriptPath) {
