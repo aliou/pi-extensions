@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+pi -e extensions/meta/ @prompts/update-extensions.md
