@@ -3,7 +3,7 @@
 Custom extensions for [Pi](https://github.com/mariozechner/pi-coding-agent), a coding agent.
 
 > [!WARNING]
-> Feel free to use these, but they're mainly for my personal use. Also, I haven't read a single line of code so I can't be held responsible if something bad happens. Godspeed ✌️
+> Feel free to use these, but they're mainly for my personal use and I might not read/merge your pr. Also, I haven't read a single line of code so I can't be held responsible if something bad happens. Godspeed ✌️
 
 ## Extensions
 
