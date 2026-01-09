@@ -122,19 +122,19 @@ export function setupChromeHook(pi: ExtensionAPI) {
         // Cost (always show)
         rightParts.push(`$${totalCost.toFixed(3)}`);
 
-        // Model name
+        // Model name and thinking level (share same color)
         const modelName = ctx.model?.id || "no-model";
-        rightParts.push(modelName);
-
-        // Thinking level
         if (ctx.model?.reasoning) {
           const thinkingLevel = pi.getThinkingLevel();
           if (thinkingLevel === "off") {
+            rightParts.push(theme.fg("error", modelName));
             rightParts.push(theme.fg("error", "off"));
           } else {
+            rightParts.push(modelName);
             rightParts.push(thinkingLevel);
           }
         } else {
+          rightParts.push(theme.fg("warning", modelName));
           rightParts.push(theme.fg("warning", "(none)"));
         }
 
