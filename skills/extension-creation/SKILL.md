@@ -254,7 +254,8 @@ Run `/command` to open panel.
 5. Add hooks in `hooks/` if needed (cleanup, events)
 6. Add commands in `commands/` if interactive UI needed
 7. Create `README.md`
-8. Run `pnpm typecheck` to verify
+8. Update root `README.md` to list the new extension and link to its README
+9. Run `pnpm typecheck` to verify
 
 ## Key Imports
 
