@@ -28,10 +28,23 @@ local function find_buffer(path)
   return bufnr
 end
 
---- Get ERROR diagnostics for a buffer
+--- Get active LSP client names for a buffer
+---@param bufnr number
+---@return table<string, boolean>
+local function get_active_lsp_sources(bufnr)
+  local sources = {}
+  local clients = vim.lsp.get_clients({ bufnr = bufnr })
+  for _, client in ipairs(clients) do
+    sources[client.name] = true
+  end
+  return sources
+end
+
+--- Get ERROR diagnostics for a buffer, filtering stale LSP diagnostics
 ---@param bufnr number
 ---@return pi.FileDiagnostic[]
 local function get_errors(bufnr)
+  local active_sources = get_active_lsp_sources(bufnr)
   local diagnostics = vim.diagnostic.get(bufnr, {
     severity = vim.diagnostic.severity.ERROR,
   })
@@ -39,12 +52,17 @@ local function get_errors(bufnr)
   ---@type pi.FileDiagnostic[]
   local result = {}
   for _, d in ipairs(diagnostics) do
-    table.insert(result, {
-      line = d.lnum + 1,
-      col = d.col + 1,
-      message = d.message,
-      source = d.source,
-    })
+    -- Keep diagnostic if:
+    -- 1. No source (can't verify, assume valid)
+    -- 2. Source matches an active LSP client
+    if not d.source or active_sources[d.source] then
+      table.insert(result, {
+        line = d.lnum + 1,
+        col = d.col + 1,
+        message = d.message,
+        source = d.source,
+      })
+    end
   end
 
   return result
