@@ -1,0 +1,77 @@
+*pi-nvim.txt*  Pi integration for Neovim
+
+CONTENTS                                                    *pi-nvim-contents*
+
+    1. Introduction .......................... |pi-nvim-introduction|
+    2. Setup ................................. |pi-nvim-setup|
+    3. Configuration ......................... |pi-nvim-config|
+    4. Commands .............................. |pi-nvim-commands|
+    5. API ................................... |pi-nvim-api|
+
+==============================================================================
+1. INTRODUCTION                                         *pi-nvim-introduction*
+
+Pi-nvim provides integration between the Pi coding agent and Neovim. It
+exposes editor state (buffers, cursor, diagnostics) to Pi via RPC.
+
+==============================================================================
+2. SETUP                                                      *pi-nvim-setup*
+
+Add the extension directory to your runtimepath and call setup:
+>lua
+    -- Example with lazy.nvim (adjust path as needed)
+    {
+      dir = "~/.pi/agent/extensions/neovim",
+      config = function()
+        require("pi-nvim").setup()
+      end
+    }
+<
+
+Or manually:
+>lua
+    vim.opt.runtimepath:append("~/.pi/agent/extensions/neovim")
+    require("pi-nvim").setup()
+<
+
+==============================================================================
+3. CONFIGURATION                                             *pi-nvim-config*
+
+>lua
+    require("pi-nvim").setup({
+      auto_start = true,  -- Start RPC server automatically (default: true)
+    })
+<
+
+==============================================================================
+4. COMMANDS                                                *pi-nvim-commands*
+
+:PiNvimStatus                                               *:PiNvimStatus*
+    Show the current status of the Pi-nvim RPC server and terminal.
+
+==============================================================================
+5. API                                                          *pi-nvim-api*
+
+require("pi-nvim").setup({opts})                          *pi-nvim.setup()*
+    Initialize the plugin with optional configuration.
+
+require("pi-nvim").start()                                *pi-nvim.start()*
+    Start the RPC server manually.
+
+require("pi-nvim").stop()                                  *pi-nvim.stop()*
+    Stop the RPC server.
+
+require("pi-nvim").status()                              *pi-nvim.status()*
+    Get the current RPC server status.
+
+require("pi-nvim").open()                                  *pi-nvim.open()*
+    Open the Pi terminal.
+
+require("pi-nvim").close()                                *pi-nvim.close()*
+    Close the Pi terminal.
+
+require("pi-nvim").toggle()                              *pi-nvim.toggle()*
+    Toggle the Pi terminal.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
