@@ -1,11 +1,39 @@
-import type { AssistantMessage } from "@mariozechner/pi-ai";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { AssistantMessage, Model } from "@mariozechner/pi-ai";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+} from "@mariozechner/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import {
   CONTEXT_ERROR_THRESHOLD,
   CONTEXT_WARNING_THRESHOLD,
 } from "../constants";
 import { formatTokens, getGitBranch, getPiVersion, stripAnsi } from "../utils";
+
+/**
+ * Get the current model dynamically from session entries.
+ * Filters model_change entries, sorts by timestamp, and gets the latest one,
+ * then resolves it to a full Model object via the model registry.
+ */
+function getCurrentModel(ctx: ExtensionContext): Model<any> | undefined {
+  const entries = ctx.sessionManager.getEntries();
+
+  // Filter to model_change entries, sort by timestamp, and get the last one
+  const modelChanges = entries.filter((entry) => entry.type === "model_change");
+  modelChanges.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+
+  const lastModelChange = modelChanges[modelChanges.length - 1];
+
+  if (!lastModelChange) {
+    return undefined;
+  }
+
+  // Resolve to full Model object via registry
+  return ctx.modelRegistry.find(
+    lastModelChange.provider,
+    lastModelChange.modelId,
+  );
+}
 
 export function setupChromeHook(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
@@ -62,13 +90,16 @@ export function setupChromeHook(pi: ExtensionAPI) {
           }
         }
 
+        // Get current model dynamically (not from stale ctx.model)
+        const model = getCurrentModel(ctx);
+
         const contextTokens = lastAssistant
           ? lastAssistant.usage.input +
             lastAssistant.usage.output +
             lastAssistant.usage.cacheRead +
             lastAssistant.usage.cacheWrite
           : 0;
-        const contextWindow = ctx.model?.contextWindow || 0;
+        const contextWindow = model?.contextWindow || 0;
         const contextPercentValue =
           contextWindow > 0 ? (contextTokens / contextWindow) * 100 : 0;
         const contextPercent = contextPercentValue.toFixed(1);
@@ -123,8 +154,8 @@ export function setupChromeHook(pi: ExtensionAPI) {
         rightParts.push(`$${totalCost.toFixed(3)}`);
 
         // Model name and thinking level (share same color)
-        const modelName = ctx.model?.id || "no-model";
-        if (ctx.model?.reasoning) {
+        const modelName = model?.id || "no-model";
+        if (model?.reasoning) {
           const thinkingLevel = pi.getThinkingLevel();
           if (thinkingLevel === "off") {
             rightParts.push(theme.fg("error", modelName));
