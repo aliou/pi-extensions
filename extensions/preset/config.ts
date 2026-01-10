@@ -11,6 +11,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { PresetsConfig } from "./types";
 
+/** File structure with $schema and presets key */
+interface PresetsFile {
+  $schema?: string;
+  presets?: PresetsConfig;
+}
+
 /**
  * Load and merge presets from global and project config files.
  * Project presets override global presets with the same name.
@@ -25,7 +31,8 @@ export function loadPresets(cwd: string): PresetsConfig {
   if (existsSync(globalPath)) {
     try {
       const content = readFileSync(globalPath, "utf-8");
-      globalPresets = JSON.parse(content);
+      const file: PresetsFile = JSON.parse(content);
+      globalPresets = file.presets ?? {};
     } catch (err) {
       console.error(`Failed to load global presets from ${globalPath}: ${err}`);
     }
@@ -34,7 +41,8 @@ export function loadPresets(cwd: string): PresetsConfig {
   if (existsSync(projectPath)) {
     try {
       const content = readFileSync(projectPath, "utf-8");
-      projectPresets = JSON.parse(content);
+      const file: PresetsFile = JSON.parse(content);
+      projectPresets = file.presets ?? {};
     } catch (err) {
       console.error(
         `Failed to load project presets from ${projectPath}: ${err}`,

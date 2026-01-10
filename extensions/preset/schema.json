@@ -4,9 +4,17 @@
   "title": "Pi Presets Configuration",
   "description": "Configuration file for Pi preset extension",
   "type": "object",
-  "additionalProperties": {
-    "$ref": "#/$defs/preset"
+  "properties": {
+    "presets": {
+      "type": "object",
+      "description": "Named preset configurations",
+      "additionalProperties": {
+        "$ref": "#/$defs/preset"
+      }
+    }
   },
+  "required": ["presets"],
+  "additionalProperties": true,
   "$defs": {
     "preset": {
       "type": "object",
