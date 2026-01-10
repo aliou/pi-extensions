@@ -15,7 +15,9 @@ import { formatTokens, getGitBranch, getPiVersion, stripAnsi } from "../utils";
  * Filters model_change entries, sorts by timestamp, and gets the latest one,
  * then resolves it to a full Model object via the model registry.
  */
-function getCurrentModel(ctx: ExtensionContext): Model<any> | undefined {
+function getCurrentModel(
+  ctx: ExtensionContext,
+): { model: Model<any>; provider: string } | undefined {
   const entries = ctx.sessionManager.getEntries();
 
   // Filter to model_change entries, sort by timestamp, and get the last one
@@ -29,10 +31,16 @@ function getCurrentModel(ctx: ExtensionContext): Model<any> | undefined {
   }
 
   // Resolve to full Model object via registry
-  return ctx.modelRegistry.find(
+  const model = ctx.modelRegistry.find(
     lastModelChange.provider,
     lastModelChange.modelId,
   );
+
+  if (!model) {
+    return undefined;
+  }
+
+  return { model, provider: lastModelChange.provider };
 }
 
 export function setupChromeHook(pi: ExtensionAPI) {
@@ -91,7 +99,9 @@ export function setupChromeHook(pi: ExtensionAPI) {
         }
 
         // Get current model dynamically (not from stale ctx.model)
-        const model = getCurrentModel(ctx);
+        const currentModel = getCurrentModel(ctx);
+        const model = currentModel?.model;
+        const provider = currentModel?.provider;
 
         const contextTokens = lastAssistant
           ? lastAssistant.usage.input +
@@ -154,7 +164,8 @@ export function setupChromeHook(pi: ExtensionAPI) {
         rightParts.push(`$${totalCost.toFixed(3)}`);
 
         // Model name and thinking level (share same color)
-        const modelName = model?.id || "no-model";
+        const modelName =
+          provider && model ? `${provider}/${model.id}` : "no-model";
         if (model?.reasoning) {
           const thinkingLevel = pi.getThinkingLevel();
           if (thinkingLevel === "off") {
