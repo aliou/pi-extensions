@@ -245,10 +245,19 @@ export function registerNvimContextHook(
     // Reset modified files tracking for new prompt
     state.modifiedFilesThisTurn = new Set();
 
-    // Always inject the static neovim system prompt
-    let systemPrompt = NVIM_SYSTEM_PROMPT;
+    // Build result with static system prompt
+    const result: {
+      systemPrompt: string;
+      message?: {
+        customType: string;
+        content: string;
+        display: boolean;
+      };
+    } = {
+      systemPrompt: NVIM_SYSTEM_PROMPT,
+    };
 
-    // Add dynamic editor context if connected
+    // Add dynamic editor context as a message if connected
     if (state.socket) {
       try {
         const splits = (await queryNvim(pi.exec, state.socket, "splits", {
@@ -257,16 +266,18 @@ export function registerNvimContextHook(
 
         if (splits && splits.length > 0) {
           const context = formatSplitsContext(splits, ctx.cwd);
-          systemPrompt += "\n\n" + context;
+          result.message = {
+            customType: "nvim-context",
+            content: context,
+            display: false,
+          };
         }
       } catch {
         // Query failed, continue without dynamic context
       }
     }
 
-    return {
-      systemPrompt,
-    };
+    return result;
   });
 
   // -------------------------------------------------------------------------
