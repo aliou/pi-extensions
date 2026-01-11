@@ -11,6 +11,7 @@
 import * as path from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
+import { NVIM_SYSTEM_PROMPT } from "../constants";
 import {
   type DiscoveredInstance,
   discoverNvim,
@@ -244,26 +245,28 @@ export function registerNvimContextHook(
     // Reset modified files tracking for new prompt
     state.modifiedFilesThisTurn = new Set();
 
-    if (!state.socket) return;
+    // Always inject the static neovim system prompt
+    let systemPrompt = NVIM_SYSTEM_PROMPT;
 
-    try {
-      const splits = (await queryNvim(pi.exec, state.socket, "splits", {
-        timeout: 2000,
-      })) as SplitInfo[] | null;
+    // Add dynamic editor context if connected
+    if (state.socket) {
+      try {
+        const splits = (await queryNvim(pi.exec, state.socket, "splits", {
+          timeout: 2000,
+        })) as SplitInfo[] | null;
 
-      if (!splits || splits.length === 0) {
-        return;
+        if (splits && splits.length > 0) {
+          const context = formatSplitsContext(splits, ctx.cwd);
+          systemPrompt += "\n\n" + context;
+        }
+      } catch {
+        // Query failed, continue without dynamic context
       }
-
-      const context = formatSplitsContext(splits, ctx.cwd);
-
-      return {
-        systemPrompt: context,
-      };
-    } catch {
-      // Query failed, continue without context
-      return;
     }
+
+    return {
+      systemPrompt,
+    };
   });
 
   // -------------------------------------------------------------------------
