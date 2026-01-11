@@ -10,6 +10,7 @@ Custom extensions for [Pi](https://github.com/mariozechner/pi-coding-agent), a c
 | Extension | Description |
 |-----------|-------------|
 | [debug](extensions/debug/README.md) | Debugging utilities (session path clipboard) |
+| [mcp](extensions/mcp/README.md) | MCP (Model Context Protocol) server integration |
 | [meta](extensions/meta/README.md) | Pi introspection tools (version, docs, changelog) |
 | [neovim](extensions/neovim/README.md) | Bidirectional Neovim integration (editor context, file reload, LSP diagnostics) |
 | [pi-ui](extensions/pi-ui/README.md) | Custom header and footer |
