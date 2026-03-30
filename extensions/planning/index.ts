@@ -14,10 +14,8 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { setupPlanningCommands } from "./commands";
 import { setupPlanningHooks } from "./hooks";
-import { setupPlanningTools } from "./tools";
 
 export default function (pi: ExtensionAPI) {
   setupPlanningCommands(pi);
   setupPlanningHooks(pi);
-  setupPlanningTools(pi);
 }

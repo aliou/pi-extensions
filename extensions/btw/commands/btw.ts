@@ -5,7 +5,7 @@ import {
   serializeConversation,
 } from "@mariozechner/pi-coding-agent";
 import { Loader, visibleWidth } from "@mariozechner/pi-tui";
-import { executeSubagent } from "../../subagents/lib";
+import { executeSubagent } from "@subagents/lib";
 import { BTW_SYSTEM_REMINDER } from "../lib/system-prompt";
 import { BTW_MESSAGE_TYPE, type BtwDetails } from "../lib/types";
 

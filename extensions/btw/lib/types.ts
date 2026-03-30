@@ -1,4 +1,4 @@
-import type { SubagentUsage } from "../../subagents/lib/types";
+import type { SubagentUsage } from "@subagents/lib/types";
 
 export const BTW_MESSAGE_TYPE = "btw";
 

@@ -7,16 +7,12 @@ import {
   setupSessionLinkMarkerRenderer,
   setupSessionLinkSourceRenderer,
 } from "./lib/session-link";
-import { setupSessionTools } from "./tools";
 
 export default async function (pi: ExtensionAPI) {
   await configLoader.load();
-  const config = configLoader.getConfig();
-
   setupProtectSessionsDirHook(pi);
   setupSessionLinkMarkerRenderer(pi);
   setupSessionLinkSourceRenderer(pi);
-  setupSessionTools(pi, { handoffTool: config.handoffTool });
   setupSessionCommands(pi);
   setupPaletteRegistration(pi);
 }

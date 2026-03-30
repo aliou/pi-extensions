@@ -3,6 +3,14 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@packages/*": ["packages/*"],
+      "@extensions/*": ["extensions/*"],
+      "@modes/*": ["modes/*"],
+      "@subagents/*": ["subagents/*"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -14,5 +22,14 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true
   },
-  "include": ["extensions/**/*.ts", "packages/**/*.ts", "tests/**/*.ts"]
+  "include": [
+    "index.ts",
+    "config/**/*.ts",
+    "tools/**/*.ts",
+    "modes/**/*.ts",
+    "subagents/**/*.ts",
+    "extensions/**/*.ts",
+    "packages/**/*.ts",
+    "tests/**/*.ts"
+  ]
 }
