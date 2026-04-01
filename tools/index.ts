@@ -3,7 +3,6 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { applyMode } from "@modes/lib/mode-lifecycle";
 import { createAskUserTool } from "@/tools/ask-user";
 import { setupBashTool } from "@/tools/bash";
-import { setupEditTool } from "@/tools/edit";
 import { setupFindTool } from "@/tools/find";
 import { setupFindSessionsTool } from "@/tools/find-sessions";
 import { setupGetCurrentTimeTool } from "@/tools/get-current-time";
@@ -19,7 +18,6 @@ export async function setupRootTools(pi: ExtensionAPI): Promise<void> {
   const breadcrumbsConfig = breadcrumbsConfigLoader.getConfig();
 
   setupReadTool(pi);
-  setupEditTool(pi);
   setupFindTool(pi);
   setupBashTool(pi);
   setupGetCurrentTimeTool(pi);
