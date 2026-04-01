@@ -1,92 +1,74 @@
-# modes
+# Modes
 
-Hardcoded mode system for Pi with tool policy, model switching, and per-branch restore.
+Modes define high-level operating contexts for the harness.
 
-## Modes
+## Location
 
-- `default`
-  - Native built-ins enabled: `read`, `bash`, `edit`, `write`
-  - Native built-ins disabled by default: `grep`, `find`, `ls`
-  - All extension tools enabled, including `switch_mode`
-  - No provider/model override
+All mode definitions live under:
 
-- `research`
-  - Native built-ins enabled: `read`, `ls`, `find`, `grep`
-  - Native built-ins blocked: `write`, `edit`
-  - Native `bash` requires explicit approval for every call
-  - Extension tools require confirmation by default (can allow for session)
-  - Side-effecting extension tools blocked by policy: `worker`, `process`
-  - `switch_mode` tool always enabled (self-confirmed inside tool execution)
-  - Provider/model: `anthropic / claude-opus-4-6`
+- `modes/`
 
-## Controls
+Modes are wired into the harness through the single root entrypoint:
 
-- `/mode` opens selector
-- `/mode <default|research>` switches directly
-- `switch_mode` tool switches between modes with explicit in-tool confirmation
-- `Ctrl+U` cycles modes
-- `--agent-mode <default|research>` sets startup mode
+- `index.ts`
 
-## Behavior
+## How mode switching works
 
-- Tool access is policy-based:
-  - each tool resolves to `enabled`, `disabled`, or `confirm`
-  - `pi.setActiveTools()` includes only `enabled` + `confirm`
-  - `tool_call` hook enforces runtime blocking/confirmation
-- Mode state persisted with `appendEntry("mode-state", ...)`
-- Restores mode per branch using `sessionManager.getBranch()`
-- Appends mode instructions to system prompt on each turn
-- Sends UI-visible custom `mode-switch` messages
-- Filters `mode-switch` messages out of LLM context via `context` hook
-- Emits `ad:notify:dangerous` when mode gating requires attention
+Mode changes are exposed through the root tool:
 
-## Event compatibility pattern
+- `mode.switch`
 
-For cross-extension notification and sound interoperability, emit this event shape:
+This means:
 
-```ts
-pi.events.emit("ad:notify:dangerous", {
-  command: string,
-  description: string,
-  pattern: string,
-  toolName?: string,
-  toolCallId?: string,
-});
-```
+- mode definitions belong in `modes/`
+- switching behavior is user-facing through `mode.switch`
+- callers do not need to know internal registration details
 
-`defaults` listens for this event, plays the attention sound, and uses `toolName`/`toolCallId` (when present) to keep terminal-title attention aligned with the exact triggering tool call.
+## Expected mode workflow
 
-## Config overrides
+When adding or editing a mode:
 
-You can override tool gating per mode via pi-utils-settings config files:
+1. create or update the mode definition in `modes/`
+2. export/register it from the modes index
+3. ensure the root wiring includes the modes registry
+4. verify `mode.switch` can resolve and activate it
 
-- Global: `~/.pi/agent/extensions/modes.json`
-- Local: `<project>/.pi/extensions/modes.json`
+## Design guidance
 
-Schema:
+Prefer modes for:
+- changing workflow posture
+- changing default behavior or prompt framing
+- organizing a small set of clearly named operating contexts
 
-```json
-{
-  "tools": {
-    "research": {
-      "allow": ["read_url", "list_sessions"],
-      "deny": ["worker", "process"]
-    },
-    "default": {
-      "allow": [],
-      "deny": []
-    }
-  }
-}
-```
+Do **not** use modes for:
+- one-off commands
+- specialized expert tasks that should be subagents
+- generic helper functionality that belongs in tools
 
-Rules:
-- `deny` forces a tool to `disabled`.
-- `allow` forces a tool to `enabled` (bypasses confirmation state).
-- If a tool is in both, `deny` wins.
+## Relationship to subagents
 
-## Notes
+Modes and subagents solve different problems:
 
-- No config file and no enabled toggle by design
-- Publishes mode label and border band color through editor decoration events
-- Editor rendering is owned by the `editor` extension
+- **Modes** change the current operating context
+- **Subagents** perform delegated specialized work through `subagent.<name>`
+
+Use a mode when the whole session should behave differently.
+Use a subagent when you want to invoke a specialist for a bounded task.
+
+## Checklist for adding a mode
+
+- [ ] Add the mode under `modes/`
+- [ ] Export/register it in the modes index
+- [ ] Confirm root entrypoint wiring still includes modes
+- [ ] Confirm `mode.switch` can target it
+- [ ] Document any behavior that contributors need to understand
+
+## Keep it simple
+
+A good mode is:
+- easy to name
+- easy to switch into
+- obviously different from other modes
+- not coupled to unrelated tool logic
+
+If the change mostly affects one expert workflow instead of session-wide behavior, consider creating a subagent instead.

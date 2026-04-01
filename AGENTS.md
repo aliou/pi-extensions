@@ -1,38 +1,141 @@
-# pi-harness
+# Contributor Notes
 
-My personal harness around [Pi](https://github.com/badlogic/pi-mono/) for coding-agent work.
+This repo uses a **single-root harness architecture**. When making changes, follow the current structure rather than older multi-entrypoint patterns.
 
-All packages in this repository use the `@aliou` scope where applicable, not `@anthropic` or `@anthropic-ai`.
+## Source of truth
 
-## Structure
+The current top-level layout is:
 
-- `extensions/` - Private Pi extensions bundled in this repository
-- `packages/` - Shared internal package code
-- `tests/` - Test utilities and harness. See [tests/README.md](tests/README.md) for usage.
+- `index.ts` — single extension entrypoint
+- `tools/` — root tools
+- `modes/` — mode definitions
+- `subagents/` — subagent definitions and registration
+- `extensions/` — remaining feature modules
+- `config/` — shared config
+- `packages/` — internal packages
 
-## Extensions
+Do **not** introduce new top-level extension entrypoints unless there is a strong, explicit reason.
 
-- `breadcrumbs` - Session history tools. Search past sessions, extract information, and hand off context to new sessions.
-- `btw` - `/btw` side-question command with custom message rendering and context filtering.
-- `defaults` - Personal sensible defaults and quality-of-life improvements.
-- `editor` - Owns the custom editor component and shared border-decoration rendering.
-- `modes` - Hardcoded execution modes with tool gating, model defaults, and branch-aware restore.
-- `palette` - Command palette with keyboard-driven UI for running commands and shortcuts.
-- `planning` - Turn conversations into implementation plans and manage saved plans.
-- `providers` - Register custom providers and show unified rate-limit and usage dashboards.
-- `subagents` - Framework for spawning specialized subagents with custom tools, consistent UI rendering, and logging.
+## Rules of thumb
 
-## Development
+### 1) Keep root wiring centralized
+If you add a user-facing capability, make sure it is wired through the root entrypoint flow.
 
-Uses pnpm workspaces. Nix environment available via `flake.nix`.
+Prefer:
+- adding tool registration in `tools/`
+- adding mode registration in `modes/`
+- adding subagent registration in `subagents/`
 
-```sh
-pnpm install
-pnpm typecheck
-pnpm lint
-```
+Avoid:
+- hidden side-effect registration
+- scattered entrypoint logic
+- duplicate registration paths
 
-## Notes
+### 2) Use namespaced subagent tools
+Subagents should be exposed as:
 
-- This repo is my private Pi harness infrastructure first. Not every package here is intended to be published as a standalone package.
-- Keep repository-level docs focused on my Pi harness. Extension-specific details belong in the extension README files.
+- `subagent.scout`
+- `subagent.lookout`
+- `subagent.oracle`
+- `subagent.reviewer`
+- `subagent.jester`
+- `subagent.worker`
+
+Follow the same pattern for new subagents:
+
+- `subagent.<name>`
+
+Do not expose subagents as generic root tool names.
+
+### 3) Use `mode.switch` for mode changes
+Modes live in `modes/`, but switching is surfaced via the root tool:
+
+- `mode.switch`
+
+If you add a mode:
+- define it under `modes/`
+- register it in the modes index
+- make sure switch resolution stays accurate
+
+### 4) Reuse root tools through catalog plumbing
+If a subagent needs common capabilities, prefer sharing existing **root non-subagent tools** through tool catalog plumbing instead of reimplementing them.
+
+Examples of reusable root tools:
+- `read`
+- `edit`
+- `find`
+- `bash`
+- `read_url`
+- `read_session`
+- `ask_user`
+
+This keeps behavior consistent and reduces drift.
+
+### 5) Keep `extensions/` for feature modules
+`extensions/` is still the right place for grouped feature logic such as:
+- breadcrumbs
+- defaults
+- editor
+- palette
+- planning
+- providers
+
+But these are no longer separate top-level extension entrypoints. They should plug into the root entrypoint architecture.
+
+## When editing specific areas
+
+### Tools
+- put implementations in `tools/`
+- keep names stable and explicit
+- prefer small, composable tools
+- avoid creating subagent-specific copies of generic utilities
+
+### Subagents
+- add files under `subagents/<name>/`
+- register in `subagents/index.ts`
+- update any shared config in `subagents/config.ts` if needed
+- expose via `subagent.<name>`
+
+### Modes
+- add definitions under `modes/`
+- document intended usage
+- keep mode behavior understandable from the mode metadata/prompt
+
+### Package/build
+- bundle output is `dist/index.js`
+- package manifest points `pi.extensions` at that file
+- build uses `tsup`
+- runtime target is Node 22
+
+## Preferred change style
+
+Prefer:
+- minimal diffs
+- explicit exports
+- one registration path
+- small, local changes
+
+Avoid:
+- broad restructuring unless required
+- reviving legacy doc structure
+- adding duplicate abstractions around tools/modes/subagents
+
+## Documentation expectations
+
+If you change architecture or workflows, update docs that describe the current structure:
+
+- `README.md`
+- `modes/README.md`
+- `subagents/README.md`
+- relevant skill docs under `.pi/skills/`
+
+Docs should describe the **current** refactored harness, not historical layouts.
+
+## Sanity checklist before finishing
+
+- [ ] New code is reachable from `index.ts` through normal registration
+- [ ] Tool names follow current conventions
+- [ ] New subagents use `subagent.<name>`
+- [ ] Mode changes go through `mode.switch`
+- [ ] Shared tool reuse is done via tool catalog plumbing where appropriate
+- [ ] Docs still match the filesystem and bundle entrypoint

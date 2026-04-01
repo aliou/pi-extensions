@@ -15,26 +15,6 @@ export function createLookoutToolFormatter(
     const { toolName, args } = tc;
 
     switch (toolName) {
-      case "ast_grep": {
-        const pattern = args.pattern as string | undefined;
-        const lang = args.lang as string | undefined;
-        const paths = Array.isArray(args.paths)
-          ? (args.paths as string[])
-          : undefined;
-        const truncated = pattern
-          ? `"${pattern.slice(0, 50)}${pattern.length > 50 ? "..." : ""}"`
-          : "...";
-        const scope = paths?.length
-          ? ` in ${paths
-              .slice(0, 2)
-              .map((p) => sp(p))
-              .join(", ")}${paths.length > 2 ? ", ..." : ""}`
-          : "";
-        return {
-          label: "AST Grep",
-          detail: `${truncated}${lang ? ` (${lang})` : ""}${scope}`,
-        };
-      }
       case "grep": {
         const pattern = args.pattern as string | undefined;
         const path = args.path as string | undefined;

@@ -127,7 +127,7 @@ export const MODES: Record<string, ModeDefinition> = {
         edit: { access: "disabled" },
       },
       extension: {
-        worker: { access: "disabled" },
+        "subagent.worker": { access: "disabled" },
         process: { access: "disabled" },
         "mode.switch": { access: "enabled" },
       },

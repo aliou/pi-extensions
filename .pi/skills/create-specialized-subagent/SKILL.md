@@ -1,246 +1,284 @@
+# Create a Specialized Subagent
+
+Use this skill when adding a new specialist to the refactored Pi harness.
+
+This repo uses a **single root entrypoint** (`index.ts`) with subagents defined under `subagents/` and exposed through namespaced root tools such as `subagent.oracle`.
+
+## Goal
+
+Add a new subagent that:
+
+- lives under `subagents/<name>/...`
+- is registered in `subagents/index.ts`
+- updates shared subagent config in `subagents/config.ts` if needed
+- is exposed as a root tool named `subagent.<name>`
+- can reuse selected root non-subagent tools through tool catalog plumbing
+
 ---
-name: create-specialized-subagent
-description: Create specialized subagents within the subagents extension. Use when asked to create a new subagent like scout, librarian, oracle, etc.
----
-
-# Create Specialized Subagent
-
-Create subagents within `extensions/subagents/subagents/`.
-
-Subagents are autonomous agents with their own tools, system prompt, and model. They run as Pi tools, streaming progress and rendering results.
-
-## Directory Structure
-
-```
-extensions/subagents/subagents/<name>/
-├── index.ts          # Main tool definition (createXxxTool, executeXxx, XXX_GUIDANCE)
-├── system-prompt.ts  # System prompt string
-├── types.ts          # XxxInput, XxxDetails interfaces
-├── tool-formatter.ts # formatXxxToolCall() for display
-└── tools/
-    ├── index.ts      # createXxxTools() aggregator
-    └── <tool>.ts     # Individual tool definitions
-```
-
-Note: Subagents do not use a separate `config.ts` file. Model configuration is handled in `index.ts` or imported from shared configuration.
-
-## Files Overview
-
-### types.ts
-
-- `XxxInput`: Parameters the parent agent provides
-  - Include `skills?: string[]` for optional skill passthrough
-- `XxxDetails`: State for UI rendering, must include:
-  - `toolCalls: SubagentToolCall[]`
-  - `spinnerFrame: number`
-  - `response?: string`
-  - `aborted?: boolean`
-  - `error?: string`
-  - `usage?: SubagentUsage`
-  - `skills?: string[]` - Requested skill names (from input)
-  - `skillsResolved?: number` - Number of skills successfully resolved
-  - `skillsNotFound?: string[]` - Skill names that were not found
-
-### config.ts
-
-- `MODEL`: Provider and model ID
-- Optional provider type aliases for external APIs
-
-### system-prompt.ts
-
-- Role definition
-- Available tools list
-- Behavior rules per input combination
-- Response format guidelines
-- Constraints and guardrails
-
-### tool-formatter.ts
-
-- `formatXxxToolCall(tc)`: Returns `{ label, detail }` for human-readable display
-- `label`: Action name ("Search", "Fetch")
-- `detail`: Context (hostname, query, repo path)
-
-### tools/
-
-- Individual tool definitions
-- Must return `cost` in details for cost aggregation:
-  ```typescript
-  return {
-    content: [...],
-    details: { ..., cost: response.costDollars?.total },
-  };
-  ```
-
-### index.ts
-
-Exports:
-- `createXxxTool()`: Tool definition with `execute`, `renderCall`, `renderResult`
-- `executeXxx()`: Direct execution without tool wrapper
-- `XXX_GUIDANCE`: Markdown guidance for parent agent's system prompt
-
-## Execute Function
-
-1. Resolve skills if provided:
-   ```typescript
-   const { skills: skillNames } = args;
-   let resolvedSkills: Skill[] = [];
-   let notFoundSkills: string[] = [];
-   if (skillNames && skillNames.length > 0) {
-     const result = resolveSkillsByName(skillNames, ctx.cwd);
-     resolvedSkills = result.skills;
-     notFoundSkills = result.notFound;
-   }
-   ```
-2. Validate inputs, return error in details if invalid (include skill info)
-3. Set up spinner interval (80ms), clear in `finally`
-4. Build user message, append warning if skills not found:
-   ```typescript
-   if (notFoundSkills.length > 0) {
-     userMessage += `\n\n**Note:** The following skills were not found and could not be loaded: ${notFoundSkills.join(", ")}`;
-   }
-   ```
-5. Call `executeSubagent()` with:
-   - `skills: resolvedSkills` in config
-   - `onTextUpdate` and `onToolUpdate` callbacks that include skill info in details
-6. Handle abort/error states (include skill info in all return paths)
-7. Use final tool calls from `result.toolCalls` for failure checks
-8. Check if all tool calls failed → return error
-9. Return `usage` from result (include skill info)
-
-## Tool Rendering Guidelines (required)
-
-Use shared UI abstractions from `@aliou/pi-utils-ui`. Do not hand-roll tool header/body/footer for new subagents.
-
-### renderCall pattern
-
-Always use this header shape:
-
-- First line: `[Tool Name]: [Action] [Main arg] [Option args]`
-- Following lines: long args only (wrapped naturally)
-
-In subagents, use `ToolCallHeader`:
-
-```ts
-return new ToolCallHeader(
-  {
-    toolName: "Scout", // display name, not snake_case tool id
-    // action only when meaningful (e.g. process start/output/kill)
-    mainArg: "short primary arg",
-    optionArgs: [{ label: "cwd", value: args.cwd ?? "" }],
-    longArgs: [{ label: "prompt", value: args.prompt }],
-  },
-  theme,
-);
-```
-
-Rules:
-- Keep main arg short and useful.
-- Move long text (prompt/task/question/instructions/context) to `longArgs`.
-- Do not truncate when wrapping gives better readability (e.g. query/question).
-- Tool name should be human display text (`Scout`, `Read Session`), not raw tool id.
-
-### renderResult structure
-
-Use `ToolBody` + footer component (`SubagentFooter` for model-backed subagents).
-
-```ts
-return new ToolBody({ fields, footer }, options, theme);
-```
-
-Footer spacing is standardized. Keep footer data concise and machine-skim-friendly.
-
-## renderResult States
-
-| State | Display |
-|-------|---------|
-| Aborted | Warning "Aborted" + optional completion count |
-| Error | Error message |
-| Running + collapsed | Spinner + current tool name |
-| Running + expanded | Status line + all tool calls with indicators |
-| Done + collapsed | `✓` or `✗` (if all failed) + stats |
-| Done + expanded | Stats + tool summary + failed tool details + markdown response |
-
-## Registration
-
-In `extensions/subagents/index.ts`:
-
-1. Import the tool and guidance
-2. Add guidance to `SUBAGENT_GUIDANCES` array
-3. Register tool with `pi.registerTool(createXxxTool())`
-4. If the subagent requires API keys, add them to `checkApiKeys()`
-
-See the existing registration pattern in the file.
-
-## API Key Validation
-
-If your subagent requires external API keys, validate them at extension load time. This prevents the extension from loading if required keys are missing.
-
-Add your required keys to `checkApiKeys()` in `extensions/subagents/index.ts`. See the existing implementation for the pattern.
 
 ## Checklist
 
-1. Create directory: `subagents/<name>/`
-2. Create `types.ts` with Input and Details interfaces
-   - Add `skills?: string[]` to Input interface
-   - Add `skills?`, `skillsResolved?`, `skillsNotFound?` to Details interface
-3. Create `config.ts` with model configuration
-4. Create `system-prompt.ts` with subagent instructions
-5. Create `tools/` directory with subagent's tools
-6. Create `tool-formatter.ts` for display formatting
-7. Create `index.ts` with createXxxTool, executeXxx, XXX_GUIDANCE
-   - Import `resolveSkillsByName` and `Skill` type from lib
-   - Add `skills` parameter to TypeBox schema
-   - Update tool description to mention skill support
-   - Resolve skills in execute function
-   - Pass `skills: resolvedSkills` to executeSubagent
-   - Include skill info in all details returns
-   - Use `ToolCallHeader` in `renderCall` and follow standard line pattern
-   - Use `ToolBody` + `SubagentFooter` in `renderResult`
-8. Register in `extensions/subagents/index.ts`
-9. Run `pnpm typecheck`
+- [ ] Choose a short lowercase name for the subagent
+- [ ] Create `subagents/<name>/`
+- [ ] Add the subagent prompt/instructions
+- [ ] Export/register the subagent in `subagents/index.ts`
+- [ ] Update `subagents/config.ts` if the subagent needs shared config or tool catalog changes
+- [ ] Expose the callable root tool as `subagent.<name>`
+- [ ] Reuse existing root tools via tool catalog plumbing instead of duplicating them
+- [ ] Verify root entrypoint wiring still reaches the subagent
+- [ ] Update docs if the new specialist should be discoverable by contributors
 
-## Key Points
+---
 
-- **Details interface**: Must include `toolCalls`, `spinnerFrame`, `response`, `aborted`, `error`, `usage`, and skill tracking fields
-- **Skills support**: All subagents should support optional `skills` parameter for specialized context
-- **Cost tracking**: Tools must return `cost` in details for aggregation
-- **Spinner**: 80ms interval, clear in finally block
-- **Extensions disabled**: Subagents don't run user extensions (`extensions: []`)
-- **Failed tools**: Show individually in done+expanded state
-- **All failed**: Show error indicator only when ALL tools failed (partial success = success indicator)
-- **Final tool calls**: Use `result.toolCalls` if present to decide failure state
-- **Mark tool as failed**: When all internal tools fail, return error so parent agent sees failure
-- **Skill resolution**: Use `resolveSkillsByName()` from lib to convert skill names to Skill objects
-- **Skill warnings**: Append warning to user message if skills not found (don't fail the request)
+## Recommended workflow
 
-## Notifications
+### 1) Pick the role and boundary
 
-Subagents can emit notifications to alert users. This is useful for long-running subagent tasks or when user attention is needed.
+Define what the subagent is for in one sentence.
 
-### Emitting Notifications
+Good examples:
+- architecture review
+- exploratory repo scanning
+- implementation planning
+- fast drafting
+- adversarial review
 
-```typescript
-const NOTIFICATION_EVENT = "ad:notification";
+Avoid creating a subagent when a normal tool would be enough.
 
-interface NotificationEvent {
-  message: string;
-  sound?: string;
-}
+Use a subagent only if the capability needs:
+- specialized instructions
+- agentic reasoning
+- repeated delegated usage
 
-// In execute function, after completion
-pi.events.emit(NOTIFICATION_EVENT, {
-  message: "Research completed",
-  sound: "/System/Library/Sounds/Blow.aiff",
-});
+### 2) Create the folder
+
+Create a new folder:
+
+```text
+subagents/<name>/
 ```
 
-### When to Notify
+Keep the structure minimal. Usually you only need:
+- a prompt/instructions file
+- optional local helpers or metadata
 
-- Subagent completes a long-running task
-- Subagent encounters errors that need user attention
-- Subagent needs user input (though prefer interactive tools like `ask_user`)
+Example:
 
-## Reference
+```text
+subagents/librarian/
+  prompt.md
+```
 
-Refer to the scout subagent for complete implementation:
-- [subagents/scout/](../../extensions/subagents/subagents/scout/)
+### 3) Add the prompt
+
+Write clear instructions for the specialist.
+
+Minimal example:
+
+```md
+# Librarian
+
+You are a research-oriented subagent.
+
+Focus on:
+- finding relevant code quickly
+- summarizing what exists before suggesting changes
+- citing exact files and symbols when possible
+
+Do:
+- prefer concise findings
+- highlight uncertainty
+- call out missing context
+
+Do not:
+- make broad refactor plans unless asked
+- rewrite unrelated areas
+```
+
+### 4) Register the subagent in `subagents/index.ts`
+
+Add the new subagent to the registry used by the harness.
+
+Minimal example:
+
+```ts
+// subagents/index.ts
+import { librarianPrompt } from "./librarian/prompt";
+
+export const subagents = [
+  // existing subagents...
+  {
+    name: "librarian",
+    description: "Researches code and summarizes relevant findings.",
+    prompt: librarianPrompt,
+  },
+];
+```
+
+Use the same registration pattern already present in the file. Match local conventions instead of inventing a new shape.
+
+### 5) Update shared config in `subagents/config.ts` if needed
+
+If subagents share tool catalog rules, defaults, or common config, add the new subagent there.
+
+Typical reasons to edit `subagents/config.ts`:
+- allow the new subagent to see selected shared root tools
+- add per-subagent config
+- attach defaults used by the registry/tooling
+
+Minimal example:
+
+```ts
+// subagents/config.ts
+export const subagentToolAccess = {
+  // existing entries...
+  librarian: [
+    "read",
+    "find",
+    "read_url",
+    "get_current_time",
+  ],
+};
+```
+
+Important: prefer reusing existing root non-subagent tools through catalog plumbing. Do not clone tool implementations into the subagent.
+
+### 6) Expose the root tool as `subagent.<name>`
+
+Make the subagent callable through the root tool surface.
+
+Target naming:
+
+```text
+subagent.librarian
+```
+
+Use the existing subagent tool registration pattern already used for:
+- `subagent.scout`
+- `subagent.lookout`
+- `subagent.oracle`
+- `subagent.reviewer`
+- `subagent.jester`
+- `subagent.worker`
+
+If the repo has a centralized place where subagent tools are declared, add the new entry there instead of creating a one-off registration path.
+
+### 7) Verify root wiring
+
+Confirm the new subagent is reachable from the single root entrypoint:
+
+- `index.ts` loads the root extension graph
+- subagent registration is included
+- the root tool catalog includes `subagent.<name>`
+
+### 8) Keep docs aligned
+
+If the new subagent is a stable part of the harness, update:
+- `subagents/README.md`
+- `README.md` if contributor discovery matters
+
+---
+
+## Minimal scaffold example
+
+Use this as a small, adaptable starting point.
+
+### Files
+
+```text
+subagents/librarian/prompt.ts
+subagents/index.ts
+subagents/config.ts
+```
+
+### `subagents/librarian/prompt.ts`
+
+```ts
+export const librarianPrompt = `
+You are Librarian, a specialized research subagent.
+
+Your job:
+- inspect the codebase
+- find the most relevant files quickly
+- summarize findings clearly
+- avoid speculative rewrites
+
+Prefer:
+- exact file references
+- short evidence-backed summaries
+- noting uncertainty when context is incomplete
+`;
+```
+
+### `subagents/index.ts`
+
+```ts
+import { librarianPrompt } from "./librarian/prompt";
+
+export const subagents = [
+  {
+    name: "librarian",
+    description: "Finds relevant code and summarizes what exists.",
+    prompt: librarianPrompt,
+  },
+];
+```
+
+### `subagents/config.ts`
+
+```ts
+export const subagentToolAccess = {
+  librarian: ["read", "find", "read_url"],
+};
+```
+
+### Root tool exposure
+
+Ensure the harness exposes:
+
+```text
+subagent.librarian
+```
+
+using the same tool registration mechanism as the other `subagent.*` tools.
+
+---
+
+## Guardrails
+
+- Do not add a separate top-level extension entrypoint for the subagent
+- Do not register the subagent through hidden side effects
+- Do not create a non-namespaced tool like `librarian` at the root
+- Do not duplicate root tool logic inside `subagents/`
+- Do not skip `subagents/index.ts` registration
+
+---
+
+## Quick decision guide
+
+Create a **subagent** if:
+- the task benefits from a specialist persona/instructions
+- the work is delegated and bounded
+- the capability will be reused
+
+Create a **tool** instead if:
+- the behavior is deterministic
+- the inputs/outputs are straightforward
+- no specialist reasoning is needed
+
+Create a **mode** instead if:
+- you want to change session-wide behavior
+- the whole harness should operate differently until switched back
+
+---
+
+## Done criteria
+
+A new subagent is complete when:
+
+- it lives under `subagents/<name>/`
+- it is registered in `subagents/index.ts`
+- any shared config is updated in `subagents/config.ts`
+- it is callable as `subagent.<name>`
+- it reuses shared root tools through tool catalog plumbing where appropriate
+- the root entrypoint architecture remains unchanged
