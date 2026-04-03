@@ -1,235 +1,81 @@
-# Specialized Subagents Extension
+# Subagents
 
-Framework for running specialized subagents behind first-class Pi tools.
+Specialized agents registered through the root harness and invoked via namespaced tools.
 
-This extension registers six tools:
+## Registration model
 
-- `scout`
-- `lookout`
-- `oracle`
-- `reviewer`
-- `jester`
-- `worker`
+Subagents are part of the single-root architecture:
 
-Each tool delegates to a subagent with its own system prompt, model selection, optional skills, logging, and UI rendering.
+- root entrypoint: `index.ts`
+- subagent registry: `subagents/index.ts`
+- shared subagent config: `subagents/config.ts`
 
-## What it does
+They are exposed as root tools with the pattern:
 
-- Registers all subagent tools at extension load.
-- Resets per-session model selections on `session_start`.
-- Applies enable/disable toggles before each agent turn.
-- Logs each subagent run under `~/.pi/agent/subagents/...`.
-- Supports optional debug logs via `debug.jsonl`.
-- Supports passing Pi skills into subagents by exact skill name.
+- `subagent.<name>`
 
-## Registered subagents
+Current set:
 
-### Scout
+- `subagent.scout`
+- `subagent.lookout`
+- `subagent.oracle`
+- `subagent.reviewer`
+- `subagent.jester`
+- `subagent.worker`
 
-Deep web and GitHub research subagent.
+## Intent by subagent
 
-Inputs:
+### `subagent.scout`
+Deep web + GitHub research and synthesis.
 
-- `url?`
-- `query?`
-- `repo?`
-- `prompt`
-- `skills?`
+### `subagent.lookout`
+Local codebase search by behavior/flow/concept.
 
-At least one of `url`, `query`, or `repo` is required.
+### `subagent.oracle`
+Advisory reasoning for planning/debugging/architecture.
 
-Scout uses custom tools, not Pi built-ins. Current internal toolset:
+### `subagent.reviewer`
+Diff-focused code review feedback.
 
-- `webSearch`
-- `webFetch`
-- `githubContent`
-- `githubSearch`
-- `githubCommits`
-- `githubIssue`
-- `githubIssues`
-- `githubPrDiff`
-- `githubPrReviews`
-- `githubCompare`
-- `listUserRepos`
-- `downloadGist`
-- `uploadGist`
+### `subagent.jester`
+Creative/random generation. No factual guarantees.
 
-Default routed web config:
+### `subagent.worker`
+Focused implementation on known files with verification expectations.
 
-- Search order: `synthetic -> exa -> linkup`
-- Fetch order: `markdownDotNew -> exa -> linkup`
+## Models and settings
 
-Required env depends on which providers you actually use. The extension only checks `SCOUT_GITHUB_TOKEN` at load time. In the default config, Scout also expects `SYNTHETIC_API_KEY` for search.
+Per-subagent model candidate selection and web-routing settings live in:
 
-Relevant env vars:
+- `subagents/config.ts`
 
-- `SCOUT_GITHUB_TOKEN`
-- `SYNTHETIC_API_KEY`
-- `EXA_API_KEY`
-- `LINKUP_API_KEY`
+User-facing subagent settings command is:
 
-### Lookout
-
-Local codebase search subagent.
-
-Inputs:
-
-- `query`
-- `cwd?`
-- `skills?`
-
-Lookout uses Pi read-only tools created by `createReadOnlyTools(workingDir)`:
-
-- `grep`
-- `find`
-- `read`
-- `ls`
-
-It does not use `osgrep`.
-
-If the model returns an answer without using search tools, the response is discarded to avoid hallucinated file paths.
-
-### Oracle
-
-Advisory subagent for planning, debugging, architecture review, and deep reasoning.
-
-Inputs:
-
-- `task`
-- `context?`
-- `files?`
-- `skills?`
-
-Oracle is advisory-only. It does not use tools. If `files` are provided, their contents are read by the tool wrapper and embedded into the subagent prompt.
-
-### Reviewer
-
-Diff review subagent.
-
-Inputs:
-
-- `diff`
-- `focus?`
-- `context?`
-- `skills?`
-
-Reviewer uses:
-
-- Pi read-only tools for repository inspection
-- Pi `bash` for git/diff commands
-- additional reviewer-specific custom tools
-
-It is intended for review of staged changes, commits, or scoped diffs.
-
-### Jester
-
-Creative generation subagent.
-
-Input:
-
-- `question`
-
-Jester uses no tools. It is for random, creative, or unexpected output only.
-
-### Worker
-
-Sandboxed implementation subagent for known files.
-
-Inputs:
-
-- `task`
-- `instructions`
-- `files`
-- `context?`
-- `skills?`
-
-Worker does not explore the repo. It gets a restricted toolset:
-
-- scoped `read`
-- scoped `edit`
-- scoped `write`
-- guarded `bash`
-
-The worker bash wrapper blocks policy-violating commands. Worker is intended to run verification before finishing and must not bypass checks with flags like `--no-verify`.
-
-## Models
-
-Each subagent has its own candidate model list in `extensions/subagents/config.ts`.
-
-Configured subagents:
-
-- `scout`
-- `lookout`
-- `oracle`
-- `reviewer`
-- `jester`
-- `worker`
-
-The extension resolves model candidates per subagent and resets per-session selections on session start.
-
-## Skills
-
-`scout`, `lookout`, `oracle`, `reviewer`, and `worker` accept `skills`.
-
-Skill resolution is exact-name only and uses Pi skill discovery for the current cwd. Missing skill names are reported back to the subagent call.
-
-`jester` does not accept skills.
+- `/subagents:settings`
 
 ## Logging
 
-Each run gets its own log directory:
+Subagent runs are logged under:
 
-`~/.pi/agent/subagents/<sanitized-cwd>/<subagent-name>/<run-id>/`
+- `~/.pi/agent/subagents/...`
 
-Files:
+Exact path shaping and logger implementation live in:
 
-- `stream.log` - human-readable run log
-- `debug.jsonl` - raw event log when debug is enabled
-
-Run IDs look like:
-
-`<subagent>-<YYYYMMDD-HHMMSS>-<random6>`
-
-## Settings
-
-This extension registers the `/subagents:settings` command.
-
-Current settings cover:
-
-- global debug logging
-- per-subagent enabled/disabled state
-- Scout web routing
-  - search order
-  - fetch order
-  - provider enable flags
-  - Exa search mode
-  - Linkup search depth
-  - Linkup `renderJsDefault`
-
-All tools are registered up front. Before each agent turn, disabled subagents are removed from the active tool list.
-
-## Files worth reading
-
-- `extensions/subagents/index.ts` - extension registration and activation logic
-- `extensions/subagents/config.ts` - model candidates and Scout web config
-- `extensions/subagents/commands/settings-command.ts` - `/subagents:settings`
-- `extensions/subagents/lib/executor.ts` - shared subagent execution path
-- `extensions/subagents/lib/logging/` - run log layout and writers
-- `extensions/subagents/lib/skills.ts` - skill resolution
-- `extensions/subagents/subagents/*` - per-subagent implementation
+- `subagents/lib/logging/`
 
 ## Adding a new subagent
 
-Use the `create-specialized-subagent` skill.
+1. Create `subagents/<name>/...`
+2. Register in `subagents/index.ts`
+3. Update `subagents/config.ts` when model/settings plumbing is needed
+4. Expose as `subagent.<name>`
+5. Reuse root tools where appropriate instead of cloning behavior
 
-Reference structure from an existing subagent such as:
+See `.pi/skills/create-specialized-subagent/SKILL.md` for scaffold guidance.
 
-- `extensions/subagents/subagents/scout/`
-- `extensions/subagents/subagents/worker/`
+## Important conventions
 
-Typical pieces:
-
-- `index.ts`
-- `system-prompt.ts`
-- `types.ts`
-- `tools/` when the subagent needs custom tools
+- Keep namespaced tool naming (`subagent.<name>`)
+- Keep registration centralized
+- Keep docs aligned with root-single-entrypoint architecture
+- Avoid reviving old `extensions/subagents/...` path assumptions

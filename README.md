@@ -1,37 +1,56 @@
 # pi-harness
 
-My personal harness around [Pi](https://github.com/badlogic/pi-mono/) for coding-agent work.
-
-> [!WARNING]
-> Feel free to use these, but they're mainly for my personal use and I might not read/merge your pr. Also, I haven't read a single line of code so I can't be held responsible if something bad happens. Godspeed ✌️
+Personal Pi harness built around a **single root extension entrypoint**.
 
 ## Install
-
-Install the repository as a Pi package:
 
 ```bash
 pi install git:github.com/aliou/pi-harness
 ```
 
-To install selectively, or disable specific extensions, edit your `settings.json`:
+This package exposes one extension bundle from `pi.extensions`:
 
-```json
-{
-  "packages": [
-    {
-      "source": "git:github.com/aliou/pi-harness",
-      "extensions": [
-        "extensions/btw/index.ts",
-        "extensions/defaults/index.ts",
-        "extensions/providers/index.ts"
-      ]
-    }
-  ]
-}
-```
+- `./dist/index.js`
 
-Extension paths should match the directory names in `extensions/` exactly.
+## Architecture
 
-## Scope
+Source of truth layout:
 
-This repo contains my Pi harness extensions, shared package code, and test utilities.
+- `index.ts` — root orchestrator entrypoint
+- `tools/` — root tools
+- `modes/` — mode definitions + lifecycle wiring
+- `subagents/` — subagent definitions + registration
+- `extensions/` — feature modules (internal organization)
+- `config/` — shared config
+
+The harness is **not** a multi-top-level-extension package anymore.
+
+## Tool surface
+
+Root tools include file/system/session utilities and control tools.
+
+Notable names:
+
+- `mode.switch`
+- `subagent.scout`
+- `subagent.lookout`
+- `subagent.oracle`
+- `subagent.reviewer`
+- `subagent.jester`
+- `subagent.worker`
+
+Subagents are always exposed as `subagent.<name>`.
+
+## Build
+
+- bundle output: `dist/index.js`
+- build tool: `tsup`
+- runtime target: Node 22
+
+`postinstall` runs build so installed package has fresh dist output.
+
+## Notes
+
+`extensions/` is still used for feature grouping, but those modules plug into the root entrypoint flow. Do not treat them as separate package entrypoints.
+
+For contributor constraints and conventions, see `AGENTS.md`.
