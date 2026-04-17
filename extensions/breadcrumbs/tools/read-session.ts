@@ -46,7 +46,8 @@ import {
 import { getSessionsDir } from "../lib/session-search";
 import type { ReadSessionDetails } from "./read-session-types";
 
-const MODEL = "gpt-5.3-codex-spark";
+const MODEL = "gpt-5.4-mini";
+// const MODEL = "gpt-5.3-codex-spark";
 
 const SYSTEM_PROMPT = `You are a session analyzer. Your task is to extract specific information from a Pi coding agent session.
 
