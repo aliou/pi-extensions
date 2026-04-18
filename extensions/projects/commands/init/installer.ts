@@ -1,5 +1,7 @@
 /**
  * Installer. Reads/writes .pi/settings.json for selected skills and packages.
+ *
+ * All entries (skills and packages) are stored as npm refs in settings.packages.
  */
 
 import { existsSync } from "node:fs";
@@ -33,15 +35,9 @@ export async function readSettings(cwd: string): Promise<PiSettings> {
   }
 }
 
-/** Get currently installed skill/package paths from settings. */
-export function getInstalled(settings: PiSettings): {
-  skills: Set<string>;
-  packages: Set<string>;
-} {
-  return {
-    skills: new Set(settings.skills ?? []),
-    packages: new Set(settings.packages ?? []),
-  };
+/** Get currently installed npm refs from settings.packages. */
+export function getInstalled(settings: PiSettings): Set<string> {
+  return new Set(settings.packages ?? []);
 }
 
 /**
@@ -59,32 +55,24 @@ export async function applySelections(
   }
 
   const settings = await readSettings(cwd);
-  const skills = new Set(settings.skills ?? []);
   const packages = new Set(settings.packages ?? []);
 
   // Add selected
   for (const entry of selected) {
-    if (entry.type === "skill") {
-      skills.add(entry.path);
-    } else {
-      packages.add(entry.path);
-    }
+    packages.add(entry.npmRef);
   }
 
   // Remove unselected
   for (const entry of unselected) {
-    if (entry.type === "skill") {
-      skills.delete(entry.path);
-    } else {
-      packages.delete(entry.path);
-    }
+    packages.delete(entry.npmRef);
   }
 
-  settings.skills = [...skills];
+  // Remove legacy skills key
+  delete settings.skills;
+
   settings.packages = [...packages];
 
   // Clean up empty arrays
-  if (settings.skills.length === 0) delete settings.skills;
   if (settings.packages.length === 0) delete settings.packages;
 
   const path = settingsPath(cwd);

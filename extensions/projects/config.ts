@@ -5,20 +5,20 @@
 import { ConfigLoader } from "@aliou/pi-utils-settings";
 
 export interface ProjectConfig {
-  catalog?: string[];
-  catalogDepth?: number;
+  registry?: string;
+  scope?: string;
   childProjectDepth?: number;
 }
 
 export interface ResolvedProjectConfig {
-  catalog: string[];
-  catalogDepth: number;
+  registry: string;
+  scope: string;
   childProjectDepth: number;
 }
 
 const DEFAULT_CONFIG: ResolvedProjectConfig = {
-  catalog: [],
-  catalogDepth: 3,
+  registry: "",
+  scope: "",
   childProjectDepth: 2,
 };
 

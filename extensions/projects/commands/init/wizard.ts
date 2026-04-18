@@ -3,7 +3,7 @@
  *
  * Four-step wizard using the Wizard component from @aliou/pi-utils-settings:
  * 1. Packages — multi-select packages from the catalog
- * 2. Skills — multi-select skills (skills bundled with checked packages are locked)
+ * 2. Skills — multi-select skills (skills bundled with checked packages are hidden)
  * 3. Nix — select shell/flake strategy
  * 4. AGENTS.md — toggle generation and pick target directories
  *
@@ -23,7 +23,7 @@ import { getSettingsListTheme } from "@mariozechner/pi-coding-agent";
 import type { Component, SettingsListTheme } from "@mariozechner/pi-tui";
 import { Input, Key, matchesKey } from "@mariozechner/pi-tui";
 import type { CatalogEntry } from "./catalog";
-import { scanCatalog } from "./catalog";
+import { scanRegistry } from "./catalog";
 import { getInstalled, readSettings } from "./installer";
 import { findChildProjects, type ProjectStack, scanProject } from "./scanner";
 
@@ -48,11 +48,11 @@ export interface WizardResult {
 interface WizardState {
   catalog: CatalogEntry[];
   stack: ProjectStack;
-  installedSkills: Set<string>;
-  installedPackages: Set<string>;
+  installed: Set<string>;
 
   // Items mutated by steps
   packageItems: FuzzyMultiSelectorItem[];
+  allSkillItems: FuzzyMultiSelectorItem[];
   skillItems: FuzzyMultiSelectorItem[];
   nixChoice: NixChoice;
   nixHasShell: boolean;
@@ -82,8 +82,7 @@ class PackagesStep implements Component {
       items: state.packageItems,
       theme: settingsTheme,
       onToggle: () => {
-        // Recompute skill locks when packages change
-        recomputeSkillLocks(state);
+        updateVisibleSkills(state);
       },
     });
   }
@@ -116,8 +115,8 @@ class SkillsStep implements Component {
   ) {
     wizardCtx.markComplete();
 
-    // Ensure locks are current when entering this step
-    recomputeSkillLocks(state);
+    // Ensure visible skills are current
+    updateVisibleSkills(state);
 
     this.selector = new FuzzyMultiSelector({
       label: "Skills",
@@ -127,8 +126,8 @@ class SkillsStep implements Component {
   }
 
   render(width: number): string[] {
-    // Re-apply locks every render in case packages changed via tab navigation
-    recomputeSkillLocks(this.state);
+    // Re-apply visibility in case packages changed via tab navigation
+    updateVisibleSkills(this.state);
     this.selector.refresh();
     return this.selector.render(width);
   }
@@ -451,38 +450,29 @@ class AgentsStep implements Component {
 }
 
 // ---------------------------------------------------------------------------
-// Lock computation
+// Visible skills computation (replaces lock-based approach)
 // ---------------------------------------------------------------------------
 
-function recomputeSkillLocks(state: WizardState): void {
-  // Reset all locks
-  for (const item of state.skillItems) {
-    item.locked = false;
-    item.lockedBy = undefined;
-  }
-
-  // Find checked packages and lock their bundled skills
+/**
+ * Update state.skillItems to hide skills covered by checked packages.
+ * Mutates state.skillItems in-place so the FuzzyMultiSelector sees changes on refresh().
+ */
+function updateVisibleSkills(state: WizardState): void {
+  const coveredSkills = new Set<string>();
   for (const pkgItem of state.packageItems) {
     if (!pkgItem.checked) continue;
-
     const entry = state.catalog.find(
       (e) => e.type === "package" && e.name === pkgItem.label,
     );
-    if (!entry || entry.type !== "package" || entry.skillPaths.length === 0) {
-      continue;
-    }
-
-    for (const skillItem of state.skillItems) {
-      const skillEntry = state.catalog.find(
-        (e) => e.type === "skill" && e.name === skillItem.label,
-      );
-      if (skillEntry && entry.skillPaths.includes(skillEntry.path)) {
-        skillItem.locked = true;
-        skillItem.lockedBy = pkgItem.label;
-        skillItem.checked = true;
-      }
+    if (entry?.skills) {
+      for (const s of entry.skills) coveredSkills.add(s);
     }
   }
+  const visible = state.allSkillItems.filter(
+    (item) => !coveredSkills.has(item.label),
+  );
+  state.skillItems.length = 0;
+  state.skillItems.push(...visible);
 }
 
 // ---------------------------------------------------------------------------
@@ -491,7 +481,7 @@ function recomputeSkillLocks(state: WizardState): void {
 
 function buildPackageItems(
   catalog: CatalogEntry[],
-  installedPackages: Set<string>,
+  installed: Set<string>,
 ): FuzzyMultiSelectorItem[] {
   return catalog
     .filter(
@@ -499,7 +489,7 @@ function buildPackageItems(
     )
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((entry) => {
-      const skillCount = entry.skillPaths.length;
+      const skillCount = entry.skills?.length ?? 0;
       const suffix =
         skillCount > 0
           ? `(${skillCount} skill${skillCount !== 1 ? "s" : ""})`
@@ -508,14 +498,14 @@ function buildPackageItems(
         label: entry.name,
         description: entry.description || undefined,
         suffix,
-        checked: installedPackages.has(entry.path),
+        checked: installed.has(entry.npmRef),
       };
     });
 }
 
 function buildSkillItems(
   catalog: CatalogEntry[],
-  installedSkills: Set<string>,
+  installed: Set<string>,
 ): FuzzyMultiSelectorItem[] {
   return catalog
     .filter((e) => e.type === "skill")
@@ -523,7 +513,7 @@ function buildSkillItems(
     .map((entry) => ({
       label: entry.name,
       description: entry.description,
-      checked: installedSkills.has(entry.path),
+      checked: installed.has(entry.npmRef),
     }));
 }
 
@@ -596,17 +586,14 @@ function collectResult(state: WizardState): WizardResult {
 
 export async function showWizard(
   ctx: ExtensionCommandContext,
-  catalogDirs: string[],
-  catalogDepth: number,
+  registry: string,
+  scope: string,
   childProjectDepth: number,
 ): Promise<WizardResult | null> {
   // --- Loading phase (blocking, before wizard appears) ---
-  const catalog = await scanCatalog(catalogDirs, catalogDepth);
+  const catalog = await scanRegistry(registry, scope);
   if (catalog.length === 0) {
-    ctx.ui.notify(
-      "No skills or packages found in catalog directories.",
-      "warning",
-    );
+    ctx.ui.notify("No skills or packages found in the registry.", "warning");
     return null;
   }
 
@@ -620,13 +607,15 @@ export async function showWizard(
   const hasShell = existsSync(resolve(ctx.cwd, "shell.nix"));
 
   // --- Build shared state ---
+  const allSkillItems = buildSkillItems(catalog, installed);
+
   const state: WizardState = {
     catalog,
     stack,
-    installedSkills: installed.skills,
-    installedPackages: installed.packages,
-    packageItems: buildPackageItems(catalog, installed.packages),
-    skillItems: buildSkillItems(catalog, installed.skills),
+    installed,
+    packageItems: buildPackageItems(catalog, installed),
+    allSkillItems,
+    skillItems: [...allSkillItems],
     nixChoice: hasFlake || hasShell ? "skip" : "shell.nix",
     nixHasShell: hasShell,
     nixHasFlake: hasFlake,
@@ -635,8 +624,8 @@ export async function showWizard(
     agentsDirItems: buildAgentsDirItems(ctx.cwd, childProjects),
   };
 
-  // Apply initial locks
-  recomputeSkillLocks(state);
+  // Apply initial visibility
+  updateVisibleSkills(state);
 
   // --- Show wizard ---
   const settingsTheme = getSettingsListTheme();

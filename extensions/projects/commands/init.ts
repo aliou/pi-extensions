@@ -22,9 +22,9 @@ export function registerProjectInitCommand(pi: ExtensionAPI): void {
       }
 
       const config = configLoader.getConfig();
-      if (config.catalog.length === 0) {
+      if (!config.registry || !config.scope) {
         ctx.ui.notify(
-          "No catalog directories configured. Use /defaults:settings to add directories.",
+          "No npm registry configured. Edit the projects settings JSON file to set registry and scope.",
           "warning",
         );
         return;
@@ -32,8 +32,8 @@ export function registerProjectInitCommand(pi: ExtensionAPI): void {
 
       const result = await showWizard(
         ctx,
-        config.catalog,
-        config.catalogDepth,
+        config.registry,
+        config.scope,
         config.childProjectDepth,
       );
 
@@ -58,9 +58,7 @@ export function registerProjectInitCommand(pi: ExtensionAPI): void {
 
         const added = result.selectedEntries.length;
         const removed = result.unselectedEntries.filter((e) =>
-          e.type === "skill"
-            ? installed.skills.has(e.path)
-            : installed.packages.has(e.path),
+          installed.has(e.npmRef),
         ).length;
 
         const parts: string[] = [];

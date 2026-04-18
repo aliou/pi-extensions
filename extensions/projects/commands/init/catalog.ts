@@ -1,176 +1,131 @@
 /**
- * Catalog scanner. Discovers skills and packages from catalog directories.
+ * Catalog scanner. Discovers skills and packages from an npm registry.
  *
- * Scans two levels deep:
- * - Level 1: direct children (flat layout) or category dirs
- * - Level 2: children of category dirs (e.g. core/skill-creator/)
- *
- * - Skills: directories containing a SKILL.md file
- * - Packages: directories containing a package.json with a `pi` key
+ * Uses the npm search API to list all packages in a scope, then fetches
+ * metadata for group packages to resolve their constituent skills.
  */
 
-import { existsSync, readdirSync, statSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { basename, resolve } from "node:path";
-
-export interface CatalogSkill {
-  type: "skill";
-  name: string;
+export interface CatalogEntry {
+  type: "skill" | "package";
+  name: string; // unscoped: "frontend", "biome"
+  npmRef: string; // "npm:@agents/frontend"
   description: string;
-  path: string;
-  scope: string;
+  skills?: string[]; // packages only: ["biome", "tailwind", ...]
 }
 
-export interface CatalogPackage {
-  type: "package";
-  name: string;
-  description: string;
-  path: string;
-  skillPaths: string[];
+interface SearchHit {
+  package: {
+    name: string;
+    description: string;
+    keywords?: string[];
+  };
 }
 
-export type CatalogEntry = CatalogSkill | CatalogPackage;
-
-/** Extract name and description from SKILL.md frontmatter. */
-function parseFrontmatter(
-  content: string,
-  fallbackName: string,
-): { name: string; description: string } {
-  const match = content.match(/^---\s*\n([\s\S]*?)\n---/);
-  if (!match?.[1]) return { name: fallbackName, description: "" };
-
-  const fm = match[1];
-  const name = fm.match(/^name:\s*(.+)$/m)?.[1]?.trim() ?? fallbackName;
-  const description = fm.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? "";
-
-  return { name, description };
+interface SearchResponse {
+  objects: SearchHit[];
+  total: number;
 }
 
-/** List immediate subdirectories, skipping hidden dirs and node_modules. */
-function listDirs(dir: string): string[] {
+interface PackageMetadata {
+  "dist-tags": Record<string, string>;
+  versions: Record<string, { dependencies?: Record<string, string> }>;
+}
+
+/** Fetch all packages from the npm registry search API with pagination. */
+async function searchAll(
+  registry: string,
+  scope: string,
+): Promise<SearchHit[]> {
+  const hits: SearchHit[] = [];
+  const size = 50;
+  let from = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const url = `${registry}/-/v1/search?text=${encodeURIComponent(scope)}&size=${size}&from=${from}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(
+        `Registry search failed: ${res.status} ${res.statusText}`,
+      );
+    }
+
+    const data = (await res.json()) as SearchResponse;
+    hits.push(...data.objects);
+
+    if (hits.length >= data.total) break;
+    from += size;
+  }
+
+  return hits;
+}
+
+/** Fetch metadata for a single package to get its dependencies. */
+async function fetchPackageMetadata(
+  registry: string,
+  scope: string,
+  name: string,
+): Promise<PackageMetadata | null> {
+  const encoded = `${scope}%2f${name}`;
+  const url = `${registry}/${encoded}`;
   try {
-    return readdirSync(dir).filter((name) => {
-      if (name.startsWith(".") || name === "node_modules") return false;
-      return statSync(resolve(dir, name)).isDirectory();
-    });
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return (await res.json()) as PackageMetadata;
   } catch {
-    return [];
+    return null;
   }
 }
 
-/** Try to collect a skill or package from a directory. Returns true if found. */
-async function tryCollect(
-  dirPath: string,
-  dirName: string,
-  parentDirName: string,
-  entries: CatalogEntry[],
-): Promise<boolean> {
-  const scope = parentDirName;
-  const skillPath = resolve(dirPath, "SKILL.md");
-  if (existsSync(skillPath)) {
-    try {
-      const content = await readFile(skillPath, "utf-8");
-      const { name, description } = parseFrontmatter(content, dirName);
-      entries.push({ type: "skill", name, description, path: dirPath, scope });
-    } catch {
-      entries.push({
-        type: "skill",
-        name: dirName,
-        description: "",
-        path: dirPath,
-        scope,
-      });
-    }
-    return true;
-  }
+/** Classify a search hit as skill or package based on keywords. */
+function classifyEntry(
+  hit: SearchHit,
+  scope: string,
+): CatalogEntry & { type: "skill" | "package" } {
+  const keywords = hit.package.keywords ?? [];
+  const isPackage = keywords.includes("pi-package");
+  const name = hit.package.name;
 
-  const pkgPath = resolve(dirPath, "package.json");
-  if (existsSync(pkgPath)) {
-    try {
-      const content = await readFile(pkgPath, "utf-8");
-      const pkg = JSON.parse(content) as Record<string, unknown>;
-      if ("pi" in pkg) {
-        const pi = pkg.pi as Record<string, unknown>;
-        const skills = Array.isArray(pi.skills) ? pi.skills : [];
-        const skillPaths = skills
-          .filter((s): s is string => typeof s === "string")
-          .map((s) => resolve(dirPath, s.replace(/\/SKILL\.md$/, "")));
-
-        entries.push({
-          type: "package",
-          name: (pkg.name as string) ?? dirName,
-          description: (pkg.description as string) ?? "",
-          path: dirPath,
-          skillPaths,
-        });
-        return true;
-      }
-    } catch {
-      // skip malformed package.json
-    }
-  }
-
-  return false;
+  return {
+    type: isPackage ? "package" : "skill",
+    name,
+    npmRef: `npm:${scope}/${name}`,
+    description: hit.package.description ?? "",
+  };
 }
 
-/** Scan a catalog directory up to maxDepth levels deep. */
-async function scanDirectory(
-  dir: string,
-  maxDepth: number,
+/** Scan an npm registry for all packages in a scope. */
+export async function scanRegistry(
+  registry: string,
+  scope: string,
 ): Promise<CatalogEntry[]> {
-  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  const hits = await searchAll(registry, scope);
+  const entries = hits.map((hit) => classifyEntry(hit, scope));
 
-  const entries: CatalogEntry[] = [];
-  await scanLevel(dir, entries, 0, maxDepth, dir);
-  return entries;
-}
-
-async function scanLevel(
-  dir: string,
-  entries: CatalogEntry[],
-  depth: number,
-  maxDepth: number,
-  catalogRoot: string,
-): Promise<void> {
-  if (depth >= maxDepth) return;
-
-  for (const child of listDirs(dir)) {
-    const childPath = resolve(dir, child);
-
-    // The scope is the parent directory name (basename of dir)
-    // But use empty string if dir is the catalog root
-    const parentDirName = dir === catalogRoot ? "" : basename(dir);
-
-    const found = await tryCollect(childPath, child, parentDirName, entries);
-    if (found) continue;
-
-    await scanLevel(childPath, entries, depth + 1, maxDepth, catalogRoot);
-  }
-}
-
-/** Scan all catalog directories and return deduplicated entries. */
-export async function scanCatalog(
-  dirs: string[],
-  maxDepth: number,
-): Promise<CatalogEntry[]> {
-  const all: CatalogEntry[] = [];
-  const seen = new Set<string>();
-
-  // Expand ~ in paths
-  const expandedDirs = dirs.map((d) =>
-    d.startsWith("~") ? d.replace("~", process.env.HOME ?? "") : d,
+  // Fetch metadata for group packages to resolve constituent skills
+  const packages = entries.filter((e) => e.type === "package");
+  const metadataResults = await Promise.all(
+    packages.map(async (pkg) => {
+      const meta = await fetchPackageMetadata(registry, scope, pkg.name);
+      return { pkg, meta };
+    }),
   );
 
-  for (const dir of expandedDirs) {
-    const entries = await scanDirectory(dir, maxDepth);
-    for (const entry of entries) {
-      const key = `${entry.type}:${entry.name}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        all.push(entry);
-      }
+  for (const { pkg, meta } of metadataResults) {
+    if (!meta) continue;
+    const latest = meta["dist-tags"]?.latest;
+    if (!latest) continue;
+    const version = meta.versions?.[latest];
+    if (!version?.dependencies) continue;
+
+    const skillNames = Object.keys(version.dependencies)
+      .filter((dep) => dep.startsWith(`${scope}/`))
+      .map((dep) => dep.slice(scope.length + 1));
+
+    if (skillNames.length > 0) {
+      pkg.skills = skillNames;
     }
   }
 
-  return all;
+  return entries;
 }
