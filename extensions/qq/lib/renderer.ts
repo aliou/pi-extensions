@@ -1,14 +1,15 @@
 import { ToolCallHeader } from "@aliou/pi-utils-ui";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { getMarkdownTheme, keyHint } from "@mariozechner/pi-coding-agent";
-import type { MarkdownTheme } from "@mariozechner/pi-tui";
 import {
+  Container,
   Markdown,
+  type MarkdownTheme,
   Text,
   truncateToWidth,
   visibleWidth,
 } from "@mariozechner/pi-tui";
-import { QQ_MESSAGE_TYPE, type QqDetails } from "./types";
+import { QQ_MESSAGE_TYPE, type QqDetails, qqPending } from "./types";
 
 function formatTokenCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -74,6 +75,14 @@ export function registerQqRenderer(pi: ExtensionAPI): void {
     QQ_MESSAGE_TYPE,
     (message, options, theme) => {
       const details = message.details;
+
+      // While the message is pending (added during an active turn),
+      // hide it in the session view. The result is shown in a widget
+      // above the editor instead. When the next turn starts, the pending
+      // state is cleared and this renderer displays normally.
+      if (details?.timestamp && qqPending.has(details.timestamp)) {
+        return new Container(); // renders zero lines — invisible
+      }
       const question = details?.question ?? "";
       const answer = details?.answer ?? "";
       const expanded = options.expanded ?? false;

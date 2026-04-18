@@ -1,13 +1,17 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionCommandContext,
+} from "@mariozechner/pi-coding-agent";
 import {
   buildSessionContext,
   convertToLlm,
+  getMarkdownTheme,
   serializeConversation,
 } from "@mariozechner/pi-coding-agent";
-import { Loader, visibleWidth } from "@mariozechner/pi-tui";
+import { Loader, Markdown, Text, visibleWidth } from "@mariozechner/pi-tui";
 import { executeSubagent } from "../../subagents/lib";
 import { QQ_SYSTEM_REMINDER } from "../lib/system-prompt";
-import { QQ_MESSAGE_TYPE, type QqDetails } from "../lib/types";
+import { QQ_MESSAGE_TYPE, type QqDetails, qqPending } from "../lib/types";
 
 const WIDGET_ID = "qq";
 
@@ -33,6 +37,62 @@ function wrapInRoundedBorder(
   });
 
   return [top, ...wrapped, bottom];
+}
+
+/**
+ * Show a result widget above the editor while the agent is still working.
+ * The widget renders the QQ answer with the same bordered style used by
+ * the message renderer, so the visual transition is seamless when the
+ * pending state is cleared and the renderer takes over.
+ */
+function showResultWidget(
+  ctx: ExtensionCommandContext,
+  question: string,
+  answer: string,
+  model: { provider: string; id: string },
+): void {
+  ctx.ui.setWidget(
+    WIDGET_ID,
+    (_tui, theme) => {
+      const borderColor = (t: string) => theme.fg("success", t);
+      const mdTheme = getMarkdownTheme();
+
+      return {
+        render(width: number) {
+          const contentWidth = Math.max(1, width - 4);
+          const content: string[] = [];
+
+          // Header line
+          content.push(
+            theme.fg("customMessageLabel", `\x1b[1mqq:\x1b[22m `) + question,
+          );
+          content.push("");
+
+          // Answer (first paragraph for brevity in widget)
+          const paragraphs = answer.split(/\n\n/).filter((p) => p.trim());
+          const firstParagraph = paragraphs[0] ?? "";
+          try {
+            const md = new Markdown(firstParagraph, 0, 0, mdTheme);
+            content.push(...md.render(contentWidth));
+          } catch {
+            content.push(
+              ...new Text(firstParagraph, 0, 0).render(contentWidth),
+            );
+          }
+
+          // Footer with model info
+          content.push("");
+          content.push(theme.fg("dim", `(${model.provider}/${model.id})`));
+
+          const padded = content.map((line) => ` ${line} `);
+          return wrapInRoundedBorder(padded, width, borderColor);
+        },
+        handleInput() {},
+        invalidate() {},
+      };
+    },
+    { placement: "aboveEditor" },
+  );
 }
 
 export function registerQqCommand(pi: ExtensionAPI): void {
@@ -143,6 +203,8 @@ export function registerQqCommand(pi: ExtensionAPI): void {
           return;
         }
 
+        const timestamp = Date.now();
+
         pi.sendMessage<QqDetails>(
           {
             customType: QQ_MESSAGE_TYPE,
@@ -153,7 +215,7 @@ export function registerQqCommand(pi: ExtensionAPI): void {
               answer: result.content,
               provider: model.provider,
               model: model.id,
-              timestamp: Date.now(),
+              timestamp,
               usage: result.usage,
               runId: result.runId,
               totalDurationMs: result.totalDurationMs,
@@ -161,6 +223,16 @@ export function registerQqCommand(pi: ExtensionAPI): void {
           },
           { triggerTurn: false },
         );
+
+        // If the agent is still working, mark the message as pending so
+        // the renderer hides it. Show the result in a widget above the
+        // editor instead. On the next turn (or agent end), the pending
+        // state is cleared, the widget is removed, and the renderer
+        // displays the message in its proper session position.
+        if (!ctx.isIdle()) {
+          qqPending.add(timestamp);
+          showResultWidget(ctx, question, result.content, model);
+        }
       } catch (err) {
         ctx.ui.setWidget(WIDGET_ID, undefined);
         ctx.ui.notify(
