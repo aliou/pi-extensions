@@ -1,14 +1,12 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { setupCodexFastModeHooks } from "./codex-fast-mode";
-import { setupCodexVerbosityHooks } from "./codex-verbosity";
+import { setupCodexFastModeHooks } from "./codex/fast-mode";
+import { setupCodexVerbosityHooks } from "./codex/verbosity";
 import { setupContextWindowOverrides } from "./context-window-overrides";
-import { setupRateLimitWarningHooks } from "./rate-limit-warning";
-import { setupUsageBarHooks } from "./usage-bar";
+import { setupWarningHooks } from "./warnings";
 
-export function setupUsageHooks(pi: ExtensionAPI): void {
+export function setupHooks(pi: ExtensionAPI): void {
   setupContextWindowOverrides(pi);
-  setupRateLimitWarningHooks(pi);
-  setupUsageBarHooks(pi);
+  setupWarningHooks(pi);
   setupCodexFastModeHooks(pi);
   setupCodexVerbosityHooks(pi);
 }

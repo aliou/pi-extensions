@@ -9,7 +9,7 @@ import {
   AD_PROVIDERS_CODEX_VERBOSITY_READY_EVENT,
   AD_PROVIDERS_CODEX_VERBOSITY_REQUEST_EVENT,
   type AdProvidersCodexVerbosityChangedEvent,
-} from "../../../packages/events";
+} from "../../../../packages/events";
 
 export type CodexVerbosity = "low" | "medium" | "high";
 

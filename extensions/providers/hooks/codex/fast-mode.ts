@@ -8,12 +8,12 @@ import {
   AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT,
-} from "../../../packages/events";
+} from "../../../../packages/events";
 import {
   CODEX_FAST_ENTRY_TYPE,
   DEFAULT_CODEX_FAST_MODE_ENABLED,
   readCodexFastModeState,
-} from "../lib/codex-fast-mode";
+} from "../../lib/codex-fast-mode";
 
 const PALETTE_REGISTER = AD_PALETTE_REGISTER_EVENT;
 const CODEX_FAST_MODE_READY_EVENT = AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT;

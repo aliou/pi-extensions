@@ -6,28 +6,10 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import {
   configLoader,
   PROVIDER_DISPLAY_NAMES,
-  PROVIDER_KEYS,
   type ProvidersConfig,
   type ResolvedConfig,
-  type WidgetMode,
 } from "../config";
-
-const WIDGET_MODE_LABELS: Record<WidgetMode, string> = {
-  always: "always",
-  "warnings-only": "warnings only",
-  never: "never",
-};
-
-function widgetDisplayValue(mode: WidgetMode): string {
-  return WIDGET_MODE_LABELS[mode];
-}
-
-function widgetStorageValue(display: string): WidgetMode {
-  for (const [mode, label] of Object.entries(WIDGET_MODE_LABELS)) {
-    if (label === display) return mode as WidgetMode;
-  }
-  return "warnings-only";
-}
+import { PROVIDER_KEYS } from "../lib/adapters";
 
 export function registerProvidersSettings(pi: ExtensionAPI): void {
   registerSettingsCommand<ProvidersConfig, ResolvedConfig>(pi, {
@@ -41,7 +23,6 @@ export function registerProvidersSettings(pi: ExtensionAPI): void {
     ): SettingsSection[] => {
       const sections: SettingsSection[] = [];
 
-      // General section
       sections.push({
         label: "General",
         items: [
@@ -59,26 +40,15 @@ export function registerProvidersSettings(pi: ExtensionAPI): void {
         ],
       });
 
-      // Per-provider sections
       for (const key of PROVIDER_KEYS) {
         const displayName = PROVIDER_DISPLAY_NAMES[key];
         const providerResolved = resolved.providers[key];
         const providerConfig = tabConfig?.providers?.[key];
-
         if (!providerResolved) continue;
 
         sections.push({
           label: displayName,
           items: [
-            {
-              id: `providers.${key}.widget`,
-              label: "Widget",
-              description: "When to show the usage bar widget",
-              currentValue: widgetDisplayValue(
-                providerConfig?.widget ?? providerResolved.widget,
-              ),
-              values: Object.values(WIDGET_MODE_LABELS),
-            },
             {
               id: `providers.${key}.warnings`,
               label: "Warnings",
@@ -110,7 +80,6 @@ export function registerProvidersSettings(pi: ExtensionAPI): void {
         return updated;
       }
 
-      // Provider settings: "providers.{key}.{field}"
       const match = id.match(/^providers\.(.+)\.(\w+)$/);
       if (match) {
         const providerKey = match[1] as string;
@@ -120,9 +89,7 @@ export function registerProvidersSettings(pi: ExtensionAPI): void {
         if (!updated.providers[providerKey])
           updated.providers[providerKey] = {};
 
-        if (field === "widget") {
-          updated.providers[providerKey].widget = widgetStorageValue(newValue);
-        } else if (field === "warnings") {
+        if (field === "warnings") {
           updated.providers[providerKey].warnings = newValue === "enabled";
         }
 
