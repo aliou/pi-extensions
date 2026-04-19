@@ -5,20 +5,27 @@ import type { ProviderSnapshot } from "../types";
 import type { ProviderAdapter } from "./base";
 import { claudeAdapter } from "./claude";
 import { codexAdapter } from "./codex";
+import { opencodeGoAdapter } from "./opencode-go";
 import { syntheticAdapter } from "./synthetic";
 
-export type ProviderKey = "anthropic" | "openai-codex" | "synthetic";
+export type ProviderKey =
+  | "anthropic"
+  | "openai-codex"
+  | "synthetic"
+  | "opencode-go";
 
 export const PROVIDER_KEYS: ProviderKey[] = [
   "anthropic",
   "openai-codex",
   "synthetic",
+  "opencode-go",
 ];
 
 const adapters: Record<ProviderKey, ProviderAdapter> = {
   anthropic: claudeAdapter,
   "openai-codex": codexAdapter,
   synthetic: syntheticAdapter,
+  "opencode-go": opencodeGoAdapter,
 };
 
 /**
@@ -70,5 +77,6 @@ export function toProviderKey(
   if (n === "anthropic") return "anthropic";
   if (n === "openai-codex") return "openai-codex";
   if (n === "synthetic") return "synthetic";
+  if (n === "opencode-go") return "opencode-go";
   return null;
 }

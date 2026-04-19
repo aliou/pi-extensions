@@ -27,6 +27,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderKey, string> = {
   anthropic: "Claude",
   "openai-codex": "Codex",
   synthetic: "Synthetic",
+  "opencode-go": "OpenCode Go",
 };
 
 // --- Defaults ---
@@ -35,7 +36,12 @@ const DEFAULT_PROVIDER_SETTINGS: ResolvedProviderSettings = {
   warnings: true,
 };
 
-const PROVIDER_KEYS: ProviderKey[] = ["anthropic", "openai-codex", "synthetic"];
+const PROVIDER_KEYS: ProviderKey[] = [
+  "anthropic",
+  "openai-codex",
+  "synthetic",
+  "opencode-go",
+];
 
 const DEFAULT_CONFIG: ResolvedConfig = {
   providers: Object.fromEntries(
