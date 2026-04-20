@@ -19,12 +19,8 @@ import {
   AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT,
-  AD_PROVIDERS_CODEX_VERBOSITY_CHANGED_EVENT,
-  AD_PROVIDERS_CODEX_VERBOSITY_READY_EVENT,
-  AD_PROVIDERS_CODEX_VERBOSITY_REQUEST_EVENT,
   type AdEditorStashChangedEvent,
   type AdProvidersCodexFastModeChangedEvent,
-  type AdProvidersCodexVerbosityChangedEvent,
 } from "../../../packages/events";
 import { GitStatusWatcher } from "../lib/git-status";
 import { buildModelIdLine, buildModelLine } from "../lib/model";
@@ -43,7 +39,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
   let ctx: ExtensionContext | undefined;
   let requestRender: (() => void) | undefined;
   let codexFastModeEnabled = false;
-  let codexVerbosity: "low" | "medium" | "high" | undefined;
   let gitStatusWatcher: GitStatusWatcher | undefined;
 
   pi.events.on(AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT, () => {
@@ -51,21 +46,9 @@ export function createCustomFooter(pi: ExtensionAPI) {
     pi.events.emit(AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT, { ctx });
   });
 
-  pi.events.on(AD_PROVIDERS_CODEX_VERBOSITY_READY_EVENT, () => {
-    pi.events.emit(AD_PROVIDERS_CODEX_VERBOSITY_REQUEST_EVENT, {});
-  });
-
   pi.events.on(AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT, (data: unknown) => {
     const event = (data ?? {}) as Partial<AdProvidersCodexFastModeChangedEvent>;
     codexFastModeEnabled = event.enabled === true;
-    if (!ctx) return;
-    requestRender?.();
-  });
-
-  pi.events.on(AD_PROVIDERS_CODEX_VERBOSITY_CHANGED_EVENT, (data: unknown) => {
-    const event = (data ??
-      {}) as Partial<AdProvidersCodexVerbosityChangedEvent>;
-    codexVerbosity = event.verbosity;
     if (!ctx) return;
     requestRender?.();
   });
@@ -189,7 +172,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
         ctx.model?.id,
         ctx.model?.provider,
         codexFastModeEnabled,
-        codexVerbosity,
       );
       line2 = truncateToWidth(modelIdLine, width, "...");
     } else {
@@ -210,7 +192,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
         !!ctx.model?.reasoning,
         thinkingLevel ?? "off",
         codexFastModeEnabled,
-        codexVerbosity,
       );
       const modelWidth = visibleWidth(modelLine);
 
@@ -254,7 +235,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
     setup: (context: ExtensionContext) => {
       ctx = context;
       pi.events.emit(AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT, { ctx });
-      pi.events.emit(AD_PROVIDERS_CODEX_VERBOSITY_REQUEST_EVENT, {});
       pi.events.emit(AD_EDITOR_STASH_REQUEST_EVENT, {});
 
       ctx.ui.setFooter((tui, theme, footerData) => {

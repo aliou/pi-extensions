@@ -1,6 +1,5 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { setupSessionCommands } from "./commands";
-import { setupPaletteRegistration } from "./hooks/palette";
 import { setupProtectSessionsDirHook } from "./hooks/protect-sessions-dir";
 import {
   setupSessionLinkMarkerRenderer,
@@ -14,5 +13,4 @@ export default async function (pi: ExtensionAPI) {
   setupSessionLinkSourceRenderer(pi);
   setupSessionTools(pi);
   setupSessionCommands(pi);
-  setupPaletteRegistration(pi);
 }

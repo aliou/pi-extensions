@@ -1,25 +1,16 @@
 import type { Theme, ThemeColor } from "@mariozechner/pi-coding-agent";
 
 const FAST_SYMBOL = "\u26A1";
-const VERBOSITY_LOW_SYMBOL = "\u{1F508}";
-const VERBOSITY_MEDIUM_SYMBOL = "\u{1F509}";
-const VERBOSITY_HIGH_SYMBOL = "\u{1F50A}";
 
 function getCodexStatusPrefix(
   provider: string | undefined,
   codexFastModeEnabled = false,
-  codexVerbosity?: "low" | "medium" | "high",
 ): string {
   if (provider !== "openai-codex") return "";
 
-  const parts: string[] = [];
-  if (codexFastModeEnabled) parts.push(FAST_SYMBOL);
-  if (codexVerbosity === "low") parts.push(VERBOSITY_LOW_SYMBOL);
-  if (codexVerbosity === "medium") parts.push(VERBOSITY_MEDIUM_SYMBOL);
-  if (codexVerbosity === "high") parts.push(VERBOSITY_HIGH_SYMBOL);
-
-  return parts.length > 0 ? `${parts.join(" ")} ` : "";
+  return codexFastModeEnabled ? `${FAST_SYMBOL} ` : "";
 }
+
 const THINKING_LEVEL_COLOR_MAP: Record<string, ThemeColor> = {
   off: "thinkingOff",
   minimal: "thinkingMinimal",
@@ -43,13 +34,8 @@ export function buildModelLine(
   hasReasoning: boolean,
   thinkingLevel: string,
   codexFastModeEnabled = false,
-  codexVerbosity?: "low" | "medium" | "high",
 ): string {
-  const prefix = getCodexStatusPrefix(
-    provider,
-    codexFastModeEnabled,
-    codexVerbosity,
-  );
+  const prefix = getCodexStatusPrefix(provider, codexFastModeEnabled);
   const providerName = `${prefix}${provider ?? "unknown"}`;
   const modelLine = `${providerName}/${modelId ?? "no-model"}`;
 
@@ -74,12 +60,7 @@ export function buildModelIdLine(
   modelId: string | undefined,
   provider?: string | undefined,
   codexFastModeEnabled = false,
-  codexVerbosity?: "low" | "medium" | "high",
 ): string {
-  const prefix = getCodexStatusPrefix(
-    provider,
-    codexFastModeEnabled,
-    codexVerbosity,
-  );
+  const prefix = getCodexStatusPrefix(provider, codexFastModeEnabled);
   return theme.fg("thinkingMinimal", `${prefix}${modelId ?? "no-model"}`);
 }

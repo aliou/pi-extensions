@@ -3,8 +3,6 @@ import type {
   ExtensionContext,
 } from "@mariozechner/pi-coding-agent";
 import {
-  AD_PALETTE_READY_EVENT,
-  AD_PALETTE_REGISTER_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT,
@@ -15,7 +13,6 @@ import {
   readCodexFastModeState,
 } from "../../lib/codex-fast-mode";
 
-const PALETTE_REGISTER = AD_PALETTE_REGISTER_EVENT;
 const CODEX_FAST_MODE_READY_EVENT = AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT;
 const CODEX_FAST_MODE_REQUEST_EVENT =
   AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT;
@@ -117,33 +114,12 @@ function setFastMode(
   }
 }
 
-function emitPaletteRegistration(pi: ExtensionAPI): void {
-  pi.events.emit(PALETTE_REGISTER, {
-    id: "providers.codex-fast.toggle",
-    title: "Toggle Codex fast mode",
-    description: "Priority service tier",
-    keywords: ["codex", "fast", "priority", "service tier", "providers"],
-    group: "model",
-    isEnabled: (c: { ctx: ExtensionContext }) => {
-      if (c.ctx.model?.provider !== "openai-codex") {
-        return {
-          enabled: false,
-          reason: "Requires a Codex model",
-        };
-      }
-
-      return true;
-    },
-    execute: async (ctx: ExtensionContext) => {
+export function setupCodexFastModeHooks(pi: ExtensionAPI): void {
+  pi.registerCommand("providers:codex-fast", {
+    description: "Toggle Codex fast mode (priority service tier)",
+    handler: async (_args, ctx) => {
       setFastMode(pi, ctx, !fastModeEnabled);
     },
-  });
-}
-
-export function setupCodexFastModeHooks(pi: ExtensionAPI): void {
-  emitPaletteRegistration(pi);
-  pi.events.on(AD_PALETTE_READY_EVENT, () => {
-    emitPaletteRegistration(pi);
   });
 
   pi.events.on(CODEX_FAST_MODE_REQUEST_EVENT, (data: unknown) => {
@@ -167,7 +143,7 @@ export function setupCodexFastModeHooks(pi: ExtensionAPI): void {
 
     const suffix = fastModeEnabled ? " Fast mode is currently enabled." : "";
     ctx.ui.notify(
-      `Codex fast mode and verbosity are available for this model from the palette.${suffix}`,
+      `Codex fast mode is available for this model.${suffix}`,
       "info",
     );
   });

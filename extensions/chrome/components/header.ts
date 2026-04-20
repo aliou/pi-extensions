@@ -15,7 +15,6 @@ import { Container, Spacer, Text } from "@mariozechner/pi-tui";
 
 // Custom shortcuts defined in harness extensions.
 const SHORTCUTS: { key: string; description: string }[] = [
-  { key: "ctrl+p", description: "command palette" },
   { key: "ctrl+shift+s", description: "stash editor" },
   { key: "ctrl+shift+r", description: "pop stash" },
 ];
