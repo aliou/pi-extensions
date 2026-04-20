@@ -1,5 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { ToolCallHeader } from "@aliou/pi-utils-ui";
 import type {
@@ -24,6 +23,7 @@ import {
   type ReadUrlHandler,
 } from "./read-url/handlers";
 import type { HandlerImage } from "./read-url/handlers/types";
+import { writeTempFilePreview } from "./utils/temp-file-preview";
 
 const ReadUrlParams = Type.Object({
   url: Type.String({
@@ -49,11 +49,14 @@ interface ReadUrlDetails {
   imageCount?: number;
   attachedImageCount?: number;
   skippedImageCount?: number;
+  tempFilePath?: string;
+  totalLines?: number;
 }
 
 type ExecuteResult = AgentToolResult<ReadUrlDetails>;
 
 const COLLAPSED_PREVIEW_LINES = 8;
+const LLM_PREVIEW_LINES = 10;
 
 export async function executeReadUrlRequest(
   input: string,
@@ -81,52 +84,56 @@ export async function executeReadUrlRequest(
   }
 
   const data = await handler.fetchData(parsedUrl, signal);
-  const content: ReadContentBlock[] = [{ type: "text", text: data.markdown }];
+  const markdown = data.markdown;
+
+  // Write full content to a temp file so the agent can read it with offset/limit.
+  // Only the preview goes into the LLM context to avoid blowing it up.
+  const { preview, tempFilePath, totalLines } = await writeTempFilePreview(
+    markdown,
+    { slug: trimmedInput },
+  );
+
+  const content: ReadContentBlock[] = [{ type: "text", text: preview }];
 
   let attachedImageCount = 0;
   let skippedImageCount = 0;
   const images = data.images ?? [];
 
   if (images.length > 0) {
-    const tempDir = await mkdtemp(join(tmpdir(), "read-url-"));
+    const tempDir = join(tempFilePath, "..");
+    for (const [index, image] of images.entries()) {
+      try {
+        const tempPath = await fetchRemoteImageToTempFile(
+          image,
+          tempDir,
+          index,
+          signal,
+          fetchImpl,
+        );
 
-    try {
-      for (const [index, image] of images.entries()) {
-        try {
-          const tempPath = await fetchRemoteImageToTempFile(
-            image,
-            tempDir,
-            index,
-            signal,
-            fetchImpl,
-          );
+        const imageResult = await nativeRead.execute(
+          `read-url-image-${index + 1}`,
+          { path: tempPath },
+          signal,
+          undefined,
+        );
 
-          const imageResult = await nativeRead.execute(
-            `read-url-image-${index + 1}`,
-            { path: tempPath },
-            signal,
-            undefined,
-          );
-
-          if (
-            !imageResult ||
-            typeof imageResult !== "object" ||
-            !("content" in imageResult) ||
-            !Array.isArray(imageResult.content) ||
-            ("isError" in imageResult && imageResult.isError)
-          ) {
-            skippedImageCount += 1;
-            continue;
-          }
-
-          content.push(...(imageResult.content as ReadContentBlock[]));
-          attachedImageCount += 1;
-        } catch {
+        if (
+          !imageResult ||
+          typeof imageResult !== "object" ||
+          !("content" in imageResult) ||
+          !Array.isArray(imageResult.content) ||
+          ("isError" in imageResult && imageResult.isError)
+        ) {
           skippedImageCount += 1;
+          continue;
         }
+
+        content.push(...(imageResult.content as ReadContentBlock[]));
+        attachedImageCount += 1;
+      } catch {
+        skippedImageCount += 1;
       }
-    } finally {
-      await rm(tempDir, { recursive: true, force: true });
     }
   }
 
@@ -143,6 +150,8 @@ export async function executeReadUrlRequest(
       imageCount: images.length,
       attachedImageCount,
       skippedImageCount,
+      tempFilePath,
+      totalLines,
     },
   };
 }
@@ -203,6 +212,8 @@ export function setupReadUrlTool(pi: ExtensionAPI): void {
       const textBlock = result.content.find((c) => c.type === "text");
       const markdownText =
         textBlock?.type === "text" && textBlock.text ? textBlock.text : "";
+      const tempFilePath = result.details?.tempFilePath;
+      const totalLines = result.details?.totalLines;
 
       const container = new Container();
 
@@ -242,6 +253,20 @@ export function setupReadUrlTool(pi: ExtensionAPI): void {
             new Markdown(markdownText, 0, 0, getMarkdownTheme(), {
               color: (text: string) => theme.fg("toolOutput", text),
             }),
+          );
+        }
+
+        // Show temp file path so the user knows where the full content lives.
+        if (tempFilePath && totalLines && totalLines > LLM_PREVIEW_LINES) {
+          container.addChild(
+            new Text(
+              theme.fg(
+                "muted",
+                `Full content (${totalLines} lines) saved to: ${tempFilePath}`,
+              ),
+              0,
+              0,
+            ),
           );
         }
       } else {

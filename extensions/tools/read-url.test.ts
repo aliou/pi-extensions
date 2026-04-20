@@ -1,4 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { readFile, rm } from "node:fs/promises";
+import { dirname } from "node:path";
+import { afterEach, assert, describe, expect, it, vi } from "vitest";
 import { executeReadUrlRequest, guessImageExtension } from "./read-url";
 import type { ReadUrlHandler } from "./read-url/handlers";
 
@@ -19,8 +21,90 @@ function createHandler(markdown = "tweet markdown"): ReadUrlHandler {
   };
 }
 
+// Collect temp file paths for cleanup after each test.
+const tempFilePaths: string[] = [];
+
+afterEach(async () => {
+  for (const tempFilePath of tempFilePaths) {
+    await rm(dirname(tempFilePath), {
+      recursive: true,
+      force: true,
+    });
+  }
+  tempFilePaths.length = 0;
+});
+
 describe("read_url", () => {
-  it("appends native read image content after markdown", async () => {
+  it("writes full content to temp file and returns preview in content", async () => {
+    const lines = Array.from({ length: 20 }, (_, i) => `Line ${i + 1}`);
+    const markdown = lines.join("\n");
+
+    const nativeRead = {
+      execute: vi.fn().mockResolvedValue({
+        content: [],
+      }),
+    };
+
+    const result = await executeReadUrlRequest(
+      "https://x.com/alice/status/1",
+      undefined,
+      [createHandler(markdown)],
+      nativeRead,
+    );
+
+    assert(result.details, "details exist");
+    assert(result.details.tempFilePath, "tempFilePath exists");
+    tempFilePaths.push(result.details.tempFilePath);
+
+    // The content should be a preview, not the full markdown.
+    const textBlock = result.content.find((c) => c.type === "text");
+    assert(textBlock?.type === "text", "textBlock is text type");
+    const text = textBlock.text;
+    // Should contain the first 10 lines.
+    expect(text).toContain("Line 1");
+    expect(text).toContain("Line 10");
+    // Should NOT contain line 11+.
+    expect(text).not.toContain("Line 11");
+    // Should contain the temp file path hint.
+    expect(text).toContain("more lines");
+    expect(result.details.tempFilePath).toBeTruthy();
+    expect(result.details.totalLines).toBe(20);
+
+    // Verify the temp file actually contains the full content.
+    const tempFileContent = await readFile(
+      result.details.tempFilePath,
+      "utf-8",
+    );
+    expect(tempFileContent).toBe(markdown);
+  });
+
+  it("returns full content when under preview threshold", async () => {
+    const markdown = "short content";
+
+    const nativeRead = {
+      execute: vi.fn().mockResolvedValue({
+        content: [],
+      }),
+    };
+
+    const result = await executeReadUrlRequest(
+      "https://x.com/alice/status/1",
+      undefined,
+      [createHandler(markdown)],
+      nativeRead,
+    );
+
+    assert(result.details, "details exist");
+    assert(result.details.tempFilePath, "tempFilePath exists");
+    tempFilePaths.push(result.details.tempFilePath);
+
+    const textBlock = result.content.find((c) => c.type === "text");
+    assert(textBlock?.type === "text", "textBlock is text type");
+    expect(textBlock.text).toBe("short content");
+    expect(result.details.totalLines).toBe(1);
+  });
+
+  it("appends native read image content after preview", async () => {
     const nativeRead = {
       execute: vi
         .fn()
@@ -61,13 +145,24 @@ describe("read_url", () => {
       fetchImpl,
     );
 
-    expect(result.content).toEqual([
-      { type: "text", text: "tweet markdown" },
-      { type: "text", text: "Read image file [1-first.jpg]" },
-      { type: "image", image: "img-1" },
-      { type: "text", text: "Read image file [2-second.png]" },
-      { type: "image", image: "img-2" },
-    ]);
+    assert(result.details, "details exist");
+    assert(result.details.tempFilePath, "tempFilePath exists");
+    tempFilePaths.push(result.details.tempFilePath);
+
+    // First content block is the preview text.
+    const firstBlock = result.content[0];
+    expect(firstBlock?.type).toBe("text");
+    assert(firstBlock?.type === "text", "firstBlock is text type");
+    expect(firstBlock.text).toContain("tweet markdown");
+    // Image content blocks follow.
+    expect(result.content).toContainEqual({
+      type: "text",
+      text: "Read image file [1-first.jpg]",
+    });
+    expect(result.content).toContainEqual({
+      type: "image",
+      image: "img-1",
+    });
     expect(result.details).toMatchObject({
       handler: "twitter",
       imageCount: 2,
@@ -111,11 +206,18 @@ describe("read_url", () => {
       fetchImpl,
     );
 
-    expect(result.content).toEqual([
-      { type: "text", text: "markdown only" },
-      { type: "text", text: "Read image file [second]" },
-      { type: "image", image: "img-2" },
-    ]);
+    assert(result.details, "details exist");
+    assert(result.details.tempFilePath, "tempFilePath exists");
+    tempFilePaths.push(result.details.tempFilePath);
+
+    const firstBlock = result.content[0];
+    expect(firstBlock?.type).toBe("text");
+    assert(firstBlock?.type === "text", "firstBlock is text type");
+    expect(firstBlock.text).toContain("markdown only");
+    expect(result.content).toContainEqual({
+      type: "text",
+      text: "Read image file [second]",
+    });
     expect(result.details).toMatchObject({
       imageCount: 2,
       attachedImageCount: 1,
