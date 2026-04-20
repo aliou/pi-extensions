@@ -3,7 +3,8 @@
     "extensions": [
       "./ask-user/index.ts",
       "./get-current-time/index.ts",
-      "./read-url/index.ts"
+      "./read-url/index.ts",
+      "./look-at/index.ts"
     ]
   }
 }
