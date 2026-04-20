@@ -1,4 +1,4 @@
-import type { AgentTool, ThinkingLevel } from "@mariozechner/pi-agent-core";
+import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
 import type { Model } from "@mariozechner/pi-ai";
 import type { Skill, ToolDefinition } from "@mariozechner/pi-coding-agent";
 
@@ -17,8 +17,8 @@ export interface SubagentConfig {
   /** System prompt for the subagent */
   systemPrompt: string;
 
-  /** Built-in tools (AgentTool[]) - e.g., from createReadOnlyTools() */
-  tools?: AgentTool[];
+  /** Built-in tool-name allowlist - e.g., ["read", "grep"] */
+  tools?: string[];
 
   /** Custom tools (ToolDefinition[]) - e.g., GitHub tools */
   customTools?: ToolDefinition[];

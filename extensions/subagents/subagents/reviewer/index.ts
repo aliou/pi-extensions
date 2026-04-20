@@ -221,8 +221,8 @@ Pass relevant skills (e.g., 'ios-26', 'drizzle-orm') to provide specialized cont
             model,
             systemPrompt: REVIEWER_SYSTEM_PROMPT,
             skills: resolvedSkills,
-            tools,
-            customTools: createReviewerTools(),
+            tools: ["read", "grep", "find", "ls", "bash"],
+            customTools: [...tools, ...createReviewerTools()],
             thinkingLevel: "low",
             logging: {
               enabled: true,

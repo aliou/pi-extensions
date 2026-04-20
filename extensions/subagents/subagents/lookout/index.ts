@@ -206,7 +206,8 @@ Pass relevant skills (e.g., 'ios-26', 'drizzle-orm') to provide specialized cont
             model,
             systemPrompt,
             skills: resolvedSkills,
-            tools: createReadOnlyTools(workingDir), // grep, find, read, ls
+            tools: ["read", "grep", "find", "ls"],
+            customTools: createReadOnlyTools(workingDir),
             thinkingLevel: "off",
             logging: {
               enabled: true,
