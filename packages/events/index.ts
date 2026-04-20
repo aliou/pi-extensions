@@ -77,3 +77,10 @@ export const AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT =
   "ad:editor:border-decoration:changed";
 export const AD_EDITOR_READY_EVENT = "ad:editor:ready";
 export const AD_EDITOR_DRAFT_CHANGED_EVENT = "ad:editor:draft:changed";
+
+export type AdEditorScrollOverflowEvent = {
+  top: number;
+  bottom: number;
+};
+
+export const AD_EDITOR_SCROLL_OVERFLOW_EVENT = "ad:editor:scroll-overflow";

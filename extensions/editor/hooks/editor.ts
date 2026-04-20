@@ -6,6 +6,7 @@ import {
   AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT,
   AD_EDITOR_DRAFT_CHANGED_EVENT,
   AD_EDITOR_READY_EVENT,
+  AD_EDITOR_STASH_CHANGED_EVENT,
   type AdEditorBorderDecorationChangedEvent,
   type BorderBand,
   type BorderSlot,
@@ -17,6 +18,7 @@ import {
   type ResolvedBorderDecorations,
   type SlotState,
 } from "../components/editor";
+import { stashCount } from "../lib/stash";
 
 type SourceState = {
   seq: number;
@@ -24,6 +26,44 @@ type SourceState = {
 };
 
 let activeEditor: ReturnType<typeof createEditorRuntime> | undefined;
+
+const STASH_WIDGET_ID = "editor:stash";
+
+type BorderScroll = {
+  top?: number;
+  bottom?: number;
+};
+
+function updateStashWidget(ctx: ExtensionContext, scroll: BorderScroll): void {
+  const count = stashCount();
+  const hasOverflow = (scroll.top ?? 0) > 0 || (scroll.bottom ?? 0) > 0;
+
+  const text =
+    count > 0
+      ? "ctrl+shift+r to unstash"
+      : hasOverflow
+        ? "ctrl+shift+s to stash"
+        : undefined;
+
+  if (!text) {
+    ctx.ui.setWidget(STASH_WIDGET_ID, undefined);
+    return;
+  }
+
+  ctx.ui.setWidget(
+    STASH_WIDGET_ID,
+    (_tui, theme) => ({
+      render(width: number) {
+        const dimmed = theme.fg("dim", text);
+        const padding = Math.max(0, width - text.length);
+        return [" ".repeat(padding) + dimmed];
+      },
+      handleInput() {},
+      invalidate() {},
+    }),
+    { placement: "aboveEditor" },
+  );
+}
 
 export function createEditorRuntime(pi: ExtensionAPI) {
   let editorRef: BorderEditor | undefined;
@@ -107,6 +147,12 @@ export function createEditorRuntime(pi: ExtensionAPI) {
     editorRef?.requestRenderNow();
   });
 
+  // Re-render editor when stash state changes (e.g. after shortcut).
+  // This triggers onScrollIndicators which calls updateStashWidget.
+  pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, () => {
+    editorRef?.requestRenderNow();
+  });
+
   return {
     setup: (ctx: ExtensionContext) => {
       if (!ctx.hasUI) {
@@ -122,6 +168,7 @@ export function createEditorRuntime(pi: ExtensionAPI) {
         };
         editor.onScrollIndicators = (scroll) => {
           emitScrollWrites(scroll.top, scroll.bottom);
+          updateStashWidget(ctx, scroll);
         };
 
         editorRef = editor;
