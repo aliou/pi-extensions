@@ -1,8 +1,8 @@
 import { readFile, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 import { afterEach, assert, describe, expect, it, vi } from "vitest";
-import { executeReadUrlRequest, guessImageExtension } from "./read-url";
-import type { ReadUrlHandler } from "./read-url/handlers";
+import { executeReadUrlRequest, guessImageExtension } from "./";
+import type { ReadUrlHandler } from "./handlers";
 
 function createHandler(markdown = "tweet markdown"): ReadUrlHandler {
   return {

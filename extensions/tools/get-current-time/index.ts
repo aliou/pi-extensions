@@ -48,7 +48,7 @@ function formatDate(date: Date, format: string): string {
   }
 }
 
-export function setupGetCurrentTimeTool(pi: ExtensionAPI) {
+export default function (pi: ExtensionAPI) {
   pi.registerTool<typeof GetCurrentTimeParams, TimeDetails>({
     name: "get_current_time",
     label: "Get Current Time",

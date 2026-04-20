@@ -12,7 +12,7 @@ import type {
 import { keyHint } from "@mariozechner/pi-coding-agent";
 import { type Component, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
-import { Tree, type TreeNode, type TreeTone } from "../lib/tree";
+import { Tree, type TreeNode, type TreeTone } from "../../lib/tree";
 
 const DEFAULT_LIMIT = 1000;
 const COLLAPSED_RESULT_LIMIT = 40;
@@ -48,7 +48,7 @@ interface HarnessFindDetails extends FindToolDetails {
   paths?: string[];
 }
 
-export function setupFindTool(pi: ExtensionAPI): void {
+export default function (pi: ExtensionAPI): void {
   const wrappedSchema = Type.Object({
     pattern: Type.String({
       description: "The pattern to search for (glob or regex)",

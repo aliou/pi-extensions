@@ -9,7 +9,7 @@ import { createLsTool, createReadTool } from "@mariozechner/pi-coding-agent";
  * If the path is a directory, delegate to the native `ls` tool instead of
  * throwing EISDIR.
  */
-export function setupReadTool(pi: ExtensionAPI): void {
+export default function (pi: ExtensionAPI): void {
   const cwd = process.cwd();
 
   const nativeRead = createReadTool(cwd);

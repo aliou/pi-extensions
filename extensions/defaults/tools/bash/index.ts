@@ -40,7 +40,7 @@ const homedir = getHomedir();
  * if the directory doesn't exist. The cwd parameter is passed to spawn()
  * which fails explicitly if the directory is missing.
  */
-export function setupBashTool(pi: ExtensionAPI): void {
+export default function (pi: ExtensionAPI): void {
   const cwd = process.cwd();
   const nativeBash = createBashTool(cwd);
 

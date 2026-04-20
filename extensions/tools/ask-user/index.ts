@@ -1,13 +1,6 @@
-import type {
-  ExtensionAPI,
-  ToolDefinition,
-} from "@mariozechner/pi-coding-agent";
-import type { AskUserQuestionParams } from "./schema";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { createTool } from "./tool";
-import type { AskUserQuestionDetails } from "./types";
 
-export function createAskUserTool(
-  pi: ExtensionAPI,
-): ToolDefinition<typeof AskUserQuestionParams, AskUserQuestionDetails> {
-  return createTool(pi);
+export default function (pi: ExtensionAPI): void {
+  pi.registerTool(createTool(pi));
 }

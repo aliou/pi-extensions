@@ -1,0 +1,9 @@
+{
+  "pi": {
+    "extensions": [
+      "./ask-user/index.ts",
+      "./get-current-time/index.ts",
+      "./read-url/index.ts"
+    ]
+  }
+}

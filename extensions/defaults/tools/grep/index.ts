@@ -16,7 +16,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import { type Component, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
-import { Tree, type TreeNode, type TreeTone } from "../lib/tree";
+import { Tree, type TreeNode, type TreeTone } from "../../lib/tree";
 
 const DEFAULT_LIMIT = 100;
 const GREP_MAX_LINE_LENGTH = 500;
@@ -64,7 +64,7 @@ interface HarnessGrepDetails extends GrepToolDetails {
   matches?: GrepMatchData[];
 }
 
-export function setupGrepTool(pi: ExtensionAPI): void {
+export default function (pi: ExtensionAPI): void {
   const wrappedSchema = Type.Object({
     pattern: Type.String({
       description: "Search pattern (regex or literal string)",

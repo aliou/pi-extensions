@@ -15,15 +15,15 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Text } from "@mariozechner/pi-tui";
 import { type Static, Type } from "@sinclair/typebox";
+import { writeTempFilePreview } from "../utils/temp-file-preview";
 import {
   createGistHandler,
   createGitHubHandler,
   createMarkdownNewHandler,
   createTwitterHandler,
   type ReadUrlHandler,
-} from "./read-url/handlers";
-import type { HandlerImage } from "./read-url/handlers/types";
-import { writeTempFilePreview } from "./utils/temp-file-preview";
+} from "./handlers";
+import type { HandlerImage } from "./handlers/types";
 
 const ReadUrlParams = Type.Object({
   url: Type.String({
@@ -156,7 +156,7 @@ export async function executeReadUrlRequest(
   };
 }
 
-export function setupReadUrlTool(pi: ExtensionAPI): void {
+export default function (pi: ExtensionAPI): void {
   const handlers: ReadUrlHandler[] = [
     createTwitterHandler(),
     createGitHubHandler(),
