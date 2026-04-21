@@ -7,7 +7,10 @@
  */
 
 import type { AssistantMessage } from "@mariozechner/pi-ai";
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type {
+  CreateAgentSessionOptions,
+  ExtensionContext,
+} from "@mariozechner/pi-coding-agent";
 import {
   createAgentSession,
   DefaultResourceLoader,
@@ -125,15 +128,22 @@ export async function executeSubagent(
   });
   await resourceLoader.reload();
 
-  const { session } = await createAgentSession({
+  // Only pass tools array if explicitly provided
+  // Undefined allows all tools; empty array [] blocks all tools
+  const sessionConfig: CreateAgentSessionOptions = {
     model: config.model,
-    tools: config.tools ?? [],
     customTools: config.customTools ?? [],
     sessionManager: SessionManager.inMemory(),
     thinkingLevel: config.thinkingLevel ?? "low",
     modelRegistry: ctx.modelRegistry,
     resourceLoader,
-  });
+  };
+
+  if (config.tools !== undefined) {
+    sessionConfig.tools = config.tools;
+  }
+
+  const { session } = await createAgentSession(sessionConfig);
 
   let accumulated = "";
   let finalResponse = "";
