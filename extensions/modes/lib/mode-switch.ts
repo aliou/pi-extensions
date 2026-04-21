@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Box, Text } from "@mariozechner/pi-tui";
-import { DEFAULT_MODE, MODES } from "../modes";
+import { DEFAULT_MODE } from "../modes";
 
 export type ModeSwitchDetails = { mode: string; from: string; model?: string };
 
@@ -28,8 +28,8 @@ export function registerModeSwitchRenderer(pi: ExtensionAPI): void {
       const fromRaw = details?.from ?? DEFAULT_MODE.name;
       const toRaw = details?.mode ?? DEFAULT_MODE.name;
 
-      const from = MODES[fromRaw]?.name ?? DEFAULT_MODE.name;
-      const to = MODES[toRaw]?.name ?? DEFAULT_MODE.name;
+      const from = fromRaw ?? DEFAULT_MODE.name;
+      const to = toRaw ?? DEFAULT_MODE.name;
       const model =
         typeof details?.model === "string" ? details.model : undefined;
 

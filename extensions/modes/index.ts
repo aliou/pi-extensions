@@ -5,7 +5,6 @@ import {
   AD_MODES_READY_EVENT,
 } from "../../packages/events";
 import { registerModeControls } from "./commands/mode-command";
-import { configLoader } from "./config";
 import {
   setupContextFilterHook,
   setupSessionSyncHooks,
@@ -19,7 +18,6 @@ import { getCurrentMode } from "./state";
 import { setupSwitchModeTool } from "./tools/switch-mode";
 
 export default async function (pi: ExtensionAPI): Promise<void> {
-  await configLoader.load();
   pi.registerFlag("agent-mode", {
     description: "Starting modes extension mode",
     type: "string",

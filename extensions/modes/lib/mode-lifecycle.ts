@@ -3,49 +3,59 @@ import type {
   ExtensionContext,
 } from "@mariozechner/pi-coding-agent";
 import { AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT } from "../../../packages/events";
-import { DEFAULT_MODE, MODE_ORDER, MODES, resolveToolPolicy } from "../modes";
+import type { ModeSpec } from "../modes";
+import { DEFAULT_MODE, MODE_ORDER, MODES } from "../modes";
 import {
-  clearPreviousModel,
   clearSessionAllowedTools,
   getCurrentMode,
+  getPendingModeState,
   setCurrentMode,
-  setPreviousModel,
+  setPendingModeState,
 } from "../state";
 import { sendModeSwitchMessage } from "./mode-switch";
 
-function computeActiveTools(
-  modeName: string,
-  allToolNames: string[],
-): string[] {
-  const mode = MODES[modeName] ?? DEFAULT_MODE;
-  return allToolNames.filter((toolName) => {
-    const rule = resolveToolPolicy(mode, toolName);
-    return rule.access === "enabled" || rule.access === "confirm";
-  });
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function getToolsForMode(mode: ModeSpec, allToolNames: string[]): string[] {
+  return mode.allowedTools.length === 0 && mode.gatedTools.length === 0
+    ? allToolNames
+    : [...mode.allowedTools, ...mode.gatedTools];
 }
 
-export function getLastModeFromBranch(ctx: ExtensionContext): string | null {
-  const entries = ctx.sessionManager.getBranch() as Array<{
-    type?: string;
-    customType?: string;
-    data?: { mode?: unknown };
-  }>;
+function resolveModelId(
+  mode: ModeSpec | undefined,
+  ctx: ExtensionContext,
+): string | undefined {
+  if (mode?.provider && mode.model) {
+    return ctx.modelRegistry.find(mode.provider, mode.model)?.id ?? mode.model;
+  }
+  return undefined;
+}
 
-  const last = entries
-    .filter(
-      (entry) => entry.type === "custom" && entry.customType === "mode-state",
-    )
-    .at(-1);
+// ---------------------------------------------------------------------------
+// applyMode
+// ---------------------------------------------------------------------------
 
-  const mode = last?.data?.mode;
-  return typeof mode === "string" ? mode : null;
+export interface ApplyModeOptions {
+  /** Don't show mode-switch message. Used for internal restores. */
+  silent?: boolean;
+  /** Force apply even if already in this mode (sets model, thinking, tools). */
+  force?: boolean;
+  /**
+   * Persist mode-state to branch immediately.
+   * true = persist now (agent switches via switch_mode tool).
+   * false/undefined = defer until next turn boundary (user switches via Ctrl+U, /mode).
+   */
+  persist?: boolean;
 }
 
 export async function applyMode(
   pi: ExtensionAPI,
   ctx: ExtensionContext,
   modeName: string,
-  options?: { silent?: boolean },
+  options?: ApplyModeOptions,
 ): Promise<void> {
   const mode = MODES[modeName];
   if (!mode) {
@@ -54,40 +64,36 @@ export async function applyMode(
   }
 
   const previousModeName = getCurrentMode().name;
-  if (previousModeName === modeName) {
-    // Re-apply active tools even when mode is unchanged.
-    // On startup/restore we can already be in `default`, and returning early
-    // without this leaves previously active tools (e.g. custom `find`) enabled.
-    clearSessionAllowedTools();
-    const allToolNames = pi.getAllTools().map((tool) => tool.name);
-    pi.setActiveTools(computeActiveTools(modeName, allToolNames));
+  const sameMode = previousModeName === modeName;
+
+  // Apply tools regardless of whether the mode changed.
+  clearSessionAllowedTools();
+  pi.setActiveTools(
+    getToolsForMode(
+      mode,
+      pi.getAllTools().map((t) => t.name),
+    ),
+  );
+
+  // When already in this mode, only re-apply if forced.
+  if (sameMode && !options?.force) {
     return;
   }
 
-  let targetModelId: string | undefined;
-
-  // Save the current model so we can show it in the switch message.
-  setPreviousModel(ctx.model);
-
-  if (mode.provider && mode.model) {
-    targetModelId =
-      ctx.modelRegistry.find(mode.provider, mode.model)?.id ?? mode.model;
-  } else {
-    targetModelId = ctx.model?.id;
-  }
-
   setCurrentMode(mode);
-  clearSessionAllowedTools();
-
-  const allToolNames = pi.getAllTools().map((tool) => tool.name);
-  pi.setActiveTools(computeActiveTools(modeName, allToolNames));
 
   if (mode.thinkingLevel) {
     pi.setThinkingLevel(mode.thinkingLevel);
   }
 
+  const targetModelId = resolveModelId(mode, ctx);
+
   if (!options?.silent) {
-    pi.appendEntry("mode-state", { mode: modeName });
+    if (options?.persist) {
+      pi.appendEntry("mode-state", { mode: modeName });
+    } else {
+      setPendingModeState(modeName);
+    }
     sendModeSwitchMessage(
       pi,
       { mode: modeName, from: previousModeName, model: targetModelId },
@@ -95,6 +101,7 @@ export async function applyMode(
     );
   }
 
+  // Update border decoration before async model switch.
   pi.events.emit(AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT, {
     source: "modes",
     writes: [
@@ -129,6 +136,40 @@ export async function applyMode(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Pending state flush
+// ---------------------------------------------------------------------------
+
+/** Flush deferred mode-state to the branch. Called at turn boundaries. */
+export function flushPendingModeState(pi: ExtensionAPI): void {
+  const pending = getPendingModeState();
+  if (pending !== null) {
+    setPendingModeState(null);
+    pi.appendEntry("mode-state", { mode: pending });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Branch restore
+// ---------------------------------------------------------------------------
+
+export function getLastModeFromBranch(ctx: ExtensionContext): string | null {
+  const entries = ctx.sessionManager.getBranch() as Array<{
+    type?: string;
+    customType?: string;
+    data?: { mode?: unknown };
+  }>;
+
+  const last = entries
+    .filter(
+      (entry) => entry.type === "custom" && entry.customType === "mode-state",
+    )
+    .at(-1);
+
+  const mode = last?.data?.mode;
+  return typeof mode === "string" ? mode : null;
+}
+
 function isNewSession(
   reason: string | undefined,
   ctx: ExtensionContext,
@@ -138,71 +179,45 @@ function isNewSession(
   return !branch.some((e) => e.type === "message");
 }
 
+// ---------------------------------------------------------------------------
+// Session restore
+// ---------------------------------------------------------------------------
+
 export async function restoreModeForSession(
   pi: ExtensionAPI,
   ctx: ExtensionContext,
-  includeFlag: boolean,
+  honorFlagOverride: boolean,
   reason?: string,
 ): Promise<void> {
-  clearPreviousModel();
-
   const restored = getLastModeFromBranch(ctx);
   const baseMode = restored ?? DEFAULT_MODE.name;
-
   const from = getCurrentMode().name;
 
-  if (isNewSession(reason, ctx) && from === baseMode) {
-    // Brand-new session: force the mode's configured model and thinking level
-    // even if in-memory mode already matches, bypassing the same-mode fast path.
-    const mode = MODES[baseMode];
-    if (mode?.thinkingLevel) {
-      pi.setThinkingLevel(mode.thinkingLevel);
-    }
-    if (mode?.provider && mode.model) {
-      const found = ctx.modelRegistry.find(mode.provider, mode.model);
-      if (found) {
-        await pi.setModel(found);
-      }
-    }
-    // Still apply active tools via normal path.
-    clearSessionAllowedTools();
-    const allToolNames = pi.getAllTools().map((tool) => tool.name);
-    pi.setActiveTools(computeActiveTools(baseMode, allToolNames));
-  } else {
-    await applyMode(pi, ctx, baseMode, { silent: true });
-  }
+  await applyMode(pi, ctx, baseMode, {
+    silent: true,
+    force: isNewSession(reason, ctx),
+  });
 
   if (from !== baseMode && restored) {
     const mode = MODES[baseMode];
-    const targetModelId =
-      mode?.provider && mode.model
-        ? (ctx.modelRegistry.find(mode.provider, mode.model)?.id ?? mode.model)
-        : ctx.model?.id;
-
     sendModeSwitchMessage(
       pi,
-      { mode: baseMode, from, model: targetModelId },
+      { mode: baseMode, from, model: resolveModelId(mode, ctx) },
       `Restored ${baseMode.toUpperCase()} mode.`,
     );
   }
 
-  if (includeFlag) {
+  if (honorFlagOverride) {
     const modeFlag = pi.getFlag("agent-mode");
     if (typeof modeFlag === "string" && modeFlag.trim()) {
       const requested = modeFlag.trim();
       const fromFlag = getCurrentMode().name;
-      await applyMode(pi, ctx, requested, { silent: true });
+      await applyMode(pi, ctx, requested, { silent: true, persist: false });
       if (fromFlag !== requested) {
         const mode = MODES[requested];
-        const targetModelId =
-          mode?.provider && mode.model
-            ? (ctx.modelRegistry.find(mode.provider, mode.model)?.id ??
-              mode.model)
-            : ctx.model?.id;
-
         sendModeSwitchMessage(
           pi,
-          { mode: requested, from: fromFlag, model: targetModelId },
+          { mode: requested, from: fromFlag, model: resolveModelId(mode, ctx) },
           `Flag set ${requested.toUpperCase()} mode.`,
         );
       }

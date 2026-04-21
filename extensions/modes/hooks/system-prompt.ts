@@ -10,15 +10,6 @@ import { getCurrentMode } from "../state";
 /**
  * Extract the "Available tools:" through end of "Guidelines:" sections
  * from pi's base prompt. Returns empty string if markers not found.
- *
- * Pi's default prompt structure above the APPEND_SYSTEM marker:
- *   You are an expert coding assistant...
- *   \nAvailable tools:\n...
- *   \nGuidelines:\n...
- *   \nPi documentation...\n...
- *
- * We extract from "\nAvailable tools:\n" up to "\nPi documentation".
- * If "\nPi documentation" is not found, extract to end of aboveMarker.
  */
 function extractToolsAndGuidelines(aboveMarker: string): string {
   const toolsStart = aboveMarker.indexOf("\nAvailable tools:\n");
@@ -37,11 +28,11 @@ export function setupSystemPromptHook(pi: ExtensionAPI): void {
   pi.on("before_agent_start", async (event, ctx) => {
     const mode = getCurrentMode();
 
-    // If marker not found, skip family replacement -- just append mode instructions.
+    // If marker not found, skip family replacement -- just append mode prompt.
     if (!event.systemPrompt.includes(PROMPT_FAMILY_MARKER)) {
-      if (!mode.instructions) return;
+      if (!mode.systemPrompt) return;
       return {
-        systemPrompt: `${event.systemPrompt}\n\n${mode.instructions}`,
+        systemPrompt: `${event.systemPrompt}\n\n${mode.systemPrompt}`,
       };
     }
 
@@ -73,10 +64,9 @@ export function setupSystemPromptHook(pi: ExtensionAPI): void {
     // Extract tools + guidelines from pi's base prompt
     const toolsAndGuidelines = extractToolsAndGuidelines(aboveMarker);
 
-    // Choose base prompt: mode instructions replace family prompt.
-    // Family prompt is used only when no mode instructions exist.
-    const basePrompt = mode.instructions
-      ? mode.instructions
+    // Mode prompt replaces family prompt. Family prompt is fallback.
+    const basePrompt = mode.systemPrompt
+      ? mode.systemPrompt
       : getPromptForFamily(family);
 
     const parts = [basePrompt];

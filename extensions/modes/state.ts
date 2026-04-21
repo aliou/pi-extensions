@@ -1,16 +1,17 @@
-import type { Api, Model } from "@mariozechner/pi-ai";
-import type { ModeDefinition } from "./modes";
+import type { ModeSpec } from "./modes";
 import { DEFAULT_MODE } from "./modes";
 
-let currentMode: ModeDefinition = DEFAULT_MODE;
-let sessionAllowedTools: Set<string> = new Set();
-let previousModel: Model<Api> | undefined;
+let currentMode: ModeSpec = DEFAULT_MODE;
+const sessionAllowedTools: Set<string> = new Set();
 
-export function getCurrentMode(): ModeDefinition {
+/** Pending mode-state to persist on next turn boundary. */
+let pendingModeState: string | null = null;
+
+export function getCurrentMode(): ModeSpec {
   return currentMode;
 }
 
-export function setCurrentMode(mode: ModeDefinition): void {
+export function setCurrentMode(mode: ModeSpec): void {
   currentMode = mode;
 }
 
@@ -19,26 +20,17 @@ export function getSessionAllowedTools(): Set<string> {
 }
 
 export function clearSessionAllowedTools(): void {
-  sessionAllowedTools = new Set();
+  sessionAllowedTools.clear();
 }
 
-export function getPreviousModel(): Model<Api> | undefined {
-  return previousModel;
+export function addSessionAllowedTool(toolName: string): void {
+  sessionAllowedTools.add(toolName);
 }
 
-export function setPreviousModel(model: Model<Api> | undefined): void {
-  previousModel = model;
+export function getPendingModeState(): string | null {
+  return pendingModeState;
 }
 
-export function clearPreviousModel(): void {
-  previousModel = undefined;
-}
-
-export function resetModeState(): void {
-  clearSessionAllowedTools();
-  clearPreviousModel();
-}
-
-export function addSessionAllowedTool(key: string): void {
-  sessionAllowedTools.add(key);
+export function setPendingModeState(modeName: string | null): void {
+  pendingModeState = modeName;
 }

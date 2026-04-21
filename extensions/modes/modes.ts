@@ -1,19 +1,4 @@
 import type { ModeColor } from "../../packages/events";
-import { getModeToolOverride } from "./config";
-
-export type ToolAccess = "enabled" | "disabled" | "confirm";
-
-export interface ToolPolicyRule {
-  access: ToolAccess;
-  allowSession?: boolean;
-}
-
-export interface ModeToolPolicy {
-  nativeDefault: ToolPolicyRule;
-  extensionDefault: ToolPolicyRule;
-  native: Record<string, ToolPolicyRule>;
-  extension: Record<string, ToolPolicyRule>;
-}
 
 export type ThinkingLevel =
   | "off"
@@ -23,80 +8,28 @@ export type ThinkingLevel =
   | "high"
   | "xhigh";
 
-export interface ModeDefinition {
+export interface ModeSpec {
   name: string;
   label: string;
   labelColor: ModeColor;
-  toolPolicy: ModeToolPolicy;
   provider?: string;
   model?: string;
   thinkingLevel?: ThinkingLevel;
-  instructions?: string;
+  systemPrompt?: string;
+  description?: string;
+  /** Tools enabled without gating. Empty = all tools allowed. */
+  allowedTools: string[];
+  /** Tools enabled but requiring confirmation per call. */
+  gatedTools: string[];
 }
 
-export const BUILTIN_TOOL_NAMES = new Set([
-  "read",
-  "bash",
-  "edit",
-  "write",
-  "grep",
-  "find",
-  "ls",
-]);
-
-function isBuiltinTool(toolName: string): boolean {
-  return BUILTIN_TOOL_NAMES.has(toolName);
-}
-
-function normalizeRule(rule: ToolPolicyRule): ToolPolicyRule {
-  if (rule.access !== "confirm") {
-    return { access: rule.access };
-  }
-
-  return {
-    access: "confirm",
-    allowSession: rule.allowSession ?? true,
-  };
-}
-
-export function resolveToolPolicy(
-  mode: ModeDefinition,
-  toolName: string,
-): ToolPolicyRule {
-  const isBuiltin = isBuiltinTool(toolName);
-  const modeRule = isBuiltin
-    ? mode.toolPolicy.native[toolName]
-    : mode.toolPolicy.extension[toolName];
-
-  const baseRule = normalizeRule(
-    modeRule ??
-      (isBuiltin
-        ? mode.toolPolicy.nativeDefault
-        : mode.toolPolicy.extensionDefault),
-  );
-
-  const override = getModeToolOverride(mode.name);
-  if (override.deny.has(toolName)) {
-    return { access: "disabled" };
-  }
-
-  if (override.allow.has(toolName)) {
-    return { access: "enabled" };
-  }
-
-  return baseRule;
-}
-
-export const MODE_ORDER: string[] = ["balanced", "plan", "implement"];
+export const MODE_ORDER: string[] = ["balanced", "research"];
 
 // ---------------------------------------------------------------------------
-// Mode instructions
-// ---------------------------------------------------------------------------
-// These REPLACE the family prompt when a mode is active. They must be
-// self-contained: identity + behavioral rules + mode-specific constraints.
+// System prompts
 // ---------------------------------------------------------------------------
 
-const BALANCED_INSTRUCTIONS = `You are Pi, an expert coding assistant.
+const BALANCED_PROMPT = `You are Pi, an expert coding assistant.
 
 Be concise. Sacrifice grammar for brevity. Let code speak for itself.
 
@@ -107,121 +40,64 @@ Be concise. Sacrifice grammar for brevity. Let code speak for itself.
 - Work incrementally: small change, verify, continue.
 - Do not add features, refactor code, or make improvements beyond what was asked.`;
 
-const PLAN_INSTRUCTIONS = `You are Pi, an expert coding assistant in PLAN MODE. Analyze, research, and plan. Do not modify files or system state.
+const RESEARCH_PROMPT = `You are Pi, an expert coding assistant in RESEARCH MODE.
 
-- Be concise. Keep visible output short and scannable.
+Analyze, research, and plan. Do not modify files or system state.
+
 - Use read, grep, find, ls for local code exploration.
-- Use scout, lookout, or oracle only when they add clear value.
-- Read relevant code before proposing changes.
-- Prefer direct answers over long recaps. Do not restate obvious context.
-- Keep only findings that affect the plan.
-- Cite file paths for non-obvious claims. Use line refs only when useful.
-- Give the smallest plan that fully covers the work.
-- End with open questions only if there are real blockers or ambiguities.
-
-Output:
-- Short findings summary.
-- Numbered plan.
-- Risks or open questions only if needed.`;
-
-const IMPLEMENT_INSTRUCTIONS = `You are Pi, an expert coding assistant in IMPLEMENT MODE. Execute tasks with minimal explanation.
-
-SPEED FIRST. Do the work. Let the code speak.
-
-- Read code before editing. Understand conventions first.
-- Make the smallest reasonable diff. Do not rewrite whole files.
-- Work incrementally: small change, verify, continue.
-- After changes, verify with build/test/lint commands.
-- Do not add features or improvements beyond what was asked.
-- Do not add error handling for scenarios that cannot happen.
-- Do not create abstractions for one-time operations.
-
-Communication:
-- Ultra concise. 1-3 words for simple questions.
-- For code tasks: do the work, no explanation unless asked.
-- Report verification results (pass/fail counts) when done.`;
-
-// ---------------------------------------------------------------------------
-// Tool policies
-// ---------------------------------------------------------------------------
-
-const ALL_TOOLS_POLICY: ModeToolPolicy = {
-  nativeDefault: { access: "enabled" },
-  extensionDefault: { access: "enabled" },
-  native: {},
-  extension: {
-    switch_mode: { access: "enabled" },
-  },
-};
-
-const PLAN_TOOL_POLICY: ModeToolPolicy = {
-  nativeDefault: { access: "disabled" },
-  extensionDefault: { access: "confirm", allowSession: true },
-  native: {
-    read: { access: "enabled" },
-    ls: { access: "enabled" },
-    find: { access: "enabled" },
-    grep: { access: "enabled" },
-    bash: { access: "confirm", allowSession: false },
-    write: { access: "disabled" },
-    edit: { access: "disabled" },
-  },
-  extension: {
-    switch_mode: { access: "enabled" },
-    get_current_time: { access: "enabled" },
-    read_url: { access: "enabled" },
-    find_sessions: { access: "enabled" },
-    list_sessions: { access: "enabled" },
-    read_session: { access: "enabled" },
-    ask_user: { access: "enabled" },
-    synthetic_web_search: { access: "enabled" },
-    linkup_web_search: { access: "enabled" },
-    linkup_web_answer: { access: "enabled" },
-    linkup_web_fetch: { access: "enabled" },
-    scout: { access: "enabled" },
-    lookout: { access: "enabled" },
-    oracle: { access: "enabled" },
-    reviewer: { access: "enabled" },
-    worker: { access: "disabled" },
-    process: { access: "disabled" },
-  },
-};
+- Use scout, lookout, oracle for deep investigation.
+- Read relevant code before drawing conclusions.
+- Prefer deep exploration and evidence-backed findings.
+- Cite file paths for non-obvious claims.
+- Give the smallest answer that fully covers the question.
+- End with open questions only if there are real blockers or ambiguities.`;
 
 // ---------------------------------------------------------------------------
 // Mode definitions
 // ---------------------------------------------------------------------------
 
-export const MODES: Record<string, ModeDefinition> = {
+export const MODES: Record<string, ModeSpec> = {
   balanced: {
     name: "balanced",
     label: "balanced",
     labelColor: { source: "raw", color: "#777777" },
-    toolPolicy: ALL_TOOLS_POLICY,
-    provider: "synthetic",
-    model: "hf:zai-org/GLM-5.1",
-    thinkingLevel: "medium",
-    instructions: BALANCED_INSTRUCTIONS,
+    description: "All tools, default model",
+    systemPrompt: BALANCED_PROMPT,
+    allowedTools: [],
+    gatedTools: [],
   },
-  plan: {
-    name: "plan",
-    label: "plan",
-    labelColor: { source: "raw", color: "#7a8aa6" },
-    toolPolicy: PLAN_TOOL_POLICY,
-    provider: "openai-codex",
-    model: "gpt-5.4",
+  research: {
+    name: "research",
+    label: "research",
+    labelColor: { source: "raw", color: "#5f8faf" },
+    description: "Read-only + research, high thinking (Claude Opus)",
+    provider: "anthropic",
+    model: "claude-opus-4-6",
     thinkingLevel: "high",
-    instructions: PLAN_INSTRUCTIONS,
-  },
-  implement: {
-    name: "implement",
-    label: "implement",
-    labelColor: { source: "raw", color: "#99ad6a" },
-    toolPolicy: ALL_TOOLS_POLICY,
-    provider: "synthetic",
-    model: "hf:nvidia/Kimi-K2.5-NVFP4",
-    thinkingLevel: "medium",
-    instructions: IMPLEMENT_INSTRUCTIONS,
+    systemPrompt: RESEARCH_PROMPT,
+    allowedTools: [
+      "read",
+      "ls",
+      "find",
+      "grep",
+      "get_current_time",
+      "read_url",
+      "find_sessions",
+      "list_sessions",
+      "read_session",
+      "ask_user",
+      "synthetic_web_search",
+      "linkup_web_search",
+      "linkup_web_answer",
+      "linkup_web_fetch",
+      "scout",
+      "lookout",
+      "oracle",
+      "reviewer",
+      "switch_mode",
+    ],
+    gatedTools: ["bash"],
   },
 };
 
-export const DEFAULT_MODE: ModeDefinition = MODES.balanced as ModeDefinition;
+export const DEFAULT_MODE = MODES.balanced as ModeSpec;

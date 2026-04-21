@@ -1,11 +1,7 @@
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { AD_NOTIFY_DANGEROUS_EVENT } from "../../../packages/events";
 
 import { showModeConfirmDialog } from "../components/mode-confirm";
-import { resolveToolPolicy } from "../modes";
 import {
   addSessionAllowedTool,
   getCurrentMode,
@@ -18,18 +14,6 @@ function getBashCommand(input: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-function formatBlockedReason(
-  modeName: string,
-  toolName: string,
-  reason = "disabled",
-): string {
-  return `Blocked by ${modeName} mode: ${toolName} is ${reason}`;
-}
-
-function formatNoUiReason(modeName: string, toolName: string): string {
-  return `Blocked by ${modeName} mode: ${toolName} requires confirmation (no UI to confirm)`;
-}
-
 function emitDangerousEvent(
   pi: ExtensionAPI,
   description: string,
@@ -37,72 +21,27 @@ function emitDangerousEvent(
   toolName?: string,
   toolCallId?: string,
 ): void {
-  const payload = {
+  pi.events.emit(AD_NOTIFY_DANGEROUS_EVENT, {
     source: "modes:tool-gate",
     command,
     description,
     pattern: "(mode-gate)",
     toolName,
     toolCallId,
-  };
-
-  pi.events.emit(AD_NOTIFY_DANGEROUS_EVENT, payload);
-}
-
-async function confirmToolCall(
-  ctx: ExtensionContext,
-  modeName: string,
-  toolName: string,
-  bashCommand: string | undefined,
-  allowSession: boolean,
-): Promise<"allow" | "allow-session" | "deny"> {
-  if (!ctx.hasUI) return "deny";
-
-  const reasonText =
-    toolName === "bash" && !allowSession
-      ? `Bash calls in ${modeName} mode require explicit approval for each call.`
-      : `The tool ${toolName} requires confirmation in ${modeName} mode.`;
-
-  return showModeConfirmDialog(
-    ctx,
-    modeName,
-    toolName,
-    bashCommand,
-    allowSession,
-    reasonText,
-  );
+  });
 }
 
 export function setupToolGateHook(pi: ExtensionAPI): void {
   pi.on("tool_call", async (event, ctx) => {
     const mode = getCurrentMode();
 
-    const rule = resolveToolPolicy(mode, event.toolName);
-
-    if (rule.access === "disabled") {
-      if (event.toolName === "bash") {
-        emitDangerousEvent(
-          pi,
-          formatBlockedReason(mode.name, event.toolName),
-          getBashCommand(event.input),
-          event.toolName,
-          event.toolCallId,
-        );
-      }
-
-      return {
-        block: true,
-        reason: formatBlockedReason(mode.name, event.toolName),
-      };
-    }
-
-    if (rule.access === "enabled") {
+    // gatedTools and allowedTools are assumed disjoint.
+    if (!mode.gatedTools.includes(event.toolName)) {
       return;
     }
 
-    const allowSession = rule.allowSession ?? true;
     const sessionAllowed = getSessionAllowedTools();
-    if (allowSession && sessionAllowed.has(event.toolName)) {
+    if (sessionAllowed.has(event.toolName)) {
       return;
     }
 
@@ -112,7 +51,7 @@ export function setupToolGateHook(pi: ExtensionAPI): void {
     if (!ctx.hasUI) {
       return {
         block: true,
-        reason: formatNoUiReason(mode.name, event.toolName),
+        reason: `${mode.name} mode: ${event.toolName} requires confirmation (no UI to confirm)`,
       };
     }
 
@@ -124,19 +63,19 @@ export function setupToolGateHook(pi: ExtensionAPI): void {
       event.toolCallId,
     );
 
-    const decision = await confirmToolCall(
+    const decision = await showModeConfirmDialog(
       ctx,
       mode.name,
       event.toolName,
       bashCommand,
-      allowSession,
+      true,
     );
 
     if (decision === "allow") {
       return;
     }
 
-    if (decision === "allow-session" && allowSession) {
+    if (decision === "allow-session") {
       addSessionAllowedTool(event.toolName);
       return;
     }

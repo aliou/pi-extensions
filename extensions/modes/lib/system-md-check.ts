@@ -1,18 +1,24 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { getAgentDir } from "@mariozechner/pi-coding-agent";
 import { PROMPT_FAMILY_MARKER } from "./prompt-families";
+
+async function fileContains(path: string, substring: string): Promise<boolean> {
+  try {
+    const content = await readFile(path, "utf-8");
+    return content.includes(substring);
+  } catch {
+    return false;
+  }
+}
 
 export function setupAppendSystemMdCheck(pi: ExtensionAPI): void {
   pi.on("session_start", async (_event, ctx) => {
     const agentDir = getAgentDir();
     const appendSystemMdPath = join(agentDir, "APPEND_SYSTEM.md");
 
-    if (existsSync(appendSystemMdPath)) {
-      const content = readFileSync(appendSystemMdPath, "utf-8");
-      if (content.includes(PROMPT_FAMILY_MARKER)) return;
-    }
+    if (await fileContains(appendSystemMdPath, PROMPT_FAMILY_MARKER)) return;
 
     ctx.ui.notify(
       "APPEND_SYSTEM.md is missing or invalid. Prompt family switching requires it.",
@@ -27,7 +33,7 @@ export function setupAppendSystemMdCheck(pi: ExtensionAPI): void {
     if (!confirmed) return;
 
     try {
-      writeFileSync(appendSystemMdPath, `${PROMPT_FAMILY_MARKER}\n`, "utf-8");
+      await writeFile(appendSystemMdPath, `${PROMPT_FAMILY_MARKER}\n`, "utf-8");
       ctx.ui.notify(
         "Created APPEND_SYSTEM.md with prompt family marker.",
         "info",

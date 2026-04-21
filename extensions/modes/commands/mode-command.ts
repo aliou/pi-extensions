@@ -4,6 +4,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { Key } from "@mariozechner/pi-tui";
 import { showModeSelector } from "../components/mode-selector";
+import type { ApplyModeOptions } from "../lib/mode-lifecycle";
 import { DEFAULT_MODE, MODE_ORDER, MODES } from "../modes";
 import { getCurrentMode } from "../state";
 
@@ -11,7 +12,7 @@ export type ApplyModeFn = (
   pi: ExtensionAPI,
   ctx: ExtensionContext,
   modeName: string,
-  options?: { silent?: boolean },
+  options?: ApplyModeOptions,
 ) => Promise<void>;
 
 export function registerModeControls(
@@ -19,7 +20,7 @@ export function registerModeControls(
   applyMode: ApplyModeFn,
 ): void {
   pi.registerCommand("mode", {
-    description: "Switch mode (default, research)",
+    description: "Switch mode (balanced, research)",
     handler: async (args, ctx) => {
       const requested = args?.trim();
 
@@ -32,13 +33,13 @@ export function registerModeControls(
           return;
         }
 
-        await applyMode(pi, ctx, requested);
+        await applyMode(pi, ctx, requested, { persist: false });
         return;
       }
 
-      const selected = await showModeSelector(pi, ctx);
+      const selected = await showModeSelector(ctx);
       if (!selected) return;
-      await applyMode(pi, ctx, selected);
+      await applyMode(pi, ctx, selected, { persist: false });
     },
   });
 
@@ -49,7 +50,7 @@ export function registerModeControls(
       const index = MODE_ORDER.indexOf(current);
       const nextIndex = index === -1 ? 0 : (index + 1) % MODE_ORDER.length;
       const nextMode = MODE_ORDER[nextIndex] ?? DEFAULT_MODE.name;
-      await applyMode(pi, ctx, nextMode);
+      await applyMode(pi, ctx, nextMode, { persist: false });
     },
   });
 }

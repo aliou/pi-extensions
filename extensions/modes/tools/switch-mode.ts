@@ -67,6 +67,7 @@ export function setupSwitchModeTool(
     async execute(
       toolCallId,
       params: SwitchModeParamsType,
+      // unused: _signal, _onUpdate
       _signal,
       _onUpdate,
       ctx: ExtensionContext,
@@ -120,7 +121,7 @@ export function setupSwitchModeTool(
         });
       }
 
-      await applyMode(pi, ctx, requested);
+      await applyMode(pi, ctx, requested, { persist: true });
 
       return toResult({
         ok: true,

@@ -1,6 +1,5 @@
 import {
   DynamicBorder,
-  type ExtensionAPI,
   type ExtensionContext,
   getSelectListTheme,
 } from "@mariozechner/pi-coding-agent";
@@ -14,18 +13,7 @@ import {
 import { MODE_ORDER, MODES } from "../modes";
 import { getCurrentMode } from "../state";
 
-const MODE_DESCRIPTIONS: Record<string, string> = {
-  balanced: "All tools, low thinking (Kimi K2.5)",
-  plan: "Read-only + research, high thinking (GPT-5.4)",
-  implement: "All tools, low thinking (Sonnet 4.6)",
-};
-
-function modeDescription(name: string): string {
-  return MODE_DESCRIPTIONS[name] ?? name;
-}
-
 export async function showModeSelector(
-  _pi: ExtensionAPI,
   ctx: ExtensionContext,
 ): Promise<string | null> {
   const current = getCurrentMode().name;
@@ -38,11 +26,14 @@ export async function showModeSelector(
     return null;
   }
 
-  const items: SelectItem[] = MODE_ORDER.map((name) => ({
-    value: name,
-    label: name === current ? `${name} (active)` : name,
-    description: modeDescription(name),
-  }));
+  const items: SelectItem[] = MODE_ORDER.map((name) => {
+    const mode = MODES[name];
+    return {
+      value: name,
+      label: name === current ? `${name} (active)` : name,
+      description: mode?.description ?? name,
+    };
+  });
 
   const selected = await ctx.ui.custom<string | null>(
     (tui, theme, _kb, done) => {
