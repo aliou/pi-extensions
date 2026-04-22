@@ -273,7 +273,7 @@ Pass relevant skills (e.g., 'ios-26', 'drizzle-orm') to provide specialized cont
             model,
             systemPrompt: SCOUT_SYSTEM_PROMPT,
             skills: resolvedSkills,
-            tools: ["read"],
+            tools: [],
             customTools: wrapToolDefinitionsWithTiming(createScoutTools()),
             thinkingLevel: "off",
             logging: {

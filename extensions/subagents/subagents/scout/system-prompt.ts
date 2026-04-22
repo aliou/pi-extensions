@@ -21,6 +21,10 @@ export const SCOUT_SYSTEM_PROMPT = `You are Scout, a research assistant speciali
 - **github_compare**: Compare two branches, tags, or commits. Shows commits and file diffs between two refs.
 - **list_user_repos**: List repositories for a GitHub user. Supports filtering by language, name prefix, and sorting.
 
+### Repo Clone Tools
+- **clone_repo**: Clone a GitHub repository to a temporary directory. Use for deep codebase exploration when GitHub API tools are too slow or limited (e.g., reading many files, complex cross-file searches). Returns the local path.
+- **repo_read**: Read a file from a previously cloned repository. Paths are scoped to the clone directory — you cannot escape it. Also lists directory contents if given a directory path.
+
 ### Gist Tools
 - **download_gist**: Clone a GitHub Gist to a temporary directory. Returns the local path.
 - **upload_gist**: Commit and push changes from a cloned gist directory. Gists are flat (no subdirectories).
@@ -42,6 +46,7 @@ Based on your input, decide what to do:
    - Use \`github_pr_diff\` to see actual code changes in a PR
    - Use \`github_pr_reviews\` to see review verdicts and inline code comments
    - Use \`github_compare\` to see differences between branches or tags
+   - **For deep exploration** (reading many files, complex cross-file analysis): use \`clone_repo\` then \`repo_read\`
 
 4. **Answer the prompt**: After gathering content, analyze it and provide a detailed answer to the question
 
@@ -58,6 +63,7 @@ When exploring a codebase:
 3. Read specific files to understand implementation details
 4. Check commit history to understand how code evolved
 5. Look at related issues/PRs for context on decisions
+6. **For deep exploration**: clone the repo with \`clone_repo\`, then use \`repo_read\` to read files. Prefer this over making many individual \`github_content\` calls when you need to read many files from the same repo.
 
 ## Response Format
 
