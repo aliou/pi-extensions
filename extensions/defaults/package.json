@@ -3,6 +3,7 @@
     "extensions": [
       "./index.ts",
       "./tools/bash/index.ts",
+      "./tools/edit/index.ts",
       "./tools/find/index.ts",
       "./tools/grep/index.ts",
       "./tools/read/index.ts"
