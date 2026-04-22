@@ -6,11 +6,8 @@ import type {
   ToolCallEvent,
 } from "@mariozechner/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AD_NOTIFY_ATTENTION_EVENT } from "../../../packages/events";
-import {
-  _resetForTesting,
-  setupProtectSessionsDirHook,
-} from "./protect-sessions-dir";
+import { AD_NOTIFY_ATTENTION_EVENT } from "../../../../packages/events";
+import protectSessionsDirHook, { _resetForTesting } from "./index";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -119,7 +116,7 @@ describe("protect-sessions-dir", () => {
   beforeEach(() => {
     _resetForTesting();
     mockPi = createMockPi();
-    setupProtectSessionsDirHook(mockPi.pi);
+    protectSessionsDirHook(mockPi.pi);
 
     // Extract the registered tool_call handler.
     const onCalls = mockPi.onFn.mock.calls as Array<

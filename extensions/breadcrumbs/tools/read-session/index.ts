@@ -31,20 +31,20 @@ import { Type } from "@sinclair/typebox";
 import {
   createExecutionTimer,
   wrapToolDefinitionsWithTiming,
-} from "../../../packages/agent-kit";
+} from "../../../../packages/agent-kit";
 import {
   executeSubagent,
   resolveModel,
   type SubagentToolCall,
   shouldFailToolCallForModelIssue,
-} from "../../subagents/lib";
+} from "../../../subagents/lib";
 import {
   createSessionTools,
   loadSession,
   type ParsedSession,
-} from "../lib/session-reader";
-import { getSessionsDir } from "../lib/session-search";
-import type { ReadSessionDetails } from "./read-session-types";
+} from "../../lib/session-reader";
+import { getSessionsDir } from "../../lib/session-search";
+import type { ReadSessionDetails } from "../read-session-types";
 
 const MODEL = "gpt-5.4-mini";
 // const MODEL = "gpt-5.3-codex-spark";
@@ -292,7 +292,7 @@ class ToolCallContentSummary implements Component {
 /**
  * Setup the read_session tool.
  */
-export function setupReadSessionTool(pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
   pi.registerTool<typeof parameters, ReadSessionDetails>({
     name: "read_session",
     label: "Read Session",

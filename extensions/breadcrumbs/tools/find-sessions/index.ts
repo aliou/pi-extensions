@@ -18,7 +18,7 @@ import {
   type SearchOptions,
   type SessionSearchResult,
   searchSessions,
-} from "../lib/session-search";
+} from "../../lib/session-search";
 
 const FindSessionsParams = Type.Object({
   query: Type.String({
@@ -128,7 +128,7 @@ Use find_sessions when the user explicitly asks to find or search for a previous
 /**
  * Setup the find_sessions tool for discovering sessions by keyword.
  */
-export function setupFindSessionsTool(pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
   pi.registerTool<typeof FindSessionsParams, FindSessionsDetails>({
     name: "find_sessions",
     label: "Find Sessions",

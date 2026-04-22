@@ -1,0 +1,15 @@
+{
+  "pi": {
+    "extensions": [
+      "./commands/continue/index.ts",
+      "./commands/session-copy-id/index.ts",
+      "./commands/session-copy-path/index.ts",
+      "./commands/spawn/index.ts",
+      "./hooks/protect-sessions-dir/index.ts",
+      "./hooks/session-link-renderers/index.ts",
+      "./tools/find-sessions/index.ts",
+      "./tools/list-sessions/index.ts",
+      "./tools/read-session/index.ts"
+    ]
+  }
+}

@@ -8,7 +8,7 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { SessionManager } from "@mariozechner/pi-coding-agent";
 
-export function setupContinueCommand(pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
   pi.registerCommand("continue", {
     description:
       "Switch to the most recent session for the current working directory",

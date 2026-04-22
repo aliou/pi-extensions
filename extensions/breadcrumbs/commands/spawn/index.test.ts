@@ -7,12 +7,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createPiTestHarness,
   type PiTestHarness,
-} from "../../../tests/utils/pi-test-harness";
+} from "../../../../tests/utils/pi-test-harness";
 import {
   SESSION_LINK_SOURCE_TYPE,
   type SessionLinkSourceDetails,
-} from "../lib/session-link";
-import { setupSpawnCommand } from "./spawn";
+} from "../../lib/session-link";
+import setupSpawnCommand from "./index";
 
 /**
  * Seed a real in-memory SessionManager with messages and return it.

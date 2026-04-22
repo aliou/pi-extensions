@@ -15,7 +15,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
-import { listSessions, type SessionListResult } from "../lib/session-search";
+import { listSessions, type SessionListResult } from "../../lib/session-search";
 
 const ListSessionsParams = Type.Object({
   cwd: Type.String({
@@ -72,7 +72,7 @@ Use list_sessions to see recent sessions for a specific directory.
 /**
  * Setup the list_sessions tool for browsing sessions by directory.
  */
-export function setupListSessionsTool(pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
   pi.registerTool<typeof ListSessionsParams, ListSessionsDetails>({
     name: "list_sessions",
     label: "List Sessions",

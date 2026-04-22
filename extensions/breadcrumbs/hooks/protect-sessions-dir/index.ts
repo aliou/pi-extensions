@@ -33,7 +33,7 @@ import {
   Text,
   wrapTextWithAnsi,
 } from "@mariozechner/pi-tui";
-import { AD_NOTIFY_ATTENTION_EVENT } from "../../../packages/events";
+import { AD_NOTIFY_ATTENTION_EVENT } from "../../../../packages/events";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -431,7 +431,7 @@ async function showSessionGateDialog(
  * - `allowAll`: all session-dir access allowed for runtime
  * - `approvedSubtrees`: specific paths approved for runtime
  */
-export function setupProtectSessionsDirHook(pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
     const input = event.input as Record<string, unknown>;
     const request = extractSessionTargets(event.toolName, input);

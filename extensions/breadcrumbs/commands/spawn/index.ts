@@ -10,7 +10,7 @@ import {
   messageContentToText,
   writeSessionLinkMarker,
   writeSessionLinkSource,
-} from "../lib/session-link";
+} from "../../lib/session-link";
 
 /**
  * Extract the text of the last assistant message from a branch.
@@ -52,7 +52,7 @@ ${parentLastMessage}`;
 read_session({ sessionId: "${parentSessionId}", goal: "Get the last assistant message with context" })`;
 }
 
-export function setupSpawnCommand(pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
   pi.registerCommand("spawn", {
     description:
       "Create a new session linked to the current one (no context extraction)",
