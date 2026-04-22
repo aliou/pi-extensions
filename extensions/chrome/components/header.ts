@@ -24,6 +24,7 @@ const COMMANDS: { name: string; description: string }[] = [
   { name: "qq", description: "quick question" },
   { name: "spawn", description: "new linked session" },
   { name: "continue", description: "resume recent session" },
+  { name: "label", description: "bookmark current point" },
   { name: "projects:init", description: "init project config" },
   { name: "providers:usage", description: "usage dashboard" },
 ];

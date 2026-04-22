@@ -42,6 +42,7 @@ The subagent has access to session-specific tools (get_session_overview, get_mes
 - `session:copy-id` - Copy the current session ID to clipboard
 - `/spawn [note]` - Create a linked session with parent-session instructions
 - `/continue` - Continue work from a linked parent session
+- `/label <text>` - Label the current session entry for later navigation
 
 ## Session Protection
 
