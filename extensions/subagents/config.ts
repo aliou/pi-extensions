@@ -11,6 +11,7 @@ export const SUPPORTED_PROVIDERS = [
   "openai-codex",
   "mistral",
   "synthetic",
+  "neuralwatt",
 ] as const;
 export type SupportedProvider = (typeof SUPPORTED_PROVIDERS)[number];
 
@@ -116,8 +117,8 @@ const DEFAULT_CONFIG: ResolvedSubagentsConfig = {
     scout: {
       candidates: [
         { provider: "synthetic", model: "hf:zai-org/GLM-4.7-Flash" },
+        { provider: "neuralwatt", model: "glm-5.1-fast" },
         { provider: "openai-codex", model: "gpt-5.4-mini" },
-        { provider: "openai-codex", model: "gpt-5.3-codex-spark" },
       ],
       enabled: true,
       web: DEFAULT_SCOUT_WEB_CONFIG,
@@ -125,6 +126,7 @@ const DEFAULT_CONFIG: ResolvedSubagentsConfig = {
     lookout: {
       candidates: [
         { provider: "synthetic", model: "hf:zai-org/GLM-4.7-Flash" },
+        { provider: "neuralwatt", model: "glm-5.1-fast" },
         { provider: "openai-codex", model: "gpt-5.4-mini" },
         { provider: "openai-codex", model: "gpt-5.3-codex-spark" },
       ],
