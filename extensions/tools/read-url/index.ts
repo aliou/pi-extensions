@@ -15,11 +15,15 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Text } from "@mariozechner/pi-tui";
 import { type Static, Type } from "@sinclair/typebox";
-import { writeTempFilePreview } from "../utils/temp-file-preview";
+import {
+  DEFAULT_PREVIEW_MAX_LINES,
+  writeTempFilePreview,
+} from "../utils/temp-file-preview";
 import {
   createGistHandler,
   createGitHubHandler,
   createMarkdownNewHandler,
+  createTailscaleHandler,
   createTwitterHandler,
   type ReadUrlHandler,
 } from "./handlers";
@@ -56,7 +60,6 @@ interface ReadUrlDetails {
 type ExecuteResult = AgentToolResult<ReadUrlDetails>;
 
 const COLLAPSED_PREVIEW_LINES = 8;
-const LLM_PREVIEW_LINES = 10;
 
 export async function executeReadUrlRequest(
   input: string,
@@ -161,6 +164,7 @@ export default function (pi: ExtensionAPI): void {
     createTwitterHandler(),
     createGitHubHandler(),
     createGistHandler(),
+    createTailscaleHandler(),
     createMarkdownNewHandler(),
   ];
   const nativeRead = createReadTool(process.cwd());
@@ -257,7 +261,11 @@ export default function (pi: ExtensionAPI): void {
         }
 
         // Show temp file path so the user knows where the full content lives.
-        if (tempFilePath && totalLines && totalLines > LLM_PREVIEW_LINES) {
+        if (
+          tempFilePath &&
+          totalLines &&
+          totalLines > DEFAULT_PREVIEW_MAX_LINES
+        ) {
           container.addChild(
             new Text(
               theme.fg(

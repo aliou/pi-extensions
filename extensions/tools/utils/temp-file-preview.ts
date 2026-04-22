@@ -1,6 +1,17 @@
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import {
+  DEFAULT_MAX_BYTES,
+  DEFAULT_MAX_LINES,
+  formatSize,
+  truncateHead,
+} from "@mariozechner/pi-coding-agent";
+
+export {
+  DEFAULT_MAX_BYTES as DEFAULT_PREVIEW_MAX_BYTES,
+  DEFAULT_MAX_LINES as DEFAULT_PREVIEW_MAX_LINES,
+} from "@mariozechner/pi-coding-agent";
 
 export interface TempFilePreviewResult {
   preview: string;
@@ -8,15 +19,24 @@ export interface TempFilePreviewResult {
   totalLines: number;
 }
 
+export interface TempFilePreviewOptions {
+  slug: string;
+  /** Max preview lines (default: 2000). Whichever limit is hit first wins. */
+  maxLines?: number;
+  /** Max preview size in bytes (default: 50KB). Whichever limit is hit first wins. */
+  maxBytes?: number;
+  prefix?: string;
+}
+
 export async function writeTempFilePreview(
   content: string,
-  options: { slug: string; previewLines?: number; prefix?: string },
+  options: TempFilePreviewOptions,
 ): Promise<TempFilePreviewResult> {
-  const previewLines = options.previewLines ?? 10;
   const prefix = options.prefix ?? "pi-tool-";
+  const maxLines = options.maxLines ?? DEFAULT_MAX_LINES;
+  const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
 
-  const lines = content.split("\n");
-  const totalLines = lines.length;
+  const totalLines = content.split("\n").length;
 
   // Write full content to a temp file.
   const tempDir = await mkdtemp(join(tmpdir(), prefix));
@@ -27,12 +47,11 @@ export async function writeTempFilePreview(
   const tempFilePath = join(tempDir, `${safeName}.md`);
   await writeFile(tempFilePath, content, "utf-8");
 
-  // Build the preview: first N lines + file path hint if truncated.
-  const previewContentLines = lines.slice(0, previewLines);
-  const remaining = Math.max(totalLines - previewLines, 0);
-  let preview = previewContentLines.join("\n");
-  if (remaining > 0) {
-    preview += `\n\n... (${remaining} more lines) Full content at: ${tempFilePath}`;
+  const result = truncateHead(content, { maxLines, maxBytes });
+
+  let preview = result.content;
+  if (result.truncated) {
+    preview += `\n\n... (truncated, ${totalLines} total lines, ${formatSize(result.totalBytes)}) Full content at: ${tempFilePath}`;
   }
 
   return {

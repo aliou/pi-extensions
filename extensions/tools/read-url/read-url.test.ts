@@ -1,6 +1,7 @@
 import { readFile, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 import { afterEach, assert, describe, expect, it, vi } from "vitest";
+import { DEFAULT_PREVIEW_MAX_BYTES } from "../utils/temp-file-preview";
 import { executeReadUrlRequest, guessImageExtension } from "./";
 import type { ReadUrlHandler } from "./handlers";
 
@@ -35,8 +36,13 @@ afterEach(async () => {
 });
 
 describe("read_url", () => {
-  it("writes full content to temp file and returns preview in content", async () => {
-    const lines = Array.from({ length: 20 }, (_, i) => `Line ${i + 1}`);
+  it("writes full content to temp file and returns truncated preview in content", async () => {
+    // Create content that exceeds the default byte limit.
+    const linesPerMB = Math.ceil(DEFAULT_PREVIEW_MAX_BYTES / 1000) + 10;
+    const lines = Array.from(
+      { length: linesPerMB },
+      (_, i) => `${"x".repeat(1000)} Line ${i + 1}`,
+    );
     const markdown = lines.join("\n");
 
     const nativeRead = {
@@ -56,19 +62,18 @@ describe("read_url", () => {
     assert(result.details.tempFilePath, "tempFilePath exists");
     tempFilePaths.push(result.details.tempFilePath);
 
-    // The content should be a preview, not the full markdown.
+    // The content should be a truncated preview.
     const textBlock = result.content.find((c) => c.type === "text");
     assert(textBlock?.type === "text", "textBlock is text type");
     const text = textBlock.text;
-    // Should contain the first 10 lines.
+    // Should contain early lines.
     expect(text).toContain("Line 1");
-    expect(text).toContain("Line 10");
-    // Should NOT contain line 11+.
-    expect(text).not.toContain("Line 11");
-    // Should contain the temp file path hint.
-    expect(text).toContain("more lines");
+    // Should NOT contain later lines that don't fit in 50KB.
+    expect(text).not.toContain("Line 55");
+    // Should contain the truncation hint.
+    expect(text).toContain("truncated");
     expect(result.details.tempFilePath).toBeTruthy();
-    expect(result.details.totalLines).toBe(20);
+    expect(result.details.totalLines).toBe(linesPerMB);
 
     // Verify the temp file actually contains the full content.
     const tempFileContent = await readFile(
