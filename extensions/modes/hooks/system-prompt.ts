@@ -28,6 +28,16 @@ export function setupSystemPromptHook(pi: ExtensionAPI): void {
   pi.on("before_agent_start", async (event, ctx) => {
     const mode = getCurrentMode();
 
+    // Not into a cat and mouse game, so just append the mode system prompt to the default
+    // system prompt for ant models. This triggers the filter on ant's side and forces the use
+    // of the extra usage thingy.
+    if (ctx.model?.provider === "anthropic") {
+      if (!mode.systemPrompt) return;
+      return {
+        systemPrompt: `${event.systemPrompt}\n\n${mode.systemPrompt}`,
+      };
+    }
+
     // If marker not found, skip family replacement -- just append mode prompt.
     if (!event.systemPrompt.includes(PROMPT_FAMILY_MARKER)) {
       if (!mode.systemPrompt) return;
