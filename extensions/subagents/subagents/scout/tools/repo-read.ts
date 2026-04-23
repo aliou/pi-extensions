@@ -7,7 +7,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { getCloneDir } from "./clone-repo";
 
 const MAX_FILE_SIZE = 512 * 1024; // 512 KB

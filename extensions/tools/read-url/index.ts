@@ -14,7 +14,7 @@ import {
   keyText,
 } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Text } from "@mariozechner/pi-tui";
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, Type } from "typebox";
 import {
   DEFAULT_PREVIEW_MAX_LINES,
   writeTempFilePreview,

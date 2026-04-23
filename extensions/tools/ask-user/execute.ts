@@ -4,7 +4,7 @@ import {
   CombinedAutocompleteProvider,
   type SelectListTheme,
 } from "@mariozechner/pi-tui";
-import type { Static } from "@sinclair/typebox";
+import type { Static } from "typebox";
 import {
   type ComponentState,
   createAskUserComponent,

@@ -11,7 +11,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { keyHint } from "@mariozechner/pi-coding-agent";
 import { type Component, Spacer, Text } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { Tree, type TreeNode, type TreeTone } from "../../lib/tree";
 
 const DEFAULT_LIMIT = 1000;

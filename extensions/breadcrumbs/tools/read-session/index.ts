@@ -27,7 +27,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import type { Component } from "@mariozechner/pi-tui";
 import { Text, visibleWidth, wrapTextWithAnsi } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import {
   createExecutionTimer,
   wrapToolDefinitionsWithTiming,

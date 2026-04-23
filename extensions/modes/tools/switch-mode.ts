@@ -6,7 +6,7 @@ import type {
   ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, Type } from "typebox";
 import { AD_NOTIFY_ATTENTION_EVENT } from "../../../packages/events";
 
 import type { ApplyModeFn } from "../commands/mode-command";

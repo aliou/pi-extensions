@@ -103,15 +103,16 @@ export default async function (pi: ExtensionAPI) {
             sourceContent,
           );
         },
+        withSession: async (newCtx) => {
+          if (note) {
+            newCtx.ui.setEditorText(note);
+          }
+        },
       });
 
       if (result.cancelled) {
         ctx.ui.notify("Session creation cancelled", "info");
         return;
-      }
-
-      if (note) {
-        ctx.ui.setEditorText(note);
       }
     },
   });

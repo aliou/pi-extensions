@@ -130,12 +130,30 @@ export async function createPiTestHarness(
 
   // Built-in newSession spy: creates a real child SessionManager and runs
   // the setup callback, so tests can inspect entries written to the child.
+  // Also invokes withSession if provided, with a context that mirrors the
+  // replacement-session ctx (fresh ui spies etc).
   let childSm: SessionManager | undefined;
   const newSession = vi.fn(
     async (opts?: Parameters<ExtensionCommandContext["newSession"]>[0]) => {
       childSm = SessionManagerClass.inMemory();
       if (opts?.setup) {
         await opts.setup(childSm);
+      }
+      if (opts?.withSession) {
+        // NOTE: replacementCtx is built from harness defaults, not bound to
+        // childSm. In production, withSession receives a ReplacedSessionContext
+        // tied to the new session. Tests asserting session-specific identity
+        // (e.g. sessionId) should validate against childSm directly instead.
+        const replacementCtx = createCommandContext({
+          cwd,
+          ...harnessContext,
+          ui: { ...harnessContext.ui },
+        });
+        // ReplacedSessionContext extends ExtensionCommandContext but is
+        // not publicly exported, so we cast from the test context.
+        await opts.withSession(
+          replacementCtx as Parameters<NonNullable<typeof opts.withSession>>[0],
+        );
       }
       return { cancelled: false };
     },

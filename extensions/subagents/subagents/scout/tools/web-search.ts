@@ -1,5 +1,5 @@
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { routeSearch, ScoutRoutingError } from "../providers/router";
 import type { ScoutProviderId } from "../providers/types";
 

@@ -17,7 +17,6 @@ import {
   AD_NOTIFY_ATTENTION_EVENT,
   AD_NOTIFY_DANGEROUS_EVENT,
   AD_NOTIFY_DONE_EVENT,
-  AD_TERMINAL_TITLE_ATTENTION_EVENT,
 } from "../../../packages/events";
 
 // Path to the native binary (resolved relative to this file)
@@ -48,13 +47,6 @@ interface DoneEvent {
   loops?: number;
   toolCalls?: number;
 }
-
-type AttentionTitleEvent = {
-  source: string;
-  action: "start" | "end";
-  toolCallId?: string;
-  toolName?: string;
-};
 
 function isAgentRunAborted(event: unknown): boolean {
   if (!event || typeof event !== "object") return false;
@@ -112,10 +104,6 @@ const TOOL_NOTIFICATIONS: ToolNotification[] = [
   },
 ];
 
-function shouldUseTerminalEffects(ctx: ExtensionContext): boolean {
-  return ctx.hasUI && process.stdout.isTTY;
-}
-
 /**
  * Send terminal notification using OSC escape sequences.
  * OSC 9: Ghostty, ConEmu
@@ -131,99 +119,59 @@ function sendSystemNotification(message: string): void {
  * Play notification sound (macOS only).
  * Uses the play-alert-sound binary which respects system alert volume.
  */
-async function playSound(
-  pi: ExtensionAPI,
-  ctx: ExtensionContext,
-  soundPath: string,
-): Promise<void> {
+async function playSound(pi: ExtensionAPI, soundPath: string): Promise<void> {
   if (process.platform !== "darwin") return;
-  if (!existsSync(PLAY_ALERT_SOUND_BINARY)) {
-    ctx.ui.notify(
-      `play-alert-sound binary not found at ${PLAY_ALERT_SOUND_BINARY}. Run scripts/build-native-tools.sh`,
-      "warning",
-    );
-    return;
-  }
+  if (!existsSync(PLAY_ALERT_SOUND_BINARY)) return;
 
   try {
-    const result = await pi.exec(PLAY_ALERT_SOUND_BINARY, [soundPath]);
-    if (result.code !== 0) {
-      ctx.ui.notify(
-        `play-alert-sound exited with code ${result.code}: ${result.stderr?.trim() || "unknown error"}`,
-        "error",
-      );
-    }
-  } catch (err) {
-    ctx.ui.notify(`play-alert-sound failed: ${err}`, "error");
+    await pi.exec(PLAY_ALERT_SOUND_BINARY, [soundPath]);
+  } catch {
+    // Sound playback failed — not worth alerting the user over.
   }
+}
+
+function shouldUseTerminalEffects(): boolean {
+  return process.stdout.isTTY;
 }
 
 async function notify(
   pi: ExtensionAPI,
-  ctx: ExtensionContext,
   message: string,
   sound?: string,
 ): Promise<void> {
-  if (!shouldUseTerminalEffects(ctx)) return;
+  if (!shouldUseTerminalEffects()) return;
   sendSystemNotification(message);
-  if (sound) await playSound(pi, ctx, sound);
-}
-
-function emitAttentionTitleEvent(
-  pi: ExtensionAPI,
-  action: "start" | "end",
-  toolCallId?: string,
-  toolName?: string,
-): void {
-  const payload: AttentionTitleEvent = {
-    source: "chrome:notification",
-    action,
-  };
-  if (toolCallId) payload.toolCallId = toolCallId;
-  if (toolName) payload.toolName = toolName;
-  pi.events.emit(AD_TERMINAL_TITLE_ATTENTION_EVENT, payload);
+  if (sound) await playSound(pi, sound);
 }
 
 async function handleDangerousLikeEvent(
   pi: ExtensionAPI,
-  lastCtx: ExtensionContext | undefined,
   data: unknown,
 ): Promise<void> {
-  if (!lastCtx) return;
   const event = data as DangerousEvent;
   const message = `Dangerous command detected: ${event.description}`;
-  emitAttentionTitleEvent(pi, "start", event.toolCallId, event.toolName);
-  await notify(pi, lastCtx, message, ATTENTION_SOUND);
+  await notify(pi, message, ATTENTION_SOUND);
 }
 
 async function handleAttentionEvent(
   pi: ExtensionAPI,
-  lastCtx: ExtensionContext | undefined,
   data: unknown,
 ): Promise<void> {
-  if (!lastCtx) return;
   const event = data as AttentionEvent;
   const message = event.description ?? event.reason ?? "Waiting for user input";
-  emitAttentionTitleEvent(pi, "start", event.toolCallId, event.toolName);
-  await notify(pi, lastCtx, message, ATTENTION_SOUND);
+  await notify(pi, message, ATTENTION_SOUND);
 }
 
-async function handleDoneEvent(
-  pi: ExtensionAPI,
-  lastCtx: ExtensionContext | undefined,
-  data: unknown,
-): Promise<void> {
-  if (!lastCtx) return;
+async function handleDoneEvent(pi: ExtensionAPI, data: unknown): Promise<void> {
   const event = data as DoneEvent;
   const message = event.summary ?? "done";
-  await notify(pi, lastCtx, message, DEFAULT_SOUND);
+  await notify(pi, message, DEFAULT_SOUND);
 }
 
 export function setupNotificationHook(pi: ExtensionAPI) {
   let loopCount = 0;
   let toolCallCount = 0;
   let hadError = false;
-  let lastCtx: ExtensionContext | undefined;
 
   const startNotifications = TOOL_NOTIFICATIONS.filter(
     (n): n is ToolStartNotification => n.trigger === "start",
@@ -232,12 +180,20 @@ export function setupNotificationHook(pi: ExtensionAPI) {
     (n): n is ToolEndNotification => n.trigger === "end",
   );
 
-  pi.on("session_start", async (_event, ctx) => {
-    lastCtx = ctx;
+  pi.on("session_start", async (event, ctx) => {
+    if (
+      event.reason === "startup" &&
+      process.platform === "darwin" &&
+      !existsSync(PLAY_ALERT_SOUND_BINARY)
+    ) {
+      ctx.ui.notify(
+        `play-alert-sound binary not found at ${PLAY_ALERT_SOUND_BINARY}. Run scripts/build-native-tools.sh`,
+        "warning",
+      );
+    }
   });
 
   pi.on("tool_call", async (event, ctx) => {
-    lastCtx = ctx;
     toolCallCount++;
 
     const notification = startNotifications.find(
@@ -246,15 +202,7 @@ export function setupNotificationHook(pi: ExtensionAPI) {
     if (notification) {
       const message = notification.handler(event, ctx);
       if (message) {
-        if (notification.sound === ATTENTION_SOUND) {
-          emitAttentionTitleEvent(
-            pi,
-            "start",
-            event.toolCallId,
-            event.toolName,
-          );
-        }
-        await notify(pi, ctx, message, notification.sound);
+        await notify(pi, message, notification.sound);
       }
     }
 
@@ -262,18 +210,10 @@ export function setupNotificationHook(pi: ExtensionAPI) {
   });
 
   pi.on("turn_end", async (event, ctx) => {
-    lastCtx = ctx;
     loopCount++;
 
     for (const result of event.toolResults) {
       if (result.isError) hadError = true;
-
-      const startNotification = startNotifications.find(
-        (n) => n.toolName === result.toolName,
-      );
-      if (startNotification?.sound === ATTENTION_SOUND) {
-        emitAttentionTitleEvent(pi, "end", result.toolCallId, result.toolName);
-      }
 
       const notification = endNotifications.find(
         (n) => n.toolName === result.toolName,
@@ -281,14 +221,13 @@ export function setupNotificationHook(pi: ExtensionAPI) {
       if (notification) {
         const message = notification.handler(result, ctx);
         if (message) {
-          await notify(pi, ctx, message, notification.sound);
+          await notify(pi, message, notification.sound);
         }
       }
     }
   });
 
-  pi.on("agent_end", async (event, ctx) => {
-    lastCtx = ctx;
+  pi.on("agent_end", async (event) => {
     const wasRunning = loopCount > 0;
     const wasAborted = isAgentRunAborted(event);
 
@@ -311,14 +250,14 @@ export function setupNotificationHook(pi: ExtensionAPI) {
   });
 
   pi.events.on(AD_NOTIFY_DANGEROUS_EVENT, (data: unknown) => {
-    void handleDangerousLikeEvent(pi, lastCtx, data);
+    void handleDangerousLikeEvent(pi, data);
   });
 
   pi.events.on(AD_NOTIFY_ATTENTION_EVENT, (data: unknown) => {
-    void handleAttentionEvent(pi, lastCtx, data);
+    void handleAttentionEvent(pi, data);
   });
 
   pi.events.on(AD_NOTIFY_DONE_EVENT, (data: unknown) => {
-    void handleDoneEvent(pi, lastCtx, data);
+    void handleDoneEvent(pi, data);
   });
 }

@@ -4,7 +4,7 @@
 
 import { spawn } from "node:child_process";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 const DEFAULT_MAX_RESULTS = 10;
 const MAX_SNIPPET_LENGTH = 160;

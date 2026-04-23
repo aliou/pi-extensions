@@ -15,7 +15,7 @@ import {
   truncateToVisualLines,
 } from "@mariozechner/pi-coding-agent";
 import { Box, Text, truncateToWidth } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 /** Lines to show when collapsed. Matches the native bash tool. */
 const BASH_PREVIEW_LINES = 5;

@@ -26,7 +26,7 @@ import type {
   ToolDefinition,
   ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import {
   createExecutionTimer,
   wrapToolDefinitionsWithTiming,

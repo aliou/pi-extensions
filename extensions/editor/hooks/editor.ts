@@ -167,6 +167,10 @@ export function createEditorRuntime(pi: ExtensionAPI) {
           pi.events.emit(AD_EDITOR_DRAFT_CHANGED_EVENT, { text });
         };
         editor.onScrollIndicators = (scroll) => {
+          // Only act if this editor is still the active instance.
+          // After session_shutdown, cleanup() nulls editorRef — callbacks
+          // from the old TUI component must become no-ops.
+          if (editorRef !== editor) return;
           emitScrollWrites(scroll.top, scroll.bottom);
           updateStashWidget(ctx, scroll);
         };
@@ -195,6 +199,7 @@ export function setupEditorHook(pi: ExtensionAPI) {
   activeEditor = runtime;
 
   pi.on("session_start", async (_event, ctx) => {
+    _event.reason;
     runtime.setup(ctx);
   });
 

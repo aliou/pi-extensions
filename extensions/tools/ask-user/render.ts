@@ -5,7 +5,7 @@ import type {
   ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
-import type { Static } from "@sinclair/typebox";
+import type { Static } from "typebox";
 import type { AskUserQuestionParams } from "./schema";
 import type { Answer, AskUserQuestionDetails, Question } from "./types";
 

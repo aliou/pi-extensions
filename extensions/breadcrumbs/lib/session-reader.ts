@@ -22,7 +22,7 @@ import type {
   ToolDefinition,
 } from "@mariozechner/pi-coding-agent";
 import { parseSessionEntries as parseSessionEntriesImpl } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 // Re-export types for backward compatibility
 export type {

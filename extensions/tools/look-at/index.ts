@@ -27,7 +27,7 @@ import {
   SessionManager,
   SettingsManager,
 } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -118,8 +118,6 @@ const LookAtParams = Type.Object({
     }),
   ),
 });
-
-type LookAtParamsType = (typeof LookAtParams)["_static"];
 
 interface LookAtDetails {
   path: string;
@@ -294,7 +292,7 @@ Always provide a clear objective describing what you want to learn from the imag
 
     async execute(
       _toolCallId: string,
-      params: LookAtParamsType,
+      params,
       signal: AbortSignal | undefined,
       _onUpdate: unknown,
       ctx: ExtensionContext,

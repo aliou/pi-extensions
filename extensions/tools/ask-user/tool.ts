@@ -3,7 +3,7 @@ import type {
   ExtensionContext,
   ToolDefinition,
 } from "@mariozechner/pi-coding-agent";
-import type { Static } from "@sinclair/typebox";
+import type { Static } from "typebox";
 import { executeAskUserQuestion } from "./execute";
 import { renderCall, renderResult } from "./render";
 import { AskUserQuestionParams } from "./schema";

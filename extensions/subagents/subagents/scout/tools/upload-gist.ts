@@ -5,7 +5,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { runGh } from "../../../lib/gh";
 import { extractGistId } from "./download-gist";
 

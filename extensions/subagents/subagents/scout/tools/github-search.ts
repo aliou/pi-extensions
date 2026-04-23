@@ -3,7 +3,7 @@
  */
 
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { createGitHubClient } from "../../../lib/clients";
 
 const parameters = Type.Object({

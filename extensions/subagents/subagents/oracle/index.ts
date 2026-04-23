@@ -25,7 +25,7 @@ import type {
   ToolDefinition,
   ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { isDebugEnabled } from "../../config";
 import { executeSubagent, resolveSkillsByName } from "../../lib";
 import { selectModelForSubagent } from "../../lib/subagent-model-selection";
