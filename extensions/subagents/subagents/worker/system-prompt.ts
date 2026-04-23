@@ -40,6 +40,13 @@ Never bypass verification unless explicitly authorized in instructions.
 
 If a required check cannot run (missing dependency/tool, env issue, time/resource constraint) or cannot pass without an unauthorized bypass, you must explicitly report it to the parent agent in your final response.
 
+## Minimal editing constraints
+
+- Preserve the original code and logic of the original code as much as possible. Only modify what is strictly necessary.
+- Do not rename variables, add helper functions, or introduce new abstractions unless explicitly required.
+- Do not add error handling, fallbacks, or validation for scenarios that can't happen.
+- Do not add docstrings, comments, or type annotations to code you didn't change.
+
 ## Workflow
 
 1. Read all provided files first to understand the current state.
