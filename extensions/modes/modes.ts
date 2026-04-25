@@ -1,12 +1,5 @@
+import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
 import type { ModeColor } from "../../packages/events";
-
-export type ThinkingLevel =
-  | "off"
-  | "minimal"
-  | "low"
-  | "medium"
-  | "high"
-  | "xhigh";
 
 export interface ModeSpec {
   name: string;
@@ -73,7 +66,7 @@ export const MODES: Record<string, ModeSpec> = {
     description: "Read-only + research, high thinking (Claude Opus)",
     provider: "anthropic",
     model: "claude-opus-4-6",
-    thinkingLevel: "high",
+    thinkingLevel: "medium",
     systemPrompt: RESEARCH_PROMPT,
     allowedTools: [
       "read",
