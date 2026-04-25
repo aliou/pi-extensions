@@ -41,11 +41,11 @@ export function buildModelLine(
 
   if (hasReasoning && thinkingLevel !== "off") {
     const formattedLevel = thinkingLevel.slice(0, 3); // min, med, max
-    const modelPart = `${providerName}/${modelId} `;
+    const modelPart = `${providerName}/${modelId}:`;
     const thinkingColorToken = thinkingLevelToColorToken(thinkingLevel);
     return (
       theme.fg("thinkingMinimal", modelPart) +
-      theme.fg(thinkingColorToken, `(${formattedLevel})`)
+      theme.fg(thinkingColorToken, formattedLevel)
     );
   }
 
