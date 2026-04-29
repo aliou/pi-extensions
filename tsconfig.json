@@ -14,5 +14,12 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true
   },
-  "include": ["extensions/**/*.ts", "packages/**/*.ts", "tests/**/*.ts"]
+  "include": ["extensions/**/*.ts", "packages/**/*.ts", "tests/**/*.ts"],
+  "exclude": [
+    "./extensions/subagents/**/*.ts",
+    "./extensions/qq/**/*.ts",
+    "./extensions/tools/look-at/**/*.ts",
+    "./extensions/breadcrumbs/tools/read-session/**/*.ts",
+    "./extensions/chrome/**/*.ts"
+  ]
 }
