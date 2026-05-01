@@ -41,10 +41,11 @@
     "@mariozechner/pi-ai": "0.69.0",
     "@mariozechner/pi-coding-agent": "0.69.0",
     "@mariozechner/pi-tui": "0.69.0",
-    "typebox": "*",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260501.1",
     "tsx": "^4.20.5",
+    "typebox": "*",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
   },
