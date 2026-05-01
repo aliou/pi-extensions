@@ -1,0 +1,22 @@
+import type { SubagentModel } from "../../../packages/agent-kit/models";
+
+export const MODEL_CANDIDATES: SubagentModel[] = [
+  {
+    provider: "synthetic",
+    model: "hf:zai-org/GLM-4.7-Flash",
+    thinking: "off",
+    weight: 1,
+  },
+  {
+    provider: "neuralwatt",
+    model: "glm-5.1-fast",
+    thinking: "off",
+    weight: 1,
+  },
+  {
+    provider: "openai-codex",
+    model: "gpt-5.4-mini",
+    thinking: "off",
+    weight: 1,
+  },
+];
