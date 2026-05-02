@@ -22,7 +22,6 @@
     "tools/**/*.ts"
   ],
   "exclude": [
-    "./extensions/qq/**/*.ts",
     "./extensions/tools/look-at/**/*.ts",
     "./extensions/breadcrumbs/tools/read-session/**/*.ts",
     "./extensions/chrome/**/*.ts"
