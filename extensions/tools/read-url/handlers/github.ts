@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { basename, extname } from "node:path";
+import { encodePathSegments } from "@harness/utils/path";
 import type { HandlerData, ReadUrlHandler } from "./types";
 
 interface GitHubRepoResponse {
@@ -269,7 +270,7 @@ async function fetchGitHubBlobMarkdown(
     throw new Error(`Invalid GitHub code URL: ${url.toString()}`);
   }
 
-  const encodedPath = encodePath(info.path);
+  const encodedPath = encodePathSegments(info.path);
   const content = await ghApi<GitHubContentResponse>(
     `/repos/${info.owner}/${info.repo}/contents/${encodedPath}?ref=${encodeURIComponent(info.ref)}`,
     signal,
@@ -315,7 +316,7 @@ async function fetchGitHubTreeMarkdown(
   }
 
   const baseEndpoint = info.path
-    ? `/repos/${info.owner}/${info.repo}/contents/${encodePath(info.path)}?ref=${encodeURIComponent(info.ref)}`
+    ? `/repos/${info.owner}/${info.repo}/contents/${encodePathSegments(info.path)}?ref=${encodeURIComponent(info.ref)}`
     : `/repos/${info.owner}/${info.repo}/contents?ref=${encodeURIComponent(info.ref)}`;
 
   const items = await ghApi<GitHubDirectoryItem[]>(baseEndpoint, signal);
@@ -717,13 +718,6 @@ function decodeBase64Utf8(value: string | undefined): string {
 
 function normalizeHost(hostname: string): string {
   return hostname.toLowerCase().replace(/^www\./, "");
-}
-
-function encodePath(path: string): string {
-  return path
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
 }
 
 function stripLeadingSlash(value: string): string {

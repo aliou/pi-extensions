@@ -1,3 +1,4 @@
+import { encodePathSegments } from "@harness/utils/path";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 import { Type } from "typebox";
 import type { GitHubClient } from "../lib/github-client";
@@ -55,7 +56,7 @@ Returned file contents include line numbers. Directory listings use a trailing "
     async execute(_id, params, signal) {
       const repository = normalizeRepository(params.repository);
       const path = params.path.replace(/^\//, "");
-      const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+      const encodedPath = encodePathSegments(path);
       const json = await client.api(
         `repos/${repository}/contents/${encodedPath}`,
         cwd,

@@ -1,3 +1,4 @@
+import { encodePathSegments } from "@harness/utils/path";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 import { Type } from "typebox";
 import {
@@ -46,7 +47,7 @@ export function createListDirectoryGitHubTool(
     async execute(_id, params, signal) {
       const repository = normalizeRepository(params.repository);
       const path = params.path === "." ? "" : params.path.replace(/^\//, "");
-      const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+      const encodedPath = encodePathSegments(path);
       const data = parseJson<Entry[] | FileMetadata>(
         await client.api(`repos/${repository}/contents/${encodedPath}`, cwd, {
           signal,

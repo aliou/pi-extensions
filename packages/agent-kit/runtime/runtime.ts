@@ -1,3 +1,5 @@
+import { isBlank } from "@harness/utils";
+import type { Optional } from "@harness/utils/types";
 import type {
   AgentSession,
   AgentSessionEvent,
@@ -7,8 +9,6 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
 import type { SubagentConfig } from "../types";
-import { isBlank } from "../utils";
-import type { Optional } from "../utils/types";
 import { appendSubagentSessionFooter, textContent } from "./content";
 import { SubagentRuntimeState } from "./runtime-state";
 import { formatSubagentStatus } from "./status";

@@ -1,5 +1,5 @@
+import { formatCurrency, formatTimeRemaining } from "@harness/utils/formatters";
 import { assessRisk, getPacePercent, getProjectedPercent } from "./engine";
-import { formatCurrency, formatTimeRemaining } from "./formatters";
 import type {
   FixedWindowLimit,
   LimitViewModel,

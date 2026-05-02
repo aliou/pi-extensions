@@ -75,10 +75,8 @@ describe("nil utilities", () => {
       const value: string | null | undefined = "hello";
 
       if (isNil(value)) {
-        // TypeScript should know value is null | undefined here
         expect(value).toBeNull();
       } else {
-        // TypeScript should know value is string here
         expect(typeof value).toBe("string");
       }
     });
@@ -87,10 +85,8 @@ describe("nil utilities", () => {
       const value: string | null | undefined = "hello";
 
       if (isNotNil(value)) {
-        // TypeScript should know value is string here
         expect(typeof value).toBe("string");
       } else {
-        // TypeScript should know value is null | undefined here
         expect(value).toBeNull();
       }
     });

@@ -1,6 +1,6 @@
+import type { Maybe } from "@harness/utils";
 import type { Usage } from "@mariozechner/pi-ai";
 import type { SubagentModel } from "../models";
-import type { Maybe } from "../utils";
 
 export type SubagentToolCallStatus = "running" | "success" | "error";
 

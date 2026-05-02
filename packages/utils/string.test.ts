@@ -107,7 +107,6 @@ describe("string utilities", () => {
       const value: string | null | undefined = "";
 
       if (isBlank(value)) {
-        // TypeScript should know value is '' | null | undefined here
         expect(value === "" || value === null || value === undefined).toBe(
           true,
         );
@@ -118,7 +117,6 @@ describe("string utilities", () => {
       const value: string | null | undefined = "hello";
 
       if (isPresent(value)) {
-        // TypeScript should know value is a non-empty string here
         expect(value.length).toBeGreaterThan(0);
       }
     });

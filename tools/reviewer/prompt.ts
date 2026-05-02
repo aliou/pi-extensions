@@ -1,5 +1,5 @@
+import { isNotNil } from "@harness/utils";
 import type { SubagentPromptResult } from "../../packages/agent-kit/types";
-import { isNotNil } from "../../packages/agent-kit/utils";
 import type { ReviewerParamsType } from "./types";
 
 export const REVIEWER_SYSTEM_PROMPT = `You are an expert senior engineer with deep knowledge of software engineering best practices, security, performance, and maintainability.

@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import { isNil } from "@harness/utils/nil";
 import {
   type AgentSession,
   createAgentSession,
@@ -18,7 +19,6 @@ import {
   type SubagentSessionRecordStore,
 } from "../session-records";
 import type { SubagentConfig } from "../types";
-import { isNil } from "../utils/nil";
 
 export class SubagentSessionManager<Params extends TSchema = TSchema> {
   private settingsManager = SettingsManager.inMemory({

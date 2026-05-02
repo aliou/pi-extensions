@@ -1,10 +1,10 @@
+import { isNotNil } from "@harness/utils";
 import type {
   AgentToolResult,
   ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
 import { getMarkdownTheme, type Theme } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
-import { isNotNil } from "../../utils";
 import type { SubagentDetails } from "../types";
 import { renderThinking, renderToolCall } from "./activity";
 import { formatCollapsedHint } from "./footer";

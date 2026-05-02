@@ -1,0 +1,13 @@
+{
+  "name": "@harness/utils",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./formatters": "./formatters.ts",
+    "./nil": "./nil.ts",
+    "./path": "./path.ts",
+    "./string": "./string.ts",
+    "./types": "./types.ts"
+  }
+}

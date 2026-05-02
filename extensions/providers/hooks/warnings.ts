@@ -1,3 +1,4 @@
+import { formatTimeRemaining } from "@harness/utils/formatters";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -5,7 +6,6 @@ import type {
 import { getProviderSettings } from "../config";
 import { fetchProvider, toProviderKey } from "../lib/adapters";
 import { findHighRiskLimits } from "../lib/engine";
-import { formatTimeRemaining } from "../lib/formatters";
 import type { NormalizedLimit, RiskAssessment, Severity } from "../lib/types";
 
 const COOLDOWN_MS = 60 * 60 * 1000; // 60 minutes

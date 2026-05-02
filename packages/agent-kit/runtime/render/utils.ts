@@ -1,6 +1,6 @@
+import type { Maybe } from "@harness/utils";
+import { isNil } from "@harness/utils";
 import type { SubagentModel } from "../../types";
-import type { Maybe } from "../../utils";
-import { isNil } from "../../utils";
 
 export function extractParagraphs(content: string, count: number) {
   return content

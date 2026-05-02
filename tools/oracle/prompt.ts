@@ -1,5 +1,5 @@
+import { isNotNil } from "@harness/utils";
 import type { SubagentPromptResult } from "../../packages/agent-kit/types";
-import { isNotNil } from "../../packages/agent-kit/utils";
 import type { OracleParamsType } from "./types";
 
 export const ORACLE_SYSTEM_PROMPT = `You are the Oracle - an expert AI advisor with advanced reasoning capabilities.

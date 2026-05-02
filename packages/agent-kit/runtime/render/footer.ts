@@ -1,6 +1,6 @@
+import { isNotNil } from "@harness/utils";
 import type { ToolRenderResultOptions } from "@mariozechner/pi-coding-agent";
 import { keyHint } from "@mariozechner/pi-coding-agent";
-import { isNotNil } from "../../utils";
 import type { SubagentDetails } from "../types";
 import {
   formatCost,
