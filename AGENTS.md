@@ -2,13 +2,13 @@
 
 My personal harness around [Pi](https://github.com/badlogic/pi-mono/) for coding-agent work.
 
-All packages in this repository use the `@aliou` scope where applicable, not `@anthropic` or `@anthropic-ai`.
+Internal workspace packages use the `@harness` scope and are private to this repository.
 
 ## Structure
 
 - `extensions/` - Private Pi extensions bundled in this repository
-- `packages/` - Shared internal package code
-- `tests/` - Test utilities and harness. See [tests/README.md](tests/README.md) for usage.
+- `packages/` - Shared internal workspace packages (`@harness/*`)
+- `tests/` - Test setup and docs. Shared test utilities live in `packages/test-utils`.
 
 ## Extensions
 
@@ -30,7 +30,15 @@ Uses pnpm workspaces. Nix environment available via `flake.nix`.
 pnpm install
 pnpm typecheck
 pnpm lint
+pnpm test
 ```
+
+Workspace packages:
+
+- `@harness/agent-kit` - Subagent framework used by harness tools and hooks.
+- `@harness/events` - Shared event names and event payload types.
+- `@harness/utils` - Shared generic utilities.
+- `@harness/test-utils` - Shared Vitest/Pi extension test harness utilities.
 
 ## Custom header
 

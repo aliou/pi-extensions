@@ -5,7 +5,7 @@ Test utilities for pi-harness extensions. Uses real Pi internals (`SessionManage
 ## Quick start
 
 ```ts
-import { createPiTestHarness, type PiTestHarness } from "tests/utils/pi-test-harness";
+import { createPiTestHarness, type PiTestHarness } from "@harness/test-utils/pi-test-harness";
 import { setupMyTool } from "./my-tool";
 
 let pi: PiTestHarness;
@@ -30,10 +30,10 @@ const result = await pi.tool("read").execute({ path: "file.txt" });
 expect(result.content).toBeDefined();
 ```
 
-Access `renderCall` and `renderResult` on the `registered` definition for testing tool UI rendering. Use `NOOP_THEME` from `tests/utils/theme.ts` when calling render functions:
+Access `renderCall` and `renderResult` on the `registered` definition for testing tool UI rendering. Use `NOOP_THEME` from `@harness/test-utils/theme` when calling render functions:
 
 ```ts
-import { NOOP_THEME } from "tests/utils/theme";
+import { NOOP_THEME } from "@harness/test-utils/theme";
 
 const { registered } = pi.tool("read");
 const rendered = registered.renderCall({ path: "file.txt" }, NOOP_THEME);
@@ -108,13 +108,13 @@ Loaded automatically via `tests/vitest.setup.ts`. Available on any `PiTestHarnes
 
 | File | Purpose |
 |---|---|
-| `utils/pi-test-harness.ts` | Main entry point. Creates the harness, loads the extension, exposes command/tool executors and the `newSession` spy. |
-| `utils/pi-context.ts` | Builds spy-based `ExtensionCommandContext` and tool context objects. All methods are `vi.fn()` with safe defaults. |
-| `utils/matchers.ts` | Custom vitest matchers (`toHaveRegisteredTool`, `toHaveRegisteredCommand`). |
-| `utils/theme.ts` | `NOOP_THEME` constant for testing render functions without a real terminal theme. |
-| `utils/load-extension.ts` | Thin wrapper around pi-coding-agent's internal `loadExtensionFromFactory`. Single consumer of the `#pi-internal/extensions-loader` alias defined in `vitest.config.ts`. |
-| `utils/pi-internal.d.ts` | Type declarations for the aliased internal module. |
-| `vitest.setup.ts` | Setup file that loads custom matchers. Referenced in `vitest.config.ts`. |
+| `packages/test-utils/pi-test-harness.ts` | Main entry point. Creates the harness, loads the extension, exposes command/tool executors and the `newSession` spy. |
+| `packages/test-utils/pi-context.ts` | Builds spy-based `ExtensionCommandContext` and tool context objects. All methods are `vi.fn()` with safe defaults. |
+| `packages/test-utils/matchers.ts` | Custom vitest matchers (`toHaveRegisteredTool`, `toHaveRegisteredCommand`). |
+| `packages/test-utils/theme.ts` | `NOOP_THEME` constant for testing render functions without a real terminal theme. |
+| `packages/test-utils/load-extension.ts` | Thin wrapper around pi-coding-agent's internal `loadExtensionFromFactory`. Single consumer of the `#pi-internal/extensions-loader` alias defined in `vitest.config.ts`. |
+| `packages/test-utils/pi-internal.d.ts` | Type declarations for the aliased internal module. |
+| `tests/vitest.setup.ts` | Setup file that loads custom matchers. Referenced in `vitest.config.ts`. |
 
 ## Design principles
 
