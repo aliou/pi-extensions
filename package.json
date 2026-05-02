@@ -12,7 +12,9 @@
   "pi": {
     "extensions": [
       "./extensions",
-      "./tools"
+      "./tools",
+      "./hooks/session-title",
+      "./hooks/context-window-overrides"
     ]
   },
   "scripts": {

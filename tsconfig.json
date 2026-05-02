@@ -16,6 +16,7 @@
   },
   "include": [
     "extensions/**/*.ts",
+    "hooks/**/*.ts",
     "packages/**/*.ts",
     "tests/**/*.ts",
     "tools/**/*.ts"
