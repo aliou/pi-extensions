@@ -1,3 +1,4 @@
+import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import type {
   AgentToolResult,
   ExtensionAPI,
@@ -7,7 +8,6 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { type Static, Type } from "typebox";
-import { AD_NOTIFY_ATTENTION_EVENT } from "../../../packages/events";
 
 import type { ApplyModeFn } from "../commands/mode-command";
 import { MODE_ORDER, MODES } from "../modes";

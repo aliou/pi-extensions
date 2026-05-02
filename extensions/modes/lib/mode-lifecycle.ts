@@ -1,8 +1,8 @@
+import { AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT } from "@harness/events";
 import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@mariozechner/pi-coding-agent";
-import { AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT } from "../../../packages/events";
 import type { ModeSpec } from "../modes";
 import { DEFAULT_MODE, MODE_ORDER, MODES } from "../modes";
 import {

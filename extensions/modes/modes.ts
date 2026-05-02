@@ -1,5 +1,5 @@
+import type { ModeColor } from "@harness/events";
 import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
-import type { ModeColor } from "../../packages/events";
 
 export interface ModeSpec {
   name: string;

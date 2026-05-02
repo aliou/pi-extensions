@@ -1,10 +1,10 @@
-import type { ExtensionUIContext } from "@mariozechner/pi-coding-agent";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createPiTestHarness,
   type PiTestHarness,
-} from "../../tests/utils/pi-test-harness";
-import { NOOP_THEME } from "../../tests/utils/theme";
+} from "@harness/test-utils/pi-test-harness";
+import { NOOP_THEME } from "@harness/test-utils/theme";
+import type { ExtensionUIContext } from "@mariozechner/pi-coding-agent";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IntrospectPanel } from "./components/introspect-panel";
 import introspectionExtension from "./index";
 

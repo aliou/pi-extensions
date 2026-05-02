@@ -1,0 +1,21 @@
+{
+  "name": "@harness/agent-kit",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./models": "./models/index.ts",
+    "./runtime": "./runtime/index.ts",
+    "./schemas": "./schemas/index.ts",
+    "./session-manager": "./session-manager/index.ts",
+    "./session-records": "./session-records/index.ts",
+    "./types": "./types.ts"
+  },
+  "dependencies": {
+    "@harness/utils": "workspace:*",
+    "@mariozechner/pi-ai": "0.69.0",
+    "@mariozechner/pi-coding-agent": "0.69.0",
+    "@mariozechner/pi-tui": "0.69.0",
+    "typebox": "*"
+  }
+}

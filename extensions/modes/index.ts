@@ -1,9 +1,9 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import {
   AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT,
   AD_EDITOR_READY_EVENT,
   AD_MODES_READY_EVENT,
-} from "../../packages/events";
+} from "@harness/events";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { registerModeControls } from "./commands/mode-command";
 import {
   setupContextFilterHook,

@@ -1,0 +1,17 @@
+{
+  "name": "@harness/test-utils",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./load-extension": "./load-extension.ts",
+    "./matchers": "./matchers.ts",
+    "./pi-context": "./pi-context.ts",
+    "./pi-test-harness": "./pi-test-harness.ts",
+    "./theme": "./theme.ts",
+    "./tmpdir": "./tmpdir.ts"
+  },
+  "dependencies": {
+    "@mariozechner/pi-coding-agent": "0.69.0",
+    "vitest": "^4.0.18"
+  }
+}

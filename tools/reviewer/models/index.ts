@@ -1,4 +1,4 @@
-import type { SubagentModel } from "../../../packages/agent-kit/models";
+import type { SubagentModel } from "@harness/agent-kit/models";
 
 export const MODEL_CANDIDATES: SubagentModel[] = [
   {

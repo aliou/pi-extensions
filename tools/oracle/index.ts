@@ -1,6 +1,6 @@
+import { defineSubagent } from "@harness/agent-kit";
+import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { defineSubagent } from "../../packages/agent-kit";
-import type { SubagentToolSpec } from "../../packages/agent-kit/types";
 import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, ORACLE_SYSTEM_PROMPT } from "./prompt";
 import { OracleParams } from "./types";

@@ -1,5 +1,5 @@
+import { AD_NOTIFY_DANGEROUS_EVENT } from "@harness/events";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { AD_NOTIFY_DANGEROUS_EVENT } from "../../../packages/events";
 
 import { showModeConfirmDialog } from "../components/mode-confirm";
 import {

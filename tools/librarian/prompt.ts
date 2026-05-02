@@ -1,5 +1,5 @@
+import type { SubagentPromptResult } from "@harness/agent-kit/types";
 import { isNotNil } from "@harness/utils";
-import type { SubagentPromptResult } from "../../packages/agent-kit/types";
 import type { LibrarianParamsType } from "./types";
 
 export const LIBRAIAN_SYSTEM_PROMPT = `You are the Librarian, a specialized codebase understanding agent that helps users answer questions about large, complex codebases across repositories.

@@ -1,9 +1,9 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createToolContext } from "@harness/test-utils/pi-context";
+import { createPiTestHarness } from "@harness/test-utils/pi-test-harness";
 import { afterEach, assert, describe, expect, it, vi } from "vitest";
-import { createToolContext } from "../../../../tests/utils/pi-context";
-import { createPiTestHarness } from "../../../../tests/utils/pi-test-harness";
 import editExtension, { prepareEditArguments } from "./index";
 
 const tempDirs: string[] = [];

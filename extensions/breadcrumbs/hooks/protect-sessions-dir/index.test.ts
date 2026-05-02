@@ -1,12 +1,12 @@
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import type {
   ExtensionAPI,
   ExtensionContext,
   ToolCallEvent,
 } from "@mariozechner/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AD_NOTIFY_ATTENTION_EVENT } from "../../../../packages/events";
 import protectSessionsDirHook, { _resetForTesting } from "./index";
 
 // ---------------------------------------------------------------------------

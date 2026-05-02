@@ -1,4 +1,3 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import {
   AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT,
   AD_EDITOR_DRAFT_CHANGED_EVENT,
@@ -6,7 +5,8 @@ import {
   type AdEditorBorderDecorationChangedEvent,
   type AdEditorDraftChangedEvent,
   type EditorBorderWrite,
-} from "../../../packages/events";
+} from "@harness/events";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 const SOURCE = "editor:shell-indicator";
 

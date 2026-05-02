@@ -1,7 +1,7 @@
 import { join } from "node:path";
+import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { getAgentDir } from "@mariozechner/pi-coding-agent";
-import { AD_NOTIFY_ATTENTION_EVENT } from "../../packages/events";
 import { CONTEXT_WINDOW_OVERRIDES } from "./config";
 import {
   applyContextWindowOverrides,

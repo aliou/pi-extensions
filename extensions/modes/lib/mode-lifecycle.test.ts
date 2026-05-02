@@ -1,11 +1,11 @@
-import type { ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
-import { SessionManager } from "@mariozechner/pi-coding-agent";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createCommandContext } from "../../../tests/utils/pi-context";
+import { createCommandContext } from "@harness/test-utils/pi-context";
 import {
   createPiTestHarness,
   type PiTestHarness,
-} from "../../../tests/utils/pi-test-harness";
+} from "@harness/test-utils/pi-test-harness";
+import type { ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
+import { SessionManager } from "@mariozechner/pi-coding-agent";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import modesExtension from "../index";
 
 function makeSessionManager(

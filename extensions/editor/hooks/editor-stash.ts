@@ -1,9 +1,9 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import {
   AD_EDITOR_STASH_CHANGED_EVENT,
   AD_EDITOR_STASH_READY_EVENT,
   AD_EDITOR_STASH_REQUEST_EVENT,
-} from "../../../packages/events";
+} from "@harness/events";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { stashCount, stashPop, stashPush } from "../lib/stash";
 
 function emitStashState(pi: ExtensionAPI): void {

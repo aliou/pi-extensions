@@ -20,6 +20,7 @@ import type {
   WordPart,
 } from "@aliou/sh";
 import { parse } from "@aliou/sh";
+import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -33,7 +34,6 @@ import {
   Text,
   wrapTextWithAnsi,
 } from "@mariozechner/pi-tui";
-import { AD_NOTIFY_ATTENTION_EVENT } from "../../../../packages/events";
 
 // ---------------------------------------------------------------------------
 // Types

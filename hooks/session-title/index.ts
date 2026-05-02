@@ -1,8 +1,8 @@
+import { defineSubagent } from "@harness/agent-kit";
 import { isBlank } from "@harness/utils/string";
 import type { AssistantMessage, UserMessage } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, SessionEntry } from "@mariozechner/pi-coding-agent";
 import { Type } from "typebox";
-import { defineSubagent } from "../../packages/agent-kit";
 import { MODEL_CANDIDATES } from "./models";
 import {
   buildPrompt,

@@ -1,5 +1,5 @@
+import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import type { SubagentToolSpec } from "../../../packages/agent-kit/types";
 import { createGitHubClient } from "../lib/github-client";
 import { createCommitSearchTool } from "./commit-search";
 import { createDiffTool } from "./diff";

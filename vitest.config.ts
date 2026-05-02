@@ -6,7 +6,7 @@ export default defineConfig({
     alias: {
       // Internal pi-coding-agent module not exposed via package "exports".
       // Mapped here so tests can import it; the single wrapper in
-      // tests/utils/load-extension.ts is the only consumer.
+      // packages/test-utils/load-extension.ts is the only consumer.
       "#pi-internal/extensions-loader": resolve(
         "node_modules/@mariozechner/pi-coding-agent/dist/core/extensions/loader.js",
       ),

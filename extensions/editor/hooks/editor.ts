@@ -1,7 +1,3 @@
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
 import {
   AD_EDITOR_BORDER_DECORATION_CHANGED_EVENT,
   AD_EDITOR_DRAFT_CHANGED_EVENT,
@@ -12,7 +8,11 @@ import {
   type BorderSlot,
   type EditorBorderWrite,
   type ModeColor,
-} from "../../../packages/events";
+} from "@harness/events";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+} from "@mariozechner/pi-coding-agent";
 import {
   BorderEditor,
   type ResolvedBorderDecorations,

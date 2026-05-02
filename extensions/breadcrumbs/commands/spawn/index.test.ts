@@ -1,13 +1,13 @@
+import {
+  createPiTestHarness,
+  type PiTestHarness,
+} from "@harness/test-utils/pi-test-harness";
 import type { Message } from "@mariozechner/pi-ai";
 import {
   type CustomMessageEntry,
   SessionManager,
 } from "@mariozechner/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createPiTestHarness,
-  type PiTestHarness,
-} from "../../../../tests/utils/pi-test-harness";
 import {
   SESSION_LINK_SOURCE_TYPE,
   type SessionLinkSourceDetails,

@@ -1,13 +1,9 @@
+import type { BorderBand, BorderSlot, ModeColor } from "@harness/events";
 import {
   CustomEditor,
   type Theme,
   type ThemeColor,
 } from "@mariozechner/pi-coding-agent";
-import type {
-  BorderBand,
-  BorderSlot,
-  ModeColor,
-} from "../../../packages/events";
 
 const ESC = "\u001b";
 const RESET = "\u001b[0m";

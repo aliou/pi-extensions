@@ -5,13 +5,6 @@
  * Line 2: Session name (left) + Model (right aligned)
  */
 
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  ReadonlyFooterDataProvider,
-  Theme,
-} from "@mariozechner/pi-coding-agent";
-import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import {
   AD_EDITOR_STASH_CHANGED_EVENT,
   AD_EDITOR_STASH_READY_EVENT,
@@ -21,7 +14,14 @@ import {
   AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT,
   type AdEditorStashChangedEvent,
   type AdProvidersCodexFastModeChangedEvent,
-} from "../../../packages/events";
+} from "@harness/events";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  ReadonlyFooterDataProvider,
+  Theme,
+} from "@mariozechner/pi-coding-agent";
+import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { GitStatusWatcher } from "../lib/git-status";
 import { buildModelIdLine, buildModelLine } from "../lib/model";
 import { buildPathParts } from "../lib/path-parts";

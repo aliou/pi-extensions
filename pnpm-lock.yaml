@@ -29,6 +29,12 @@ importers:
       '@aliou/sh':
         specifier: ^0.1.0
         version: 0.1.0
+      '@harness/agent-kit':
+        specifier: workspace:*
+        version: link:packages/agent-kit
+      '@harness/events':
+        specifier: workspace:*
+        version: link:packages/events
       '@harness/utils':
         specifier: workspace:*
         version: link:packages/utils
@@ -51,6 +57,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.0.0
         version: 2.3.11
+      '@harness/test-utils':
+        specifier: workspace:*
+        version: link:packages/test-utils
       '@mariozechner/pi-agent-core':
         specifier: 0.69.0
         version: 0.69.0(ws@8.19.0)(zod@3.25.76)
@@ -81,6 +90,35 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/agent-kit:
+    dependencies:
+      '@harness/utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@mariozechner/pi-ai':
+        specifier: 0.69.0
+        version: 0.69.0(ws@8.19.0)(zod@3.25.76)
+      '@mariozechner/pi-coding-agent':
+        specifier: 0.69.0
+        version: 0.69.0(ws@8.19.0)(zod@3.25.76)
+      '@mariozechner/pi-tui':
+        specifier: 0.69.0
+        version: 0.69.0
+      typebox:
+        specifier: '*'
+        version: 1.1.31
+
+  packages/events: {}
+
+  packages/test-utils:
+    dependencies:
+      '@mariozechner/pi-coding-agent':
+        specifier: 0.69.0
+        version: 0.69.0(ws@8.19.0)(zod@3.25.76)
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)

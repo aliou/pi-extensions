@@ -1,6 +1,6 @@
+import { createPiTestHarness } from "@harness/test-utils/pi-test-harness";
 import { SessionManager } from "@mariozechner/pi-coding-agent";
 import { describe, expect, it, vi } from "vitest";
-import { createPiTestHarness } from "../../../../tests/utils/pi-test-harness";
 import setupLabelCommand from "./index";
 
 describe("breadcrumbs /label command", () => {
