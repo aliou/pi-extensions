@@ -6,13 +6,9 @@
  */
 
 import {
-  AD_EDITOR_STASH_CHANGED_EVENT,
-  AD_EDITOR_STASH_READY_EVENT,
-  AD_EDITOR_STASH_REQUEST_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT,
-  type AdEditorStashChangedEvent,
   type AdProvidersCodexFastModeChangedEvent,
 } from "@harness/events";
 import type {
@@ -53,19 +49,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
     requestRender?.();
   });
 
-  let currentStashCount = 0;
-
-  pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
-    const event = (data ?? {}) as Partial<AdEditorStashChangedEvent>;
-    currentStashCount = event.count ?? currentStashCount;
-    requestRender?.();
-  });
-
-  // Request current stash state when editor signals readiness
-  pi.events.on(AD_EDITOR_STASH_READY_EVENT, () => {
-    pi.events.emit(AD_EDITOR_STASH_REQUEST_EVENT, {});
-  });
-
   const renderFooter = (
     width: number,
     theme: Theme,
@@ -79,12 +62,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
     const usage = getCumulativeUsage(ctx);
     const contextUsage = getContextUsage(ctx);
 
-    // Stash indicator (before path)
-    const stashN = currentStashCount;
-    const stashPart =
-      stashN > 0 ? `${theme.fg("warning", `stash:${stashN}`)} ` : "";
-    const stashPartWidth = stashN > 0 ? visibleWidth(`stash:${stashN}`) + 1 : 0;
-
     const gitStatus = gitStatusWatcher?.getStatus();
     const pathData = buildPathParts(theme, branch, gitStatus);
 
@@ -94,7 +71,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
     const minPadding = 2;
 
     // Build line 1 with progressive degradation:
-    // 1. Full: stash + path + branch + stats
+    // 1. Full: path + branch + stats
     // 2. Drop branch
     // 3. Truncate path
     let line1: string;
@@ -114,20 +91,18 @@ export function createCustomFooter(pi: ExtensionAPI) {
       );
     };
 
-    // Full left side: stash + path + branch
+    // Full left side: path + branch
     const fullLeft =
-      stashPart +
-      pathData.path +
-      (pathData.branch ? ` ${pathData.branch}` : "");
-    const fullLeftWidth = stashPartWidth + pathData.width;
+      pathData.path + (pathData.branch ? ` ${pathData.branch}` : "");
+    const fullLeftWidth = pathData.width;
 
     if (fullLeftWidth + minPadding + statsWidth <= width) {
       // Everything fits
       line1 = buildLine1(fullLeft, fullLeftWidth, statsLine, statsWidth);
     } else {
       // Drop branch, keep path + stats
-      const noBranchLeft = stashPart + pathData.path;
-      const noBranchLeftWidth = stashPartWidth + pathData.pathWidth;
+      const noBranchLeft = pathData.path;
+      const noBranchLeftWidth = pathData.pathWidth;
 
       if (noBranchLeftWidth + minPadding + statsWidth <= width) {
         line1 = buildLine1(
@@ -149,12 +124,12 @@ export function createCustomFooter(pi: ExtensionAPI) {
 
         const availForPath = Math.max(
           0,
-          width - stashPartWidth - minPadding - minimalStatsWidth,
+          width - minPadding - minimalStatsWidth,
         );
         const truncPath = truncateToWidth(pathData.path, availForPath, "...");
         const truncPathWidth = visibleWidth(truncPath);
-        const truncLeft = stashPart + truncPath;
-        const truncLeftWidth = stashPartWidth + truncPathWidth;
+        const truncLeft = truncPath;
+        const truncLeftWidth = truncPathWidth;
 
         line1 = buildLine1(
           truncLeft,
@@ -235,8 +210,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
     setup: (context: ExtensionContext) => {
       ctx = context;
       pi.events.emit(AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT, { ctx });
-      pi.events.emit(AD_EDITOR_STASH_REQUEST_EVENT, {});
-
       ctx.ui.setFooter((tui, theme, footerData) => {
         requestRender = () => tui.requestRender?.();
 

@@ -15,8 +15,6 @@ Internal workspace packages use the `@harness` scope and are private to this rep
 - `breadcrumbs` - Session history tools. Search past sessions, extract information, and hand off context to new sessions.
 - `qq` - `/qq` quick-question command with custom message rendering and context filtering.
 - `defaults` - Personal sensible defaults and quality-of-life improvements.
-- `editor` - Owns the custom editor component and shared border-decoration rendering.
-- `modes` - Hardcoded execution modes (balanced/plan/implement) with prompt families, tool gating, model/thinking defaults, and branch-aware restore.
 - `palette` - Command palette with keyboard-driven UI for running commands and shortcuts.
 - `planning` - Turn conversations into implementation plans and manage saved plans.
 - `providers` - Register custom providers and show unified rate-limit and usage dashboards.

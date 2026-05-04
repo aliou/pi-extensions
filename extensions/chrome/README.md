@@ -6,12 +6,12 @@ Chrome extension for Pi — owns the visual chrome around the coding agent.
 
 ### Header
 
-Custom header showing harness shortcuts and commands. Displays only the custom shortcuts and commands defined in harness extensions, replacing the built-in keybinding hints.
+Custom header showing harness commands, replacing the built-in keybinding hints.
 
 ### Footer
 
 Two-line footer layout:
-- Line 1: Stash indicator + path + git branch/status + stats (cost, context usage)
+- Line 1: Path + git branch/status + stats (cost, context usage)
 - Line 2: Session name + model info with thinking level
 
 Progressive degradation for narrow terminals: drops branch, truncates path, switches to minimal stats.
