@@ -1,0 +1,40 @@
+import { defineSubagent } from "@harness/agent-kit";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { MODEL_CANDIDATES } from "./models";
+import { SYSTEM_PROMPT } from "./prompt";
+import { tools } from "./tools";
+import { ReadSessionParams } from "./types";
+
+export default async function readSession(pi: ExtensionAPI): Promise<void> {
+  const { tool, subscribe } = defineSubagent(pi, {
+    name: "read_session",
+    label: "Read Session",
+    description: "Extract specific information from a past Pi coding session.",
+    systemPrompt: SYSTEM_PROMPT,
+    // TODO: Tools from the extension
+    tools: tools.map((t) => ({ type: "custom", name: t.name, spec: () => t })),
+    models: MODEL_CANDIDATES,
+    parameters: ReadSessionParams,
+    buildPrompt({ targetSessionId: sessionId, goal }) {
+      // Log
+      return {
+        text: [
+          `<target_session_id>${sessionId}</target_session_id>`,
+          `<goal>${goal}</goal>`,
+        ].join("\n"),
+      };
+    },
+
+    // Store a custom entry with the target session id.
+    beforeExecute: async (params, session, _ctx) => {
+      // Log
+      session.sessionManager.appendCustomEntry("read-session-state", {
+        targetSessionId: params.targetSessionId,
+        goal: params.goal,
+      });
+    },
+  });
+
+  pi.registerTool(tool);
+  subscribe(pi);
+}
