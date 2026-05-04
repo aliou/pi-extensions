@@ -20,10 +20,5 @@
     "packages/**/*.ts",
     "tests/**/*.ts",
     "tools/**/*.ts"
-  ],
-  "exclude": [
-    "./extensions/tools/look-at/**/*.ts",
-    "./extensions/breadcrumbs/tools/read-session/**/*.ts",
-    "./extensions/chrome/**/*.ts"
   ]
 }
