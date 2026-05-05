@@ -184,6 +184,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       settingsManager: this.settingsManager,
     });
 
+    // Keep the subagent's own SessionManager/session file id intact for resume
+    // records, but group provider requests with the parent Pi session. The Agent
+    // id is the value forwarded as SimpleStreamOptions.sessionId.
+    session.agent.sessionId = ctx.sessionManager.getSessionId();
+
     return session;
   }
 
