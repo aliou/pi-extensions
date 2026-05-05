@@ -1,4 +1,3 @@
-import { isNotNil } from "@harness/utils";
 import type {
   AgentToolResult,
   ToolRenderResultOptions,
@@ -52,26 +51,17 @@ function renderRunning(
   const container = new Container();
 
   if (!options.expanded) {
-    const running = details.toolCalls.filter(
-      (toolCall) => toolCall.status === "running",
-    ).length;
-    const failed = details.toolCalls.filter(
-      (toolCall) => toolCall.status === "error",
-    ).length;
+    const recentToolCalls = details.toolCalls.slice(-3);
 
-    const total = details.toolCalls.length;
-
-    const result = [
-      running
-        ? `${theme.fg("success", running.toString())} running`
-        : undefined,
-      failed ? `${theme.fg("error", failed.toString())} failed` : undefined,
-      total ? `${details.toolCalls.length} total` : undefined,
-    ]
-      .filter(isNotNil)
-      .join(", ");
-
-    container.addChild(new Text(result, 0, 0));
+    if (recentToolCalls.length === 0) {
+      container.addChild(
+        new Text(theme.fg("muted", "Waiting for subagent activity..."), 0, 0),
+      );
+    } else {
+      for (const toolCall of recentToolCalls) {
+        container.addChild(renderToolCall(toolCall, theme));
+      }
+    }
   } else {
     const activity = renderActivity(details, theme);
 
