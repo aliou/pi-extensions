@@ -38,6 +38,9 @@ export function renderSubagentResult(
     container.addChild(renderFinished(details, options, theme));
   }
 
+  container.addChild(new Spacer(1));
+  container.addChild(new Text(formatCollapsedHint(details, options), 0, 0));
+
   return container;
 }
 
@@ -46,6 +49,8 @@ function renderRunning(
   options: ToolRenderResultOptions,
   theme: Theme,
 ) {
+  const container = new Container();
+
   if (!options.expanded) {
     const running = details.toolCalls.filter(
       (toolCall) => toolCall.status === "running",
@@ -66,20 +71,20 @@ function renderRunning(
       .filter(isNotNil)
       .join(", ");
 
-    return new Text(result, 0, 0);
+    container.addChild(new Text(result, 0, 0));
+  } else {
+    const activity = renderActivity(details, theme);
+
+    if (!activity) {
+      container.addChild(
+        new Text(theme.fg("muted", "Waiting for subagent activity..."), 0, 0),
+      );
+    } else {
+      container.addChild(activity);
+    }
   }
 
-  const activity = renderActivity(details, theme);
-
-  if (!activity) {
-    return new Text(
-      theme.fg("muted", "Waiting for subagent activity..."),
-      0,
-      0,
-    );
-  }
-
-  return activity;
+  return container;
 }
 
 function renderActivity(details: SubagentDetails, theme: Theme) {
