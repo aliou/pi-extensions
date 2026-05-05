@@ -74,9 +74,6 @@ Always provide a clear objective describing what you want to learn from the imag
 
   pi.registerTool(subagent.tool);
 
-  // Disable the tool on extension load.
-  disableTool(pi, TOOL_NAME);
-
   pi.on("agent_start", (_evt, ctx) => {
     const model = ctx.model;
     if (!model) return;
