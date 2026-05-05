@@ -1,0 +1,11 @@
+{
+  "name": "@harness/completion",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "@mariozechner/pi-tui": "0.69.0"
+  }
+}

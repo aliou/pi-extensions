@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@harness/agent-kit": "workspace:*",
+    "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",
     "@harness/utils": "workspace:*",
     "@aliou/pi-linkup": "^0.7.1",

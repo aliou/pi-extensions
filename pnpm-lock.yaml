@@ -32,6 +32,9 @@ importers:
       '@harness/agent-kit':
         specifier: workspace:*
         version: link:packages/agent-kit
+      '@harness/completion':
+        specifier: workspace:*
+        version: link:packages/completion
       '@harness/events':
         specifier: workspace:*
         version: link:packages/events
@@ -111,6 +114,12 @@ importers:
       typebox:
         specifier: '*'
         version: 1.1.31
+
+  packages/completion:
+    dependencies:
+      '@mariozechner/pi-tui':
+        specifier: 0.69.0
+        version: 0.69.0
 
   packages/events: {}
 
