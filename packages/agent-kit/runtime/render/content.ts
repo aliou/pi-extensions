@@ -4,13 +4,15 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { getMarkdownTheme, type Theme } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
-import type { SubagentDetails } from "../types";
+import type { SubagentConfig } from "../../types";
+import type { SubagentDetails, SubagentToolCall } from "../types";
 import { renderThinking, renderToolCall } from "./activity";
 import { formatCollapsedHint } from "./footer";
 import { Separator } from "./separator";
 import type { ToolRenderContext } from "./types";
 
 export function renderSubagentResult(
+  config: SubagentConfig,
   result: AgentToolResult<unknown>,
   options: ToolRenderResultOptions,
   theme: Theme,
@@ -32,9 +34,9 @@ export function renderSubagentResult(
   }
 
   if (details.status === "running" || options.isPartial) {
-    container.addChild(renderRunning(details, options, theme));
+    container.addChild(renderRunning(config, details, options, theme));
   } else {
-    container.addChild(renderFinished(details, options, theme));
+    container.addChild(renderFinished(config, details, options, theme));
   }
 
   container.addChild(new Spacer(1));
@@ -44,6 +46,7 @@ export function renderSubagentResult(
 }
 
 function renderRunning(
+  config: SubagentConfig,
   details: SubagentDetails,
   options: ToolRenderResultOptions,
   theme: Theme,
@@ -59,11 +62,13 @@ function renderRunning(
       );
     } else {
       for (const toolCall of recentToolCalls) {
-        container.addChild(renderToolCall(toolCall, theme));
+        container.addChild(
+          renderConfiguredToolCall(config, toolCall, options, theme),
+        );
       }
     }
   } else {
-    const activity = renderActivity(details, theme);
+    const activity = renderActivity(config, details, options, theme);
 
     if (!activity) {
       container.addChild(
@@ -77,7 +82,12 @@ function renderRunning(
   return container;
 }
 
-function renderActivity(details: SubagentDetails, theme: Theme) {
+function renderActivity(
+  config: SubagentConfig,
+  details: SubagentDetails,
+  options: ToolRenderResultOptions,
+  theme: Theme,
+) {
   const toolCallsById = new Map(
     details.toolCalls.map((toolCall) => [toolCall.toolCallId, toolCall]),
   );
@@ -96,7 +106,9 @@ function renderActivity(details: SubagentDetails, theme: Theme) {
         const toolCall = toolCallsById.get(item.toolCallId);
         if (!toolCall) break;
 
-        container.addChild(renderToolCall(toolCall, theme));
+        container.addChild(
+          renderConfiguredToolCall(config, toolCall, options, theme),
+        );
         renderedCount += 1;
         break;
       }
@@ -113,6 +125,7 @@ function renderActivity(details: SubagentDetails, theme: Theme) {
 }
 
 function renderFinished(
+  config: SubagentConfig,
   details: SubagentDetails,
   options: ToolRenderResultOptions,
   theme: Theme,
@@ -121,7 +134,7 @@ function renderFinished(
 
   const container = new Container();
   const activity = options.expanded
-    ? renderActivity(details, theme)
+    ? renderActivity(config, details, options, theme)
     : undefined;
   if (activity) {
     container.addChild(activity);
@@ -130,4 +143,19 @@ function renderFinished(
 
   container.addChild(new Markdown(text, 0, 0, getMarkdownTheme()));
   return container;
+}
+
+function renderConfiguredToolCall(
+  config: SubagentConfig,
+  toolCall: SubagentToolCall,
+  options: ToolRenderResultOptions,
+  theme: Theme,
+) {
+  const renderer = config.tools.find(
+    (tool) => tool.name === toolCall.toolName,
+  )?.render;
+
+  return (
+    renderer?.(toolCall, options, theme) ?? renderToolCall(toolCall, theme)
+  );
 }

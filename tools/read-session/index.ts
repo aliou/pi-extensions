@@ -11,8 +11,7 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     label: "Read Session",
     description: "Extract specific information from a past Pi coding session.",
     systemPrompt: SYSTEM_PROMPT,
-    // TODO: Tools from the extension
-    tools: tools.map((t) => ({ type: "custom", name: t.name, spec: () => t })),
+    tools,
     models: MODEL_CANDIDATES,
     parameters: ReadSessionParams,
     buildPrompt({ targetSessionId: sessionId, goal }) {

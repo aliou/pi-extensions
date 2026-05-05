@@ -3,18 +3,38 @@ import type {
   AgentSession,
   ExtensionContext,
   Skill,
+  Theme,
   ToolDefinition,
+  ToolRenderResultOptions,
 } from "@mariozechner/pi-coding-agent";
+import type { Component } from "@mariozechner/pi-tui";
 import type { Static, TSchema } from "typebox";
 import type { SubagentModel } from "./models";
+import type { SubagentToolCall } from "./runtime/types";
 
 export type { SubagentModel } from "./models";
 export type { SubagentDetails, SubagentToolCall } from "./runtime";
 export type { SubagentSessionRecord } from "./session-records";
 
+export type SubagentRenderOptions = Pick<
+  ToolRenderResultOptions,
+  "expanded" | "isPartial"
+>;
+
+export type SubagentToolRenderer = (
+  toolCall: SubagentToolCall,
+  options: SubagentRenderOptions,
+  theme: Theme,
+) => Component;
+
 export type SubagentToolSpec =
-  | { name: string; type: "native" }
-  | { name: string; type: "custom"; spec: (cwd: string) => ToolDefinition };
+  | { name: string; type: "native"; render?: SubagentToolRenderer }
+  | {
+      name: string;
+      type: "custom";
+      spec: (cwd: string) => ToolDefinition;
+      render?: SubagentToolRenderer;
+    };
 
 export interface SubagentPromptResult {
   text: string;

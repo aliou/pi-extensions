@@ -48,7 +48,7 @@ export function defineSubagent<Params extends TSchema>(
     renderCall: (args, theme, ctx) =>
       renderSubagentCall(config, args, theme, ctx),
     renderResult: (result, options, theme, ctx) =>
-      renderSubagentResult(result, options, theme, ctx),
+      renderSubagentResult(config, result, options, theme, ctx),
     execute,
   });
 
@@ -60,7 +60,7 @@ export function defineSubagent<Params extends TSchema>(
     renderCall: (args, theme, ctx) =>
       renderSubagentCall(config, args, theme, ctx),
     renderResult: (result, options, theme, ctx) =>
-      renderSubagentResult(result, options, theme, ctx),
+      renderSubagentResult(config, result, options, theme, ctx),
 
     async execute(
       toolCallId,
