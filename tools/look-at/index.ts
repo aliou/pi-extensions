@@ -1,107 +1,32 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineSubagent } from "@harness/agent-kit";
-import type { SubagentModel } from "@harness/agent-kit/types";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Type } from "typebox";
-import { referencesImageFiles } from "./utils";
-
-const MODEL_CANDIDATES: SubagentModel[] = [
-  {
-    provider: "neuralwatt",
-    model: "kimi-k2.5-fast",
-    thinking: "off",
-    weight: 1,
-  },
-  {
-    provider: "neuralwatt",
-    model: "kimi-k2.6-fast",
-    thinking: "off",
-    weight: 1,
-  },
-  {
-    provider: "neuralwatt",
-    model: "qwen3.6-35b-fast",
-    thinking: "off",
-    weight: 1,
-  },
-  {
-    provider: "synthetic",
-    model: "moonshotai/Kimi-K2.6",
-    thinking: "off",
-    weight: 1,
-  },
-  {
-    provider: "openai-codex",
-    model: "gpt-5.3-codex-spark",
-    thinking: "off",
-    weight: 1,
-  },
-];
-
-const ANALYSIS_SYSTEM_PROMPT = `You are an AI assistant that analyzes images for a software engineer.
-
-# Core Principles
-
-- Be concise and direct. Minimize output while maintaining accuracy.
-- Focus only on the user's objective. Do not add tangential information.
-- No preamble, disclaimers, or summaries unless specifically relevant.
-- Never start with flattery ("great question", "interesting file", etc.).
-- A wrong answer is worse than no answer. When uncertain, say so.
-
-# Precision Guidelines
-
-- Describe exactly what you see. Do not guess or infer beyond what is visible.
-- When analyzing code screenshots: reference specific line numbers and symbols.
-- When analyzing UI: describe layout, components, text, colors, and hierarchy.
-- When analyzing errors: extract the exact error message, stack trace, and root cause.
-- When analyzing diagrams: describe nodes, relationships, labels, and flow.
-
-# Output Format
-
-- Use GitHub-flavored Markdown.
-- Use code fences with language tags for code snippets.
-- No emojis or decorative symbols.
-- Keep responses focused and brief.`;
+import { MODEL_CANDIDATES } from "./models";
+import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
+import { LookAtParams } from "./types";
+import {
+  disableTool,
+  isVisionCapable,
+  mimeTypeFromPath,
+  referencesImageFiles,
+} from "./utils";
 
 const NUDGE_TEXT =
   "\n\nNote: the current model cannot see images. Use look_at to analyze any image files referenced above.";
 
-const EXT_TO_MIME: Record<string, string> = {
-  png: "image/png",
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  gif: "image/gif",
-  webp: "image/webp",
-  bmp: "image/bmp",
-  svg: "image/svg+xml",
-};
+const TOOL_NAME = "look_at";
 
-const LookAtParams = Type.Object({
-  path: Type.String({
-    description: "Path to the image file to analyze (relative or absolute).",
-  }),
-  objective: Type.String({
-    description:
-      "What you want to learn from this image (e.g., 'describe the UI layout', 'extract the error message', 'read the text in this diagram').",
-  }),
-  context: Type.Optional(
-    Type.String({
-      description:
-        "Broader context for why you need this analysis. Helps the vision model focus on what matters.",
-    }),
-  ),
-});
-
-function mimeTypeFromPath(path: string): string | null {
-  const ext = path.split(".").pop()?.toLowerCase();
-  if (!ext) return null;
-  return EXT_TO_MIME[ext] ?? null;
+function enableTool(pi: ExtensionAPI) {
+  const active = pi.getActiveTools();
+  if (!active.includes(TOOL_NAME)) {
+    pi.setActiveTools([...active, TOOL_NAME]);
+  }
 }
 
 export default function lookAt(pi: ExtensionAPI): void {
   const subagent = defineSubagent(pi, {
-    name: "look_at",
+    name: TOOL_NAME,
     label: "Look At",
     description: `Analyze an image file using a vision-capable model. Returns a text description of the image content.
 
@@ -147,20 +72,38 @@ Always provide a clear objective describing what you want to learn from the imag
     },
   });
 
-  subagent.subscribe(pi);
   pi.registerTool(subagent.tool);
-  pi.registerTool(subagent.resumeTool);
 
-  pi.on("input", (event, ctx) => {
-    const warn = (message: string) =>
-      ctx.ui.notify(`[look_at] ${message}`, "warning");
+  // Disable the tool on extension load.
+  disableTool(pi, TOOL_NAME);
+
+  pi.on("agent_start", (_evt, ctx) => {
     const model = ctx.model;
     if (!model) return;
 
-    const modelHasVision = model.input.includes("image");
+    if (isVisionCapable(model)) {
+      disableTool(pi, TOOL_NAME);
+    } else {
+      enableTool(pi);
+    }
+  });
 
-    if (modelHasVision) {
-      warn("Model with vision called `look_at` tool.");
+  pi.on("model_select", (evt, _ctx) => {
+    if (isVisionCapable(evt.model)) {
+      disableTool(pi, TOOL_NAME);
+    } else {
+      enableTool(pi);
+    }
+  });
+
+  pi.on("input", (event, ctx) => {
+    const isEnabled = pi.getActiveTools().includes(TOOL_NAME);
+    if (!isEnabled) return;
+
+    const model = ctx.model;
+    if (!model) return;
+
+    if (isVisionCapable(model)) {
       return;
     }
 
@@ -168,9 +111,6 @@ Always provide a clear objective describing what you want to learn from the imag
     const hasAttachedImages = Boolean(event.images?.length);
 
     if (!hasImageRefs && !hasAttachedImages) {
-      warn(
-        "Model called `look_at` tool when message didn't include image reference or image attachments.",
-      );
       return;
     }
 
