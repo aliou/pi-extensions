@@ -4,14 +4,21 @@
 
 import type { SearchResult as SesameSearchResult } from "@aliou/sesame";
 import { search } from "@aliou/sesame";
+import { replaceAutocompletePrefix } from "@harness/completion";
+import { formatRelativeTime } from "@harness/utils/formatters";
 import type {
   AutocompleteItem,
   AutocompleteProvider,
   AutocompleteSuggestions,
 } from "@mariozechner/pi-tui";
 import { openSesameDb } from "./db";
-import { searchByName, timeAgo } from "./search";
-import { AT_TOKEN_RE, DEBOUNCE_MS, FTS_MIN_TOKEN_LEN } from "./types";
+import { searchByName } from "./search";
+import {
+  AT_TOKEN_RE,
+  DEBOUNCE_MS,
+  FTS_MIN_TOKEN_LEN,
+  SESSION_AUTOCOMPLETE_PREFIX,
+} from "./types";
 
 /**
  * Extract the `@@<token>` at the end of `textBeforeCursor`.
@@ -91,16 +98,16 @@ export function createSessionAutocompleteProvider(
             const modified = r.modifiedAt || "";
 
             return {
-              value: `@@${r.sessionId}`,
+              value: `${SESSION_AUTOCOMPLETE_PREFIX}${r.sessionId}`,
               label: name,
-              description: modified ? timeAgo(modified) : undefined,
+              description: modified ? formatRelativeTime(modified) : undefined,
             };
           },
         );
 
         return {
           items,
-          prefix: `@@${token}`,
+          prefix: `${SESSION_AUTOCOMPLETE_PREFIX}${token}`,
         };
       } catch {
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
@@ -116,6 +123,16 @@ export function createSessionAutocompleteProvider(
       item: AutocompleteItem,
       prefix: string,
     ) {
+      if (prefix.startsWith(SESSION_AUTOCOMPLETE_PREFIX)) {
+        return replaceAutocompletePrefix(
+          lines,
+          cursorLine,
+          cursorCol,
+          prefix,
+          item.value,
+        );
+      }
+
       return current.applyCompletion(
         lines,
         cursorLine,

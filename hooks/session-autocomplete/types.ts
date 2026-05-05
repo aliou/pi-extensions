@@ -6,6 +6,9 @@ export interface ResolvedRef {
   modified: string;
 }
 
+/** Prefix for session autocomplete references. */
+export const SESSION_AUTOCOMPLETE_PREFIX = "@@";
+
 /** Match `@@` plus an optional token at end of text before cursor. */
 export const AT_TOKEN_RE = /@@([^\s@]*)$/;
 
