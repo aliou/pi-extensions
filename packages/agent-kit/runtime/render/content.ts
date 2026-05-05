@@ -139,7 +139,5 @@ function renderFinished(
   }
 
   container.addChild(new Markdown(text, 0, 0, getMarkdownTheme()));
-  container.addChild(new Spacer(1));
-  container.addChild(new Text(formatCollapsedHint(details, options), 0, 0));
   return container;
 }
