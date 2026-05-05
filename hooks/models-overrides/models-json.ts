@@ -9,7 +9,17 @@ export interface ModelsJsonConfig {
       headers?: Record<string, string>;
       modelOverrides?: Record<
         string,
-        { contextWindow?: number; maxTokens?: number }
+        {
+          contextWindow?: number;
+          maxTokens?: number;
+          cost?: {
+            input?: number;
+            output?: number;
+            cacheRead?: number;
+            cacheWrite?: number;
+          };
+          [key: string]: unknown;
+        }
       >;
       [key: string]: unknown;
     }

@@ -60,7 +60,7 @@ Tools that spawn a subagent (oracle, reviewer, read-session, librarian) follow a
 | Directory | Purpose | Key files |
 |---|---|---|
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming | `hooks/`, `components/`, `lib/`, `native/` |
-| `context-window-overrides/` | Override context window size | `index.ts` |
+| `models-overrides/` | Override model props (context window, pricing) in models.json | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
 | `session-autocomplete/` | `@` autocomplete for session names | `db.ts`, `search.ts`, `provider.ts` |
