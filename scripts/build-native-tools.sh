@@ -24,7 +24,7 @@ if ! command -v swiftc &> /dev/null; then
     exit 0
 fi
 
-TOOLS_DIR="extensions/chrome/native"
+TOOLS_DIR="hooks/chrome/native"
 OUTPUT_DIR="bin"
 
 # Create output directory

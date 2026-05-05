@@ -16,7 +16,7 @@ const tools: SubagentToolSpec[] = [
 ];
 
 const extensionPaths = [
-  "./extensions/tools",
+  "./tools",
   "./extensions/breadcrumbs",
   "npm:@aliou/pi-synthetic",
 ];

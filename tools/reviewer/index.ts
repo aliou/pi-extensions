@@ -14,7 +14,7 @@ const nativeTools: SubagentToolSpec[] = [
   { name: "synthetic_web_search", type: "native" },
 ];
 
-const extensionPaths = ["./extensions/tools", "npm:@aliou/pi-synthetic"];
+const extensionPaths = ["./tools", "npm:@aliou/pi-synthetic"];
 
 export default async function reviewer(pi: ExtensionAPI): Promise<void> {
   const tools = [...nativeTools, ...createReviewerTools(pi)];

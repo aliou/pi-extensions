@@ -11,10 +11,11 @@
   },
   "pi": {
     "extensions": [
-      "./extensions",
+      "./commands",
+      "./hooks",
       "./tools",
-      "./hooks/session-title",
-      "./hooks/context-window-overrides"
+      "./extensions/breadcrumbs",
+      "./extensions/providers"
     ]
   },
   "scripts": {

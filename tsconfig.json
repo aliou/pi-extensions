@@ -15,6 +15,7 @@
     "noImplicitOverride": true
   },
   "include": [
+    "commands/**/*.ts",
     "extensions/**/*.ts",
     "hooks/**/*.ts",
     "packages/**/*.ts",

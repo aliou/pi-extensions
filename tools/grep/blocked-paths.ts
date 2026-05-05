@@ -1,0 +1,26 @@
+import { homedir } from "node:os";
+
+export const BLOCKED_PATHS = new Set([
+  homedir(),
+  "/",
+  "/Users",
+  "/home",
+  "/tmp",
+  "/var",
+  "/etc",
+  "/opt",
+  "/usr",
+  "/System",
+  "/Library",
+  "/Applications",
+  "/Volumes",
+  "/nix",
+  "/snap",
+  "/proc",
+  "/sys",
+  "/dev",
+  "/run",
+  "/boot",
+  "/sbin",
+  "/bin",
+]);
