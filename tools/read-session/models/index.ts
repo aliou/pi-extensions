@@ -14,12 +14,6 @@ export const MODEL_CANDIDATES: SubagentModel[] = [
     weight: 1,
   },
   {
-    provider: "neuralwatt",
-    model: "qwen3.6-35b-fast",
-    thinking: "off",
-    weight: 1,
-  },
-  {
     provider: "synthetic",
     model: "moonshotai/Kimi-K2.6",
     thinking: "off",
