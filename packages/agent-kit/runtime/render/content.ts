@@ -34,9 +34,10 @@ export function renderSubagentResult(
 
   if (details.status === "running" || options.isPartial) {
     container.addChild(renderRunning(details, options, theme));
+  } else {
+    container.addChild(renderFinished(details, options, theme));
   }
 
-  container.addChild(renderFinished(details, options, theme));
   return container;
 }
 
