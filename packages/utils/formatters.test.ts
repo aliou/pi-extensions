@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   formatCurrency,
+  formatRelativeTime,
   formatResetTime,
   formatTimeRemaining,
 } from "./formatters";
@@ -22,6 +23,22 @@ describe("formatter utilities", () => {
 
     it("formats non-USD minor units", () => {
       expect(formatCurrency(1234, "EUR")).toBe("12.34 EUR");
+    });
+  });
+
+  describe("formatRelativeTime", () => {
+    it("formats invalid dates", () => {
+      expect(formatRelativeTime("not a date")).toBe("");
+    });
+
+    it("formats ISO strings", () => {
+      expect(formatRelativeTime("2026-05-02T11:30:00Z")).toBe("30m ago");
+    });
+
+    it("formats timestamps", () => {
+      expect(formatRelativeTime(Date.parse("2026-05-01T12:00:00Z"))).toBe(
+        "1d ago",
+      );
     });
   });
 

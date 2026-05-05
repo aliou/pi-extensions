@@ -1,6 +1,7 @@
 export * from "./array";
 export {
   formatCurrency,
+  formatRelativeTime,
   formatResetTime,
   formatTimeRemaining,
 } from "./formatters";
