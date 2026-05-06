@@ -48,7 +48,8 @@ function extractPathsFromBashCommand(command: string): string[] {
   let ast: Program;
   try {
     ast = parse(command, { dialect: "bash" }).ast;
-  } catch {
+  } catch (_error) {
+    void _error;
     return [];
   }
 

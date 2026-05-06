@@ -66,9 +66,11 @@ export function createGitBranchAutocompleteProvider(
 
       try {
         const tokenLower = token.toLowerCase();
-        const branches = (await listLocalBranches(cwd))
-          .filter((branch) => branch.name.toLowerCase().includes(tokenLower))
-          .slice(0, MAX_BRANCH_SUGGESTIONS);
+        const branches = await listLocalBranches(cwd).then((items) =>
+          items
+            .filter((branch) => branch.name.toLowerCase().includes(tokenLower))
+            .slice(0, MAX_BRANCH_SUGGESTIONS),
+        );
 
         if (options.signal.aborted) {
           return current.getSuggestions(lines, cursorLine, cursorCol, options);
@@ -95,7 +97,8 @@ export function createGitBranchAutocompleteProvider(
           items,
           prefix: `${GIT_BRANCH_PREFIX}${token}`,
         };
-      } catch {
+      } catch (_error) {
+        void _error;
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
     },

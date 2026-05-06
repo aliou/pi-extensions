@@ -32,7 +32,8 @@ export default function (pi: ExtensionAPI): void {
         if (stat.isDirectory()) {
           return nativeLs.execute(toolCallId, { path }, signal, onUpdate);
         }
-      } catch {
+      } catch (_error) {
+        void _error;
         // Path does not exist or cannot be accessed - let nativeRead handle the error
       }
 

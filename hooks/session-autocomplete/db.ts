@@ -13,7 +13,8 @@ export function openSesameDb(): SesameDb | undefined {
     const paths = getXDGPaths();
     const dbPath = join(paths.data, "index.sqlite");
     return openDatabase(dbPath);
-  } catch {
+  } catch (_error) {
+    void _error;
     return undefined;
   }
 }
@@ -49,7 +50,8 @@ export function resolveSessionRefFromDb(
       created: row.created_at || "",
       modified: row.modified_at || "",
     };
-  } catch {
+  } catch (_error) {
+    void _error;
     return null;
   }
 }

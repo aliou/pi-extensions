@@ -106,7 +106,8 @@ async function fetchTwitterPayload(
   let payload: FxTwitterApiResponse;
   try {
     payload = JSON.parse(bodyText) as FxTwitterApiResponse;
-  } catch {
+  } catch (_error) {
+    void _error;
     throw new Error("Invalid JSON response from fxtwitter API");
   }
 
@@ -302,7 +303,8 @@ function normalizeHeadingText(text: string): string {
 function normalizeImageUrl(url: string): string | null {
   try {
     return new URL(url).toString();
-  } catch {
+  } catch (_error) {
+    void _error;
     return null;
   }
 }
@@ -535,7 +537,8 @@ function isInternalXUrl(url: string): boolean {
     const host = parsed.hostname.replace(/^www\./, "");
     if (host !== "x.com" && host !== "twitter.com") return false;
     return parsed.pathname.startsWith("/i/");
-  } catch {
+  } catch (_error) {
+    void _error;
     return false;
   }
 }
@@ -543,7 +546,8 @@ function isInternalXUrl(url: string): boolean {
 function isTcoUrl(url: string): boolean {
   try {
     return new URL(url).hostname.replace(/^www\./, "") === "t.co";
-  } catch {
+  } catch (_error) {
+    void _error;
     return false;
   }
 }

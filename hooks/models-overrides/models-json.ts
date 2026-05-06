@@ -33,7 +33,8 @@ export function readModelsJson(path: string): ModelsJsonConfig {
     const config = JSON.parse(readFileSync(path, "utf-8")) as ModelsJsonConfig;
     if (!config.providers) config.providers = {};
     return config;
-  } catch {
+  } catch (_error) {
+    void _error;
     return { providers: {} };
   }
 }

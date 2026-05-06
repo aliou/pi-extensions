@@ -125,7 +125,8 @@ async function playSound(pi: ExtensionAPI, soundPath: string): Promise<void> {
 
   try {
     await pi.exec(PLAY_ALERT_SOUND_BINARY, [soundPath]);
-  } catch {
+  } catch (_error) {
+    void _error;
     // Sound playback failed — not worth alerting the user over.
   }
 }

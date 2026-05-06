@@ -58,7 +58,8 @@ async function readCache(provider: string): Promise<CacheEntry | null> {
     const parsed = JSON.parse(raw) as CacheEntry;
     if (!parsed?.fetchedAt || !parsed?.data) return null;
     return { ...parsed, data: rehydrateDates(parsed.data) };
-  } catch {
+  } catch (_error) {
+    void _error;
     return null;
   }
 }
@@ -75,7 +76,8 @@ async function writeCache(
       JSON.stringify(entry, null, 2),
       "utf-8",
     );
-  } catch {
+  } catch (_error) {
+    void _error;
     // Ignore write errors.
   }
 }

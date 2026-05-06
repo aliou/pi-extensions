@@ -22,8 +22,8 @@ import {
   type SessionLinkSourceDetails,
 } from "./types";
 
-export { SESSION_LINK_MARKER_TYPE, SESSION_LINK_SOURCE_TYPE };
 export type { SessionLinkMarkerDetails, SessionLinkSourceDetails };
+export { SESSION_LINK_MARKER_TYPE, SESSION_LINK_SOURCE_TYPE };
 
 export default async function (pi: ExtensionAPI) {
   pi.registerMessageRenderer(SESSION_LINK_MARKER_TYPE, renderMarker);

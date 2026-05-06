@@ -1,3 +1,4 @@
+// biome-ignore lint/plugin: direct child_process usage is required in this helper where ExtensionAPI is unavailable.
 import { spawn } from "node:child_process";
 import { detectCodeFenceLanguage } from "./github";
 import type { HandlerData, ReadUrlHandler } from "./types";

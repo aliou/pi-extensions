@@ -1,3 +1,4 @@
+// biome-ignore lint/plugin: direct child_process usage is required in this helper where ExtensionAPI is unavailable.
 import { spawn } from "node:child_process";
 import { basename, extname } from "node:path";
 import { encodePathSegments } from "@harness/utils/path";
@@ -227,7 +228,8 @@ async function fetchGitHubRepoMarkdown(
     if (decodedReadme.trim()) {
       readmeMarkdown = decodedReadme.trimEnd();
     }
-  } catch {
+  } catch (_error) {
+    void _error;
     // README is optional.
   }
 

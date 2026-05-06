@@ -10,7 +10,8 @@ export const treeOutline = defineTool({
     "Get a compact outline of the full session tree. Returns previews only.",
   parameters: Type.Object({}),
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
-    const sm = SessionManager.open(await getTargetSessionPath(ctx));
+    const targetSessionPath = await getTargetSessionPath(ctx);
+    const sm = SessionManager.open(targetSessionPath);
     const currentBranchIds = new Set(sm.getBranch().map((e) => e.id));
 
     const visit = (node: ReturnType<typeof sm.getTree>[number]): unknown => ({

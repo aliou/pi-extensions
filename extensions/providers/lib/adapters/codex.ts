@@ -123,10 +123,8 @@ export const codexAdapter: ProviderAdapter = {
           key?: string;
         }
       | undefined;
-    const token =
-      credential?.access ??
-      credential?.key ??
-      (await authStorage.getApiKey("openai-codex"));
+    const storedToken = await authStorage.getApiKey("openai-codex");
+    const token = credential?.access ?? credential?.key ?? storedToken;
 
     if (!token) {
       return {
@@ -163,10 +161,12 @@ export const codexAdapter: ProviderAdapter = {
 
       if (statusRes?.ok) {
         try {
-          const sj = (await statusRes.json()) as StatusResponse;
+          const statusJson = await statusRes.json();
+          const sj = statusJson as StatusResponse;
           status = mapStatus(sj.status?.indicator);
           statusMessage = sj.status?.description;
-        } catch {
+        } catch (_error) {
+          void _error;
           // ignore
         }
       }
@@ -178,9 +178,11 @@ export const codexAdapter: ProviderAdapter = {
           error = `HTTP ${usageRes.status}`;
         }
       } else {
-        usageJson = (await usageRes.json()) as RawUsageResponse;
+        const json = await usageRes.json();
+        usageJson = json as RawUsageResponse;
       }
-    } catch {
+    } catch (_error) {
+      void _error;
       error =
         combined.aborted || signal?.aborted
           ? "Request aborted"

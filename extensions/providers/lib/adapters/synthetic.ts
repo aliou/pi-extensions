@@ -66,7 +66,7 @@ function buildSearchHourly(
   raw: RawSearchHourly | undefined,
   now: Date,
 ): FixedWindowLimit | null {
-  if (!raw || !raw.limit || raw.limit <= 0) return null;
+  if (!raw?.limit || raw.limit <= 0) return null;
   const used = raw.requests ?? 0;
   return {
     kind: "fixed-window",
@@ -87,7 +87,7 @@ function buildRollingFiveHour(
   raw: RawRollingFiveHour | undefined,
   now: Date,
 ): RefillableLimit | null {
-  if (!raw || !raw.max || raw.max <= 0) return null;
+  if (!raw?.max || raw.max <= 0) return null;
   const remaining = raw.remaining ?? raw.max;
   const tickPercent = raw.tickPercent ?? 0.05;
   const refillAmount = raw.max * tickPercent;
@@ -192,7 +192,8 @@ export const syntheticAdapter: ProviderAdapter = {
         };
       }
 
-      const data = (await res.json()) as RawQuotasResponse;
+      const json = await res.json();
+      const data = json as RawQuotasResponse;
 
       const limits: NormalizedLimit[] = [
         buildRollingFiveHour(data.rollingFiveHourLimit, now),

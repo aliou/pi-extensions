@@ -22,7 +22,8 @@ export const branchEntries = defineTool({
     roles: Type.Optional(Type.Array(Type.String())),
   }),
   execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
-    const sm = SessionManager.open(await getTargetSessionPath(ctx));
+    const targetSessionPath = await getTargetSessionPath(ctx);
+    const sm = SessionManager.open(targetSessionPath);
     let entries = sm.getBranch(params.leafId);
     if (!params.fromEnd) entries = [...entries].reverse();
 

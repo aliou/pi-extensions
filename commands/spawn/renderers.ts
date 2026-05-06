@@ -19,7 +19,8 @@ function resolveSessionName(sessionFile: string): string {
   try {
     const sm = SessionManager.open(sessionFile);
     return sm.getSessionName() ?? sm.getSessionId().slice(0, 8);
-  } catch {
+  } catch (_error) {
+    void _error;
     return sessionFile;
   }
 }
@@ -70,7 +71,8 @@ export function renderSource(
       try {
         const md = new Markdown(content, 0, 0, getMarkdownTheme());
         box.addChild(md);
-      } catch {
+      } catch (_error) {
+        void _error;
         box.addChild(new Text(theme.fg("muted", content), 0, 0));
       }
     } else {

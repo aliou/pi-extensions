@@ -96,7 +96,8 @@ function createGrepTool(pi: ExtensionAPI) {
       for (const path of absoluteSearchPaths) {
         try {
           isDirectoryByPath.set(path, lstatSync(path).isDirectory());
-        } catch {
+        } catch (_error) {
+          void _error;
           throw new Error(`Cannot stat path: ${path}`);
         }
       }
@@ -142,7 +143,8 @@ function createGrepTool(pi: ExtensionAPI) {
         };
         try {
           event = JSON.parse(line);
-        } catch {
+        } catch (_error) {
+          void _error;
           continue;
         }
         if (event.type === "match") {
@@ -196,7 +198,8 @@ function createGrepTool(pi: ExtensionAPI) {
               .replace(/\r\n/g, "\n")
               .replace(/\r/g, "\n")
               .split("\n");
-          } catch {
+          } catch (_error) {
+            void _error;
             lines = [];
           }
           fileCache.set(filePath, lines);

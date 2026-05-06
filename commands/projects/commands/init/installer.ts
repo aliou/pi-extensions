@@ -30,7 +30,8 @@ export async function readSettings(cwd: string): Promise<PiSettings> {
   try {
     const content = await readFile(path, "utf-8");
     return JSON.parse(content) as PiSettings;
-  } catch {
+  } catch (_error) {
+    void _error;
     return {};
   }
 }

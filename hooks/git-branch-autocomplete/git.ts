@@ -1,3 +1,4 @@
+// biome-ignore lint/plugin: direct child_process usage is required in this helper where ExtensionAPI is unavailable.
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 

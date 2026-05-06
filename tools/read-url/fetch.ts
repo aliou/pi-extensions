@@ -30,7 +30,8 @@ export async function executeReadUrlRequest(
   let parsedUrl: URL;
   try {
     parsedUrl = new URL(trimmedInput);
-  } catch {
+  } catch (_error) {
+    void _error;
     throw new Error(`Invalid URL: ${trimmedInput}`);
   }
 
@@ -87,7 +88,8 @@ export async function executeReadUrlRequest(
 
         content.push(...(imageResult.content as ReadContentBlock[]));
         attachedImageCount += 1;
-      } catch {
+      } catch (_error) {
+        void _error;
         skippedImageCount += 1;
       }
     }
@@ -128,7 +130,8 @@ async function fetchRemoteImageToTempFile(
 
   const contentType = response.headers.get("content-type");
   const extension = guessImageExtension(contentType, image.sourceUrl);
-  const bytes = Buffer.from(await response.arrayBuffer());
+  const arrayBuffer = await response.arrayBuffer();
+  const bytes = Buffer.from(arrayBuffer);
   const baseName = sanitizeTempBaseName(
     image.label ||
       basename(new URL(image.sourceUrl).pathname) ||
@@ -172,7 +175,8 @@ export function guessImageExtension(
     if (extension) {
       return extension;
     }
-  } catch {
+  } catch (_error) {
+    void _error;
     // Ignore invalid URL here. Caller already validated/fetched it.
   }
 

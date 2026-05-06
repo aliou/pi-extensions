@@ -242,7 +242,8 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
 
     try {
       return SessionManager.open(parentSessionFile).getSessionId();
-    } catch {
+    } catch (_error) {
+      void _error;
       return undefined;
     }
   }

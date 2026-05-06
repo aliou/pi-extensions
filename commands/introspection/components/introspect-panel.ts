@@ -348,7 +348,8 @@ function buildSystemContent(
     const mdTheme = getMarkdownTheme();
     const md = new Markdown(prompt, 0, 0, mdTheme);
     lines.push(...md.render(width));
-  } catch {
+  } catch (_error) {
+    void _error;
     lines.push(...prompt.split("\n"));
   }
 
@@ -390,7 +391,8 @@ function buildToolsContent(
     const mdTheme = getMarkdownTheme();
     const md = new Markdown(mdLines.join("\n"), 0, 0, mdTheme);
     return md.render(width);
-  } catch {
+  } catch (_error) {
+    void _error;
     return mdLines;
   }
 }

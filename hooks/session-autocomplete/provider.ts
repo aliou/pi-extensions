@@ -109,7 +109,8 @@ export function createSessionAutocompleteProvider(
           items,
           prefix: `${SESSION_AUTOCOMPLETE_PREFIX}${token}`,
         };
-      } catch {
+      } catch (_error) {
+        void _error;
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       } finally {
         db.close();

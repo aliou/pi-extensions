@@ -56,7 +56,8 @@ function findGitPaths(cwd: string): GitPaths | null {
         } else if (stat.isDirectory()) {
           return { repoDir: dir, commonGitDir: gitPath };
         }
-      } catch {
+      } catch (_error) {
+        void _error;
         return null;
       }
     }
@@ -156,7 +157,8 @@ export class GitStatusWatcher {
           this.scheduleRefresh();
         }
       });
-    } catch {
+    } catch (_error) {
+      void _error;
       // Not a git repo or permission issue
     }
 
@@ -167,7 +169,8 @@ export class GitStatusWatcher {
         this.refsWatcher = watch(refsDir, { recursive: true }, () => {
           this.scheduleRefresh();
         });
-      } catch {
+      } catch (_error) {
+        void _error;
         // Silently fail
       }
     }

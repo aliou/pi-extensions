@@ -53,7 +53,8 @@ async function cleanupOldFiles(): Promise<void> {
         await unlink(join(HISTORY_DIR, file)).catch(() => {});
       }
     }
-  } catch {
+  } catch (_error) {
+    void _error;
     // Directory may not exist yet.
   }
 }
@@ -75,11 +76,13 @@ async function loadAllFiles(): Promise<void> {
             const samples = cache[entry.id] ?? [];
             samples.push({ at: entry.at, remaining: entry.remaining });
             cache[entry.id] = samples;
-          } catch {
+          } catch (_error) {
+            void _error;
             // Skip malformed lines.
           }
         }
-      } catch {
+      } catch (_error) {
+        void _error;
         // Skip unreadable files.
       }
     }
@@ -90,7 +93,8 @@ async function loadAllFiles(): Promise<void> {
         cache[id] = samples.slice(-MAX_SAMPLES_PER_LIMIT);
       }
     }
-  } catch {
+  } catch (_error) {
+    void _error;
     // Directory may not exist yet.
   }
 }
@@ -110,7 +114,8 @@ async function appendEntry(entry: HistoryLine): Promise<void> {
       `${JSON.stringify(entry)}\n`,
       "utf-8",
     );
-  } catch {
+  } catch (_error) {
+    void _error;
     // Ignore write errors.
   }
 }

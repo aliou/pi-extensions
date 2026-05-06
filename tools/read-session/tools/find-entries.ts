@@ -28,7 +28,8 @@ export const findEntries = defineTool({
     limit: Type.Optional(Type.Number()),
   }),
   execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
-    const sm = SessionManager.open(await getTargetSessionPath(ctx));
+    const targetSessionPath = await getTargetSessionPath(ctx);
+    const sm = SessionManager.open(targetSessionPath);
     const entries =
       params.scope === "full_tree"
         ? sm.getEntries()

@@ -41,7 +41,8 @@ function formatToolCallIndicator(toolCall: SubagentToolCall, theme: Theme) {
 function formatArgs(args: Record<string, unknown>) {
   try {
     return JSON.stringify(args);
-  } catch {
+  } catch (_error) {
+    void _error;
     return "[unserializable args]";
   }
 }

@@ -139,7 +139,8 @@ async function checkAndWarn(
     const level = hasCritical || hasHigh ? "error" : "warning";
 
     ctx.ui.notify(message, level);
-  } catch {
+  } catch (_error) {
+    void _error;
     // Silently ignore -- non-blocking.
   }
 }

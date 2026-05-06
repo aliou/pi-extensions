@@ -8,3 +8,5 @@ bin/
 .osgrep
 
 pi-*.html
+
+.pre-commit-config.yaml

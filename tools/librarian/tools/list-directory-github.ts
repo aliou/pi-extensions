@@ -48,11 +48,14 @@ export function createListDirectoryGitHubTool(
       const repository = normalizeRepository(params.repository);
       const path = params.path === "." ? "" : params.path.replace(/^\//, "");
       const encodedPath = encodePathSegments(path);
-      const data = parseJson<Entry[] | FileMetadata>(
-        await client.api(`repos/${repository}/contents/${encodedPath}`, cwd, {
+      const json = await client.api(
+        `repos/${repository}/contents/${encodedPath}`,
+        cwd,
+        {
           signal,
-        }),
+        },
       );
+      const data = parseJson<Entry[] | FileMetadata>(json);
       if (!Array.isArray(data)) {
         throw new Error(
           `Cannot list "${path || "/"}" because GitHub returned ${data.type ?? "file"} metadata instead of a directory listing.`,

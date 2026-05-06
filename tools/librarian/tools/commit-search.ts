@@ -99,13 +99,12 @@ export function createCommitSearchTool(
         if (params.since) fields.since = params.since;
         if (params.until) fields.until = params.until;
         if (params.path) fields.path = params.path;
-        commits = parseJson<Commit[]>(
-          await client.api(`repos/${repository}/commits`, cwd, {
-            method: "GET",
-            fields,
-            signal,
-          }),
-        );
+        const json = await client.api(`repos/${repository}/commits`, cwd, {
+          method: "GET",
+          fields,
+          signal,
+        });
+        commits = parseJson<Commit[]>(json);
         if (params.query) {
           const q = params.query.toLowerCase();
           commits = commits.filter(
@@ -121,14 +120,13 @@ export function createCommitSearchTool(
         if (params.author) query.push(`author:${params.author}`);
         if (params.since) query.push(`author-date:>=${params.since}`);
         if (params.until) query.push(`author-date:<=${params.until}`);
-        const response = parseJson<CommitSearchResponse>(
-          await client.api("search/commits", cwd, {
-            method: "GET",
-            fields: { q: query.join(" "), per_page: String(perPage), page },
-            headers: ["Accept: application/vnd.github+json"],
-            signal,
-          }),
-        );
+        const json = await client.api("search/commits", cwd, {
+          method: "GET",
+          fields: { q: query.join(" "), per_page: String(perPage), page },
+          headers: ["Accept: application/vnd.github+json"],
+          signal,
+        });
+        const response = parseJson<CommitSearchResponse>(json);
         commits = response.items ?? [];
         totalCount = response.total_count ?? commits.length;
       }

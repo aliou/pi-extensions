@@ -94,7 +94,8 @@ export function showResultWidget(
           try {
             const md = new Markdown(firstParagraph, 0, 0, mdTheme);
             content.push(...md.render(contentWidth));
-          } catch {
+          } catch (_error) {
+            void _error;
             content.push(
               ...new Text(firstParagraph, 0, 0).render(contentWidth),
             );

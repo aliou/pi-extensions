@@ -113,28 +113,30 @@ async function listRepositories(
           sort: "updated",
           affiliation: "owner,collaborator,organization_member",
         };
-    const repos = parseJson<Repo[]>(
-      await client.api(endpoint, cwd, { method: "GET", fields, signal }),
-    );
+    const json = await client.api(endpoint, cwd, {
+      method: "GET",
+      fields,
+      signal,
+    });
+    const repos = parseJson<Repo[]>(json);
     return filterRepos(repos, params);
   }
 
   const query = [`${params.pattern} in:name`];
   if (params.organization) query.push(`org:${params.organization}`);
   if (params.language) query.push(`language:${params.language}`);
-  const response = parseJson<SearchResponse>(
-    await client.api("search/repositories", cwd, {
-      method: "GET",
-      fields: {
-        q: query.join(" "),
-        per_page: perPage,
-        page,
-        sort: "stars",
-        order: "desc",
-      },
-      signal,
-    }),
-  );
+  const json = await client.api("search/repositories", cwd, {
+    method: "GET",
+    fields: {
+      q: query.join(" "),
+      per_page: perPage,
+      page,
+      sort: "stars",
+      order: "desc",
+    },
+    signal,
+  });
+  const response = parseJson<SearchResponse>(json);
   return response.items ?? [];
 }
 

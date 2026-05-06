@@ -11,7 +11,8 @@ export const readEntry = defineTool({
     id: Type.String({ description: "Entry id" }),
   }),
   execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
-    const sm = SessionManager.open(await getTargetSessionPath(ctx));
+    const targetSessionPath = await getTargetSessionPath(ctx);
+    const sm = SessionManager.open(targetSessionPath);
     const entry = sm.getEntry(params.id);
     if (!entry) throw new Error(`No entry found with id '${params.id}'`);
 

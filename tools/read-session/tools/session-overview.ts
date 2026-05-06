@@ -10,7 +10,8 @@ export const sessionOverview = defineTool({
     "Get compact metadata for a session. Does not return full message content.",
   parameters: Type.Object({}),
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
-    const sm = SessionManager.open(await getTargetSessionPath(ctx));
+    const targetSessionPath = await getTargetSessionPath(ctx);
+    const sm = SessionManager.open(targetSessionPath);
     const entries = sm.getEntries();
     const tree = sm.getTree();
     const leaf = sm.getLeafEntry();

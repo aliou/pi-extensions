@@ -10,7 +10,8 @@ export const labels = defineTool({
     "Get active labels as navigation anchors with compact target previews.",
   parameters: Type.Object({}),
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
-    const sm = SessionManager.open(await getTargetSessionPath(ctx));
+    const targetSessionPath = await getTargetSessionPath(ctx);
+    const sm = SessionManager.open(targetSessionPath);
     const currentBranchIds = new Set(sm.getBranch().map((e) => e.id));
     const seen = new Set<string>();
 

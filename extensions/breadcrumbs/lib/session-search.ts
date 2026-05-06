@@ -188,7 +188,8 @@ export function readSessionFileMetadata(
     };
     try {
       header = JSON.parse(lines[0]);
-    } catch {
+    } catch (_error) {
+      void _error;
       return null;
     }
 
@@ -220,7 +221,8 @@ export function readSessionFileMetadata(
         }
 
         if (messageCount > 0 && firstMessage && sessionName) break;
-      } catch {
+      } catch (_error) {
+        void _error;
         // Skip invalid lines
       }
     }
@@ -234,7 +236,8 @@ export function readSessionFileMetadata(
       firstMessage: firstMessage || "(no messages yet)",
       sessionName,
     };
-  } catch {
+  } catch (_error) {
+    void _error;
     return null;
   }
 }
@@ -340,7 +343,8 @@ export function listSessions(
   try {
     statSync(exactDir);
     matchingDirs.push(exactDir);
-  } catch {
+  } catch (_error) {
+    void _error;
     // Directory doesn't exist
   }
 
@@ -364,13 +368,15 @@ export function listSessions(
               if (statSync(childDir).isDirectory()) {
                 matchingDirs.push(childDir);
               }
-            } catch {
+            } catch (_error) {
+              void _error;
               // Skip unreadable
             }
           }
         }
       }
-    } catch {
+    } catch (_error) {
+      void _error;
       // Can't read sessions dir
     }
   }
@@ -403,7 +409,8 @@ export function listSessions(
           firstMessage: meta.firstMessage,
         });
       }
-    } catch {
+    } catch (_error) {
+      void _error;
       // Skip unreadable directories
     }
   }

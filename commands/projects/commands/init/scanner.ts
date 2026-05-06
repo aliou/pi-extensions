@@ -121,7 +121,8 @@ export async function scanProject(cwd: string): Promise<ProjectStack> {
       for (const l of result.languages ?? []) languages.add(l);
       for (const f of result.frameworks ?? []) frameworks.add(f);
       for (const t of result.tools ?? []) tools.add(t);
-    } catch {
+    } catch (_error) {
+      void _error;
       // skip unreadable files
     }
   }
@@ -195,11 +196,13 @@ function scanForProjects(
       if (name.startsWith(".") || SKIP_DIRS.has(name)) return false;
       try {
         return statSync(resolve(dir, name)).isDirectory();
-      } catch {
+      } catch (_error) {
+        void _error;
         return false;
       }
     });
-  } catch {
+  } catch (_error) {
+    void _error;
     return;
   }
 

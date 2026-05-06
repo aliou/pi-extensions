@@ -50,7 +50,8 @@ async function searchAll(
       );
     }
 
-    const data = (await res.json()) as SearchResponse;
+    const json = await res.json();
+    const data = json as SearchResponse;
     hits.push(...data.objects);
 
     if (hits.length >= data.total) break;
@@ -71,8 +72,10 @@ async function fetchPackageMetadata(
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
-    return (await res.json()) as PackageMetadata;
-  } catch {
+    const json = await res.json();
+    return json as PackageMetadata;
+  } catch (_error) {
+    void _error;
     return null;
   }
 }

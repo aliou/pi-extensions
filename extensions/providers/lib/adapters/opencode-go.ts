@@ -420,7 +420,8 @@ function parseSubscriptionText(
     const obj = JSON.parse(text);
     const result = parseSubscriptionFromJSON(obj, now);
     if (result) return result;
-  } catch {
+  } catch (_error) {
+    void _error;
     // Not JSON, try regex.
   }
 
@@ -570,7 +571,8 @@ async function fetchServerText(
       try {
         const obj = JSON.parse(text);
         message = obj.message || obj.error || obj.detail || message;
-      } catch {
+      } catch (_error) {
+        void _error;
         // Not JSON.
       }
     } catch (e) {
@@ -606,7 +608,8 @@ async function fetchWorkspaceID(
     try {
       const obj = JSON.parse(text);
       ids = parseWorkspaceIDsFromJSON(obj);
-    } catch {
+    } catch (_error) {
+      void _error;
       // Ignore.
     }
   }
@@ -627,7 +630,8 @@ async function fetchWorkspaceID(
       try {
         const obj = JSON.parse(fallback);
         ids = parseWorkspaceIDsFromJSON(obj);
-      } catch {
+      } catch (_error) {
+        void _error;
         // Ignore.
       }
     }
@@ -685,8 +689,8 @@ export const opencodeGoAdapter: ProviderAdapter = {
     const credential = authStorage.get("opencode-go-usage") as
       | { type: string; key?: string }
       | undefined;
-    const rawCookie =
-      credential?.key ?? (await authStorage.getApiKey("opencode-go-usage"));
+    const storedCookie = await authStorage.getApiKey("opencode-go-usage");
+    const rawCookie = credential?.key ?? storedCookie;
 
     if (!rawCookie) {
       return {
