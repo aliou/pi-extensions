@@ -11,7 +11,7 @@
     "./tmpdir": "./tmpdir.ts"
   },
   "dependencies": {
-    "@mariozechner/pi-coding-agent": "0.69.0",
+    "@mariozechner/pi-coding-agent": "0.73.0",
     "vitest": "^4.0.18"
   }
 }

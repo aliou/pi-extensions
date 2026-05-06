@@ -5,7 +5,6 @@
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   getXDGPaths,
@@ -14,6 +13,7 @@ import {
   type SearchResult as SesameSearchResult,
   search,
 } from "@aliou/sesame";
+import { getAgentDir } from "@mariozechner/pi-coding-agent";
 
 export interface SessionSearchResult {
   id: string;
@@ -78,9 +78,7 @@ export function parseRelativeDate(input: string): Date | null {
  * Get the sessions directory, respecting PI_CODING_AGENT_DIR env var.
  */
 export function getSessionsDir(): string {
-  const agentDir =
-    process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
-  return join(agentDir, "sessions");
+  return join(getAgentDir(), "sessions");
 }
 
 /**

@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import type {
@@ -6,6 +5,7 @@ import type {
   ExtensionContext,
   ToolCallEvent,
 } from "@mariozechner/pi-coding-agent";
+import { getAgentDir } from "@mariozechner/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import protectSessionsDirHook, { _resetForTesting } from "./index";
 
@@ -13,14 +13,8 @@ import protectSessionsDirHook, { _resetForTesting } from "./index";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getSessionsDir(): string {
-  const agentDir =
-    process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
-  return join(agentDir, "sessions");
-}
-
 function sessionFile(relativePath: string): string {
-  return resolve(getSessionsDir(), relativePath);
+  return resolve(join(getAgentDir(), "sessions"), relativePath);
 }
 
 /** Build a mock ExtensionAPI that captures tool_call handlers. */
@@ -289,7 +283,7 @@ describe("protect-sessions-dir", () => {
     // Actually: the command has no "/" and no literal sessions dir reference,
     // so it would NOT be gated. We need a command that references sessions dir
     // via an unresolvable path.
-    const sessionsDir = getSessionsDir();
+    const sessionsDir = join(getAgentDir(), "sessions");
     const ambiguousCmd = `cat ${sessionsDir}/$VAR/file.json`;
     const ambiguousEvent = bashToolEvent(ambiguousCmd);
 
@@ -353,7 +347,7 @@ describe("protect-sessions-dir", () => {
     // A command with variable substitution in the path cannot have its
     // paths reconstructed from the AST. The literal sessions dir in the
     // command string triggers ambiguous mode.
-    const sessionsDir = getSessionsDir();
+    const sessionsDir = join(getAgentDir(), "sessions");
     const cmdWithVar = `cat "${sessionsDir}/$UNRESOLVABLE/file.json"`;
     const event = bashToolEvent(cmdWithVar);
 

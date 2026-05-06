@@ -2,8 +2,8 @@
  * Session directory path utilities and approval state.
  */
 
-import { homedir } from "node:os";
 import { isAbsolute, join, relative, resolve } from "node:path";
+import { getAgentDir } from "@mariozechner/pi-coding-agent";
 
 // ---------------------------------------------------------------------------
 // Approval state (module scope, per Pi runtime)
@@ -22,10 +22,8 @@ export function _resetForTesting(): void {
 // Session dir helpers
 // ---------------------------------------------------------------------------
 
-export function getSessionsDir(): string {
-  const agentDir =
-    process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
-  return join(agentDir, "sessions");
+function getSessionsDir(): string {
+  return join(getAgentDir(), "sessions");
 }
 
 /**
