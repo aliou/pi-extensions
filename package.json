@@ -28,7 +28,6 @@
     "postinstall": "./scripts/build-native-tools.sh"
   },
   "dependencies": {
-    "@aliou/pi-linkup": "^0.7.1",
     "@aliou/pi-utils-settings": "^0.11.2",
     "@aliou/pi-utils-ui": "^0.1.4",
     "@aliou/sesame": "^0.4.0",
@@ -36,11 +35,7 @@
     "@harness/agent-kit": "workspace:*",
     "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",
-    "@harness/utils": "workspace:*",
-    "better-sqlite3": "^12.6.2",
-    "diff": ">=8.0.0",
-    "xxhash-wasm": "^1.1.0",
-    "yaml": "^2.8.2"
+    "@harness/utils": "workspace:*"
   },
   "devDependencies": {
     "@aliou/biome-plugins": "^0.8.1",
@@ -50,10 +45,7 @@
     "@mariozechner/pi-ai": "0.69.0",
     "@mariozechner/pi-coding-agent": "0.69.0",
     "@mariozechner/pi-tui": "0.69.0",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
-    "@typescript/native-preview": "7.0.0-dev.20260501.1",
-    "tsx": "^4.20.5",
     "typebox": "*",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
@@ -66,8 +58,7 @@
       "@mariozechner/pi-tui": "$@mariozechner/pi-coding-agent"
     },
     "onlyBuiltDependencies": [
-      "@aliou/sh",
-      "better-sqlite3"
+      "@aliou/sh"
     ]
   },
   "packageManager": "pnpm@10.26.1"
