@@ -87,9 +87,9 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
     promptSnippet:
       "List recent Pi sessions for a directory, optionally including child directories.",
     promptGuidelines: [
-      "Use this tool to list sessions for a specific directory without keyword search.",
-      "Use depth > 0 to include sessions from child directories.",
-      "Do not use this for keyword search (use find_sessions instead).",
+      "list_sessions: Use to list sessions for a specific directory without keyword search.",
+      "list_sessions: Use depth > 0 to include sessions from child directories.",
+      "list_sessions: Do not use for keyword search (use find_sessions instead).",
     ],
 
     parameters: ListSessionsParams,

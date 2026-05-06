@@ -24,6 +24,11 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     label: "Reviewer",
     description:
       "Formal code review subagent for reviewing diffs without running checks.",
+    promptGuidelines: [
+      "reviewer: Use for formal code review of diffs and code changes.",
+      "reviewer: Does not run checks or tests -- only reviews code statically.",
+      "reviewer: Do not use for general questions or file reads -- use oracle or read instead.",
+    ],
     systemPrompt: REVIEWER_SYSTEM_PROMPT,
     parameters: ReviewerParams,
     buildPrompt,

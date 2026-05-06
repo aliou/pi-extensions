@@ -38,6 +38,11 @@ function createReadUrlTool(_pi: ExtensionAPI) {
     description:
       "Fetch a URL as Markdown via handlers with markdown.new fallback.",
     parameters: ReadUrlParams,
+    promptGuidelines: [
+      "read_url: Use for finding documentation, articles, recent information, or any web content.",
+      "read_url: Write specific queries with names, dates, versions, or locations for best results.",
+      "read_url: Results are fresh and not cached.",
+    ],
 
     async execute(_toolCallId, params, signal, _onUpdate, _ctx) {
       return executeReadUrlRequest(

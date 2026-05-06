@@ -144,9 +144,9 @@ RESULTS: Returns matching sessions with metadata including name, directory, date
 Uses Sesame indexed search.`,
     promptSnippet: "Find previous Pi sessions by topic, date, or project.",
     promptGuidelines: [
-      "Use this tool when the user explicitly asks to find or search for a previous session or conversation.",
-      "Use this when the user wants past sessions by topic, date, or project.",
-      "Do not use this for the current session or for general codebase search.",
+      "find_sessions: Use when the user explicitly asks to find or search for a previous session or conversation.",
+      "find_sessions: Use when the user wants past sessions by topic, date, or project.",
+      "find_sessions: Do not use for the current session or for general codebase search.",
     ],
 
     parameters: FindSessionsParams,

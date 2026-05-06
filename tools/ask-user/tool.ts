@@ -35,6 +35,14 @@ WHEN NOT TO USE:
 
 Prefer making a decision and letting the user correct you over asking. Most questions slow the user down more than a wrong guess.`,
 
+    promptGuidelines: [
+      "ask_user: Use when there is genuine ambiguity and no option is clearly better.",
+      "ask_user: Use for irreversible actions (destructive changes, publishing, deploying).",
+      "ask_user: Do not use when you can make a reasonable default choice -- just do it.",
+      "ask_user: Do not use for low-stakes decisions or yes/no confirmations for routine actions.",
+      "ask_user: Prefer making a decision and letting the user correct you over asking.",
+    ],
+
     parameters: AskUserQuestionParams,
 
     async execute(

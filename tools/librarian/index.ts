@@ -13,6 +13,10 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     label: "Librarian",
     description:
       "Remote codebase-understanding subagent for deep multi-repository analysis.",
+    promptGuidelines: [
+      "librarian: Use for deep multi-repository or cross-codebase analysis.",
+      "librarian: Do not use for simple file or content searches within a single project -- use find/grep instead.",
+    ],
     systemPrompt: LIBRAIAN_SYSTEM_PROMPT,
     parameters: LibrarianParams,
     buildPrompt,

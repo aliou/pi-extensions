@@ -27,6 +27,11 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     label: "Oracle",
     description:
       "Senior advisor subagent for technical guidance, code review, architecture advice, and planning.",
+    promptGuidelines: [
+      "oracle: Use for senior-level technical guidance, architecture advice, and planning.",
+      "oracle: Use for code review when you need a second opinion on design decisions.",
+      "oracle: Do not use for simple lookups or file reads -- use read/grep/find instead.",
+    ],
     systemPrompt: ORACLE_SYSTEM_PROMPT,
     parameters: OracleParams,
     buildPrompt,

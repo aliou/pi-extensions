@@ -59,11 +59,11 @@ export default function (pi: ExtensionAPI): void {
     ...nativeBash,
     parameters: schema,
     promptGuidelines: [
-      "When a command should run in another directory, set cwd and keep command free of leading 'cd', 'pushd', or similar directory-changing shell wrappers.",
-      "Do not use patterns like 'cd dir && command', 'cd dir; command', or 'pushd dir && command'.",
-      "Use the cwd parameter instead of 'cd dir && command'.",
-      "Reserve bash for git, build/test, package managers, ssh, curl, and process management.",
-      "Prefer native tools like read, find, grep, edit, and write over shell commands when available.",
+      "bash: When a command should run in another directory, set cwd and keep command free of leading 'cd', 'pushd', or similar directory-changing shell wrappers.",
+      "bash: Do not use patterns like 'cd dir && command', 'cd dir; command', or 'pushd dir && command'.",
+      "bash: Use the cwd parameter instead of 'cd dir && command'.",
+      "bash: Reserve bash for git, build/test, package managers, ssh, curl, and process management.",
+      "bash: Prefer native tools like read, find, grep, edit, and write over shell commands when available.",
     ],
     renderCall(args, theme) {
       return renderCall(args, theme, homedir);

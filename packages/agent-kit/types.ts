@@ -45,6 +45,7 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   name: string;
   label: string;
   description: string;
+  promptGuidelines?: string[];
   systemPrompt: string;
   tools: SubagentToolSpec[];
   skills?: Skill[];

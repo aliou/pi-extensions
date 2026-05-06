@@ -56,7 +56,10 @@ function createGrepTool(pi: ExtensionAPI) {
     description: `Search file contents for a pattern. Returns matching lines with file paths and line numbers. Respects .gitignore. Output is truncated to ${DEFAULT_LIMIT} matches or 50KB (whichever is hit first). Long lines are truncated to 500 chars.`,
     parameters: WrappedSchema,
     promptGuidelines: [
-      "Search file contents for patterns (respects .gitignore)",
+      "grep: Search file contents for patterns (respects .gitignore).",
+      "grep: Use literal=true when searching for strings with special regex characters (e.g. symbols, paths).",
+      "grep: Use glob to narrow search to specific file types (e.g. '*.ts', '**/*.spec.ts').",
+      "grep: Use context to show surrounding lines for understanding match context.",
     ],
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       const {

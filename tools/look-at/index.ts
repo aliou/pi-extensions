@@ -44,6 +44,12 @@ Always provide a clear objective describing what you want to learn from the imag
 - For source code or plain text files where you need exact contents -- use read instead
 - When you need to edit the file afterward
 - For simple file reading where no interpretation is needed`,
+    promptGuidelines: [
+      "look_at: Use when you need to understand or extract information from an image file.",
+      "look_at: Do not use for source code or plain text files -- use read instead.",
+      "look_at: Always provide a clear objective describing what you want to learn from the image.",
+      "look_at: Use context parameter to provide broader context about why you need the analysis.",
+    ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],
     models: MODEL_CANDIDATES,

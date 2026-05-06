@@ -44,6 +44,7 @@ export function defineSubagent<Params extends TSchema>(
     name: config.name,
     label: config.label,
     description: config.description,
+    promptGuidelines: config.promptGuidelines,
     parameters: config.parameters,
     renderCall: (args, theme, ctx) =>
       renderSubagentCall(config, args, theme, ctx),
