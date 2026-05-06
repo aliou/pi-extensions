@@ -1,10 +1,10 @@
 import { existsSync, lstatSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { relative, resolve } from "node:path";
+import { relative } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { defineTool, truncateLine } from "@mariozechner/pi-coding-agent";
 import { Type } from "typebox";
 import { BLOCKED_PATHS } from "./blocked-paths";
+import { resolveSearchPaths } from "./path-utils";
 import { renderCall } from "./render";
 import type { GrepMatchData, HarnessGrepDetails, RgMatch } from "./types";
 
@@ -76,28 +76,34 @@ function createGrepTool(pi: ExtensionAPI) {
         throw new Error("Operation aborted");
       }
 
-      let resolvedPath = searchDir || ".";
-      if (resolvedPath === "~" || resolvedPath.startsWith("~/")) {
-        resolvedPath = resolvedPath.replace(/^~/, homedir());
-      }
-      const absoluteSearchPath = resolve(ctx.cwd, resolvedPath);
+      const rawSearchPath = searchDir || ".";
+      const absoluteSearchPaths = resolveSearchPaths(ctx.cwd, rawSearchPath);
+      const absoluteSearchPath = absoluteSearchPaths[0] ?? ctx.cwd;
 
-      if (BLOCKED_PATHS.has(absoluteSearchPath)) {
-        throw new Error(
-          `Searching '${absoluteSearchPath}' is not allowed — too broad. Narrow the search to a specific project or subdirectory.`,
-        );
+      for (const path of absoluteSearchPaths) {
+        if (BLOCKED_PATHS.has(path)) {
+          throw new Error(
+            `Searching '${path}' is not allowed — too broad. Narrow the search to a specific project or subdirectory.`,
+          );
+        }
+
+        if (!existsSync(path)) {
+          throw new Error(`Path not found: ${path}`);
+        }
       }
 
-      if (!existsSync(absoluteSearchPath)) {
-        throw new Error(`Path not found: ${absoluteSearchPath}`);
+      const isDirectoryByPath = new Map<string, boolean>();
+      for (const path of absoluteSearchPaths) {
+        try {
+          isDirectoryByPath.set(path, lstatSync(path).isDirectory());
+        } catch {
+          throw new Error(`Cannot stat path: ${path}`);
+        }
       }
 
-      let isDirectory = false;
-      try {
-        isDirectory = lstatSync(absoluteSearchPath).isDirectory();
-      } catch {
-        throw new Error(`Cannot stat path: ${absoluteSearchPath}`);
-      }
+      const isSingleDirectory =
+        absoluteSearchPaths.length === 1 &&
+        (isDirectoryByPath.get(absoluteSearchPaths[0] ?? "") ?? false);
 
       const contextValue = context && context > 0 ? context : 0;
       const effectiveLimit = Math.max(1, limit ?? DEFAULT_LIMIT);
@@ -106,7 +112,7 @@ function createGrepTool(pi: ExtensionAPI) {
       if (ignoreCase) rgArgs.push("--ignore-case");
       if (literal) rgArgs.push("--fixed-strings");
       if (glob) rgArgs.push("--glob", glob);
-      rgArgs.push(pattern, absoluteSearchPath);
+      rgArgs.push(pattern, ...absoluteSearchPaths);
 
       const result = await pi.exec("rg", rgArgs, {
         signal: signal ?? undefined,
@@ -163,9 +169,16 @@ function createGrepTool(pi: ExtensionAPI) {
 
       // Format path relative to search directory
       const formatPath = (filePath: string): string => {
-        if (isDirectory) {
+        if (absoluteSearchPaths.length > 1) {
+          const rel = relative(ctx.cwd, filePath);
+          if (rel && !rel.startsWith("..")) return rel.replace(/\\/g, "/");
+          return filePath.replace(/\\/g, "/");
+        }
+
+        const singleSearchPath = absoluteSearchPaths[0] ?? absoluteSearchPath;
+        if (isSingleDirectory) {
           const rel = filePath
-            .slice(absoluteSearchPath.length)
+            .slice(singleSearchPath.length)
             .replace(/^[/\\]/, "");
           if (rel) return rel.replace(/\\/g, "/");
         }
@@ -242,7 +255,10 @@ function createGrepTool(pi: ExtensionAPI) {
         matchCount,
         matches: matchData,
         relativeTo:
-          isDirectory && searchDir && searchDir !== "." && searchDir !== "./"
+          isSingleDirectory &&
+          searchDir &&
+          searchDir !== "." &&
+          searchDir !== "./"
             ? relative(ctx.cwd, absoluteSearchPath) || "."
             : undefined,
       };
