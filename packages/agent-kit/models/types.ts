@@ -10,5 +10,5 @@ export interface SubagentModel {
 export interface SubagentResolvedModel {
   provider: string;
   model: string;
-  thinkingLevel: ThinkingLevel;
+  thinkingLevel: ThinkingLevel | "off";
 }

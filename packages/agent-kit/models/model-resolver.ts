@@ -4,7 +4,7 @@ import type { SubagentModel, SubagentResolvedModel } from "./types";
 
 export interface SubagentModelSelection {
   model: Model<Api>;
-  thinkingLevel: ThinkingLevel;
+  thinkingLevel: ThinkingLevel | "off";
   record: SubagentResolvedModel;
 }
 
@@ -99,7 +99,7 @@ export class SubagentModelResolver {
 
   private normalizeThinkingLevel(
     thinkingLevel: ThinkingLevel | "off",
-  ): ThinkingLevel {
-    return thinkingLevel === "off" ? "low" : thinkingLevel;
+  ): ThinkingLevel | "off" {
+    return thinkingLevel;
   }
 }
