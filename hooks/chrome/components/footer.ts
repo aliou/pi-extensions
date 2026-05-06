@@ -160,11 +160,12 @@ export function createCustomFooter(pi: ExtensionAPI) {
       );
 
       const thinkingLevel = pi.getThinkingLevel();
+      const hasReasoning = !!ctx.model?.reasoning;
       const modelLine = buildModelLine(
         theme,
         ctx.model?.provider,
         ctx.model?.id,
-        !!ctx.model?.reasoning,
+        hasReasoning,
         thinkingLevel ?? "off",
         codexFastModeEnabled,
       );

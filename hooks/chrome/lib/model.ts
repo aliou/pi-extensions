@@ -37,11 +37,13 @@ export function buildModelLine(
 ): string {
   const prefix = getCodexStatusPrefix(provider, codexFastModeEnabled);
   const providerName = `${prefix}${provider ?? "unknown"}`;
-  const modelLine = `${providerName}/${modelId ?? "no-model"}`;
+  const modelPart = `${providerName}/${modelId ?? "no-model"}:`;
 
-  if (hasReasoning && thinkingLevel !== "off") {
-    const formattedLevel = thinkingLevel.slice(0, 3); // min, med, max
-    const modelPart = `${providerName}/${modelId}:`;
+  if (hasReasoning) {
+    const formattedLevel =
+      thinkingLevel !== "off"
+        ? thinkingLevel.slice(0, 3) // min, med, max
+        : "off";
     const thinkingColorToken = thinkingLevelToColorToken(thinkingLevel);
     return (
       theme.fg("thinkingMinimal", modelPart) +
@@ -49,7 +51,9 @@ export function buildModelLine(
     );
   }
 
-  return theme.fg("thinkingMinimal", modelLine);
+  return (
+    theme.fg("thinkingMinimal", modelPart) + theme.fg("thinkingOff", "none")
+  );
 }
 
 /**
