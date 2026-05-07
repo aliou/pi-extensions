@@ -12,7 +12,7 @@ const ENVRC_EXTRAS = `## .envrc extras (add as needed)
 - \`export DIRENV_WARN_TIMEOUT=0\` if builds are slow
 - Layout blocks (\`layout node\`, \`layout bun\`) guarded by \`if has ...\`
 - If this is a monorepo child, consider \`source_up\`
-- If \`pi\` / \`@mariozechner/pi-coding-agent\` is in package.json, use \`layout node --deny pi\` (or \`layout bun --deny pi\`) to prevent the local pi from overriding the global one`;
+- If \`pi\` / \`@earendil-works/pi-coding-agent\` is in package.json, use \`layout node --deny pi\` (or \`layout bun --deny pi\`) to prevent the local pi from overriding the global one`;
 
 const SHELL_NIX_PATTERN = `### shell.nix pattern
 

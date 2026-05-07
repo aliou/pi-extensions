@@ -1,8 +1,8 @@
 import type {
   AgentToolResult,
   ExtensionAPI,
-} from "@mariozechner/pi-coding-agent";
-import { createReadTool, defineTool } from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { createReadTool, defineTool } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { executeReadUrlRequest } from "./fetch";
 import {

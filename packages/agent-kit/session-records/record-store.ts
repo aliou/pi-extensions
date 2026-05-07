@@ -3,7 +3,7 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   SessionEntry,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { isSubagentResolvedModel } from "../models";
 import {
   SUBAGENT_SESSION_CUSTOM_TYPE,

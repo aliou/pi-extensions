@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 import type {
   BashSpawnContext,
   ExtensionAPI,
-} from "@mariozechner/pi-coding-agent";
-import { createBashTool } from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { createBashTool } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { renderCall, renderResult } from "./render";
 import {

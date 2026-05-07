@@ -1,4 +1,4 @@
-import type { FindToolDetails } from "@mariozechner/pi-coding-agent";
+import type { FindToolDetails } from "@earendil-works/pi-coding-agent";
 
 export interface HarnessFindDetails extends FindToolDetails {
   relativeTo?: string;

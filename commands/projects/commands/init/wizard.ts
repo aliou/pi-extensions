@@ -18,10 +18,10 @@ import {
   Wizard,
   type WizardStepContext,
 } from "@aliou/pi-utils-settings";
-import type { ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
-import { getSettingsListTheme } from "@mariozechner/pi-coding-agent";
-import type { Component, SettingsListTheme } from "@mariozechner/pi-tui";
-import { Input, Key, matchesKey } from "@mariozechner/pi-tui";
+import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import { getSettingsListTheme } from "@earendil-works/pi-coding-agent";
+import type { Component, SettingsListTheme } from "@earendil-works/pi-tui";
+import { Input, Key, matchesKey } from "@earendil-works/pi-tui";
 import type { CatalogEntry } from "./catalog";
 import { scanRegistry } from "./catalog";
 import { getInstalled, readSettings } from "./installer";

@@ -3,8 +3,8 @@ import type {
   AgentToolResult,
   Theme,
   ToolRenderResultOptions,
-} from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import type { Static } from "typebox";
 import type { AskUserQuestionParams } from "./schema";
 import type { Answer, AskUserQuestionDetails, Question } from "./types";

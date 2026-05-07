@@ -1,4 +1,4 @@
-import type { ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 import { formatTokens } from "./utils";
 
 // Context usage thresholds for color coding

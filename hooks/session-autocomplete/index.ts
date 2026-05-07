@@ -7,7 +7,7 @@
  * message and is resolved to hidden context in `before_agent_start`.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { openSesameDb, resolveSessionRefFromDb } from "./db";
 import { createSessionAutocompleteProvider } from "./provider";
 import { tildePath } from "./search";

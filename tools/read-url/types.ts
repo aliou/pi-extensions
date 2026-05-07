@@ -1,4 +1,4 @@
-import type { AgentToolResult } from "@mariozechner/pi-coding-agent";
+import type { AgentToolResult } from "@earendil-works/pi-coding-agent";
 import { type Static, Type } from "typebox";
 
 export const ReadUrlParams = Type.Object({

@@ -1,12 +1,12 @@
 import type {
   MessageRenderOptions,
   Theme,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import {
   getMarkdownTheme,
   SessionManager,
-} from "@mariozechner/pi-coding-agent";
-import { Box, Markdown, Text } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { Box, Markdown, Text } from "@earendil-works/pi-tui";
 import { messageContentToText } from "./helpers";
 import type {
   SessionLinkMarkerDetails,

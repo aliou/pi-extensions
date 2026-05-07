@@ -1,5 +1,5 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import type { SelectItem } from "@mariozechner/pi-tui";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { SelectItem } from "@earendil-works/pi-tui";
 import { ThemeSelector } from "./components/theme-selector";
 
 export default async function (pi: ExtensionAPI) {

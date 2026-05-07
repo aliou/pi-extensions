@@ -12,7 +12,7 @@ import type {
   ToolCall,
   ToolResultMessage,
   UserMessage,
-} from "@mariozechner/pi-ai";
+} from "@earendil-works/pi-ai";
 import type {
   AgentToolResult,
   CompactionEntry as PiCompactionEntry,
@@ -20,8 +20,8 @@ import type {
   SessionHeader,
   SessionMessageEntry,
   ToolDefinition,
-} from "@mariozechner/pi-coding-agent";
-import { parseSessionEntries as parseSessionEntriesImpl } from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { parseSessionEntries as parseSessionEntriesImpl } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 // Re-export types for backward compatibility
@@ -29,7 +29,7 @@ export type {
   SessionEntry,
   SessionHeader,
   SessionMessageEntry,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 /**
  * Tool call extracted from assistant message.

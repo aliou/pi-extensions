@@ -1,7 +1,7 @@
 import { join } from "node:path";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { getAgentDir } from "@mariozechner/pi-coding-agent";
 import { MODEL_OVERRIDES } from "./config";
 import { applyModelOverrides, collectDriftedModelOverrides } from "./drift";
 import { formatModelOverrideLines } from "./format";

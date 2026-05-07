@@ -1,6 +1,6 @@
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineSubagent } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, ORACLE_SYSTEM_PROMPT } from "./prompt";
 import { OracleParams } from "./types";

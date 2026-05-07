@@ -1,3 +1,8 @@
+import type {
+  AutocompleteItem,
+  AutocompleteProvider,
+  AutocompleteSuggestions,
+} from "@earendil-works/pi-tui";
 import {
   createPrefixCompletionItem,
   extractPrefixCandidate,
@@ -5,11 +10,6 @@ import {
   replaceAutocompletePrefix,
 } from "@harness/completion";
 import { formatRelativeTime } from "@harness/utils/formatters";
-import type {
-  AutocompleteItem,
-  AutocompleteProvider,
-  AutocompleteSuggestions,
-} from "@mariozechner/pi-tui";
 import { listLocalBranches } from "./git";
 import {
   GIT_BRANCH_PREFIX,

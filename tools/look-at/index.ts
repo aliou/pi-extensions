@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineSubagent } from "@harness/agent-kit";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { MODEL_CANDIDATES } from "./models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
 import { LookAtParams } from "./types";

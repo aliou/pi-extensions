@@ -1,4 +1,4 @@
-import type { TextContent } from "@mariozechner/pi-ai";
+import type { TextContent } from "@earendil-works/pi-ai";
 
 export function textContent(text: string): TextContent {
   return { type: "text", text };

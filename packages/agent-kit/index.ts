@@ -1,4 +1,4 @@
-import { defineTool, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
 import { SubagentModelResolver } from "./models";
 import {

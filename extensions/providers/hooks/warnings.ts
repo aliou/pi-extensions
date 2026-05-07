@@ -1,8 +1,8 @@
-import { formatTimeRemaining } from "@harness/utils/formatters";
 import type {
   ExtensionAPI,
   ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { formatTimeRemaining } from "@harness/utils/formatters";
 import { getProviderSettings } from "../config";
 import { fetchProvider, toProviderKey } from "../lib/adapters";
 import { findHighRiskLimits } from "../lib/engine";

@@ -1,7 +1,7 @@
 import type {
   ExtensionAPI,
   ToolDefinition,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 const Params = Type.Object({

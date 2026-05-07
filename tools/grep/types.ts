@@ -1,4 +1,4 @@
-import type { GrepToolDetails } from "@mariozechner/pi-coding-agent";
+import type { GrepToolDetails } from "@earendil-works/pi-coding-agent";
 
 export interface RgMatch {
   filePath: string;

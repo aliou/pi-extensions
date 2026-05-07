@@ -1,10 +1,10 @@
+import type { Theme } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import type {
   SubagentToolCall,
   SubagentToolSpec,
 } from "@harness/agent-kit/types";
 import { truncate } from "@harness/utils";
-import type { Theme } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
 import { branchEntries } from "./branch-entries";
 import { findEntries } from "./find-entries";
 import { labels } from "./labels";

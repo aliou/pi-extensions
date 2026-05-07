@@ -2,7 +2,7 @@
  * Helper functions for the spawn command.
  */
 
-import type { SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
 /**
  * Extract plain text from a message content array or string.

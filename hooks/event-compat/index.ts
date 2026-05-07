@@ -1,5 +1,5 @@
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { AD_NOTIFY_DANGEROUS_EVENT } from "@harness/events";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 type EventMapper = (data: unknown) => Record<string, unknown> | undefined;
 

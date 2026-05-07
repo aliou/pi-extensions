@@ -2,13 +2,13 @@ import {
   BorderedLoader,
   type ExtensionAPI,
   type Theme,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import {
   type Component,
   matchesKey,
   visibleWidth,
   wrapTextWithAnsi,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import { fetchAllProviders } from "../lib/adapters";
 import { getSeverityColor } from "../lib/engine";
 import type {

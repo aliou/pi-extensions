@@ -1,7 +1,10 @@
+import type { AssistantMessage, UserMessage } from "@earendil-works/pi-ai";
+import type {
+  ExtensionAPI,
+  SessionEntry,
+} from "@earendil-works/pi-coding-agent";
 import { defineSubagent } from "@harness/agent-kit";
 import { isBlank } from "@harness/utils/string";
-import type { AssistantMessage, UserMessage } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, SessionEntry } from "@mariozechner/pi-coding-agent";
 import { Type } from "typebox";
 import { MODEL_CANDIDATES } from "./models";
 import {

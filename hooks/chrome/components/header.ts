@@ -9,9 +9,9 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   Theme,
-} from "@mariozechner/pi-coding-agent";
-import { rawKeyHint } from "@mariozechner/pi-coding-agent";
-import { Container, Spacer, Text } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { rawKeyHint } from "@earendil-works/pi-coding-agent";
+import { Container, Spacer, Text } from "@earendil-works/pi-tui";
 
 // Custom commands defined in harness extensions.
 const COMMANDS: { name: string; description: string }[] = [

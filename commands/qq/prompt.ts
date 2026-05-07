@@ -1,9 +1,9 @@
-import type { ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import {
   buildSessionContext,
   convertToLlm,
   serializeConversation,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { QQ_SYSTEM_REMINDER } from "./lib/system-prompt";
 
 export function buildQqPrompt(

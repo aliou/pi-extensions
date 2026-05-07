@@ -1,4 +1,4 @@
-import type { Skill } from "@mariozechner/pi-coding-agent";
+import type { Skill } from "@earendil-works/pi-coding-agent";
 import type { SubagentResolvedModel } from "../models";
 
 export const SUBAGENT_SESSION_CUSTOM_TYPE = "subagent_session" as const;

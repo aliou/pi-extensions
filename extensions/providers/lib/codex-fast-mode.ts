@@ -1,4 +1,4 @@
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 export const CODEX_FAST_ENTRY_TYPE = "providers-codex-fast";
 export const DEFAULT_CODEX_FAST_MODE_ENABLED = true;

@@ -13,7 +13,7 @@ import {
   type SearchResult as SesameSearchResult,
   search,
 } from "@aliou/sesame";
-import { getAgentDir } from "@mariozechner/pi-coding-agent";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 
 export interface SessionSearchResult {
   id: string;

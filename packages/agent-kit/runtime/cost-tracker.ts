@@ -1,5 +1,5 @@
-import type { AssistantMessage, Usage } from "@mariozechner/pi-ai";
-import type { AgentSessionEvent } from "@mariozechner/pi-coding-agent";
+import type { AssistantMessage, Usage } from "@earendil-works/pi-ai";
+import type { AgentSessionEvent } from "@earendil-works/pi-coding-agent";
 
 type MessageEndEvent = Extract<AgentSessionEvent, { type: "message_end" }>;
 

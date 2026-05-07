@@ -1,5 +1,5 @@
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineSubagent } from "@harness/agent-kit";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { MODEL_CANDIDATES } from "./models";
 import { SYSTEM_PROMPT } from "./prompt";
 import { tools } from "./tools";

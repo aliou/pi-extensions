@@ -1,5 +1,5 @@
-import { getMarkdownTheme, type Theme } from "@mariozechner/pi-coding-agent";
-import { Markdown, Text } from "@mariozechner/pi-tui";
+import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
+import { Markdown, Text } from "@earendil-works/pi-tui";
 import type { SubagentToolCall } from "../types";
 import { extractParagraphs } from "./utils";
 

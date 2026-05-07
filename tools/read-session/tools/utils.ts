@@ -1,12 +1,12 @@
 import { globSync } from "node:fs";
 import { basename, join } from "node:path";
-import { isEmptyArray, isNil, isSoleArray } from "@harness/utils";
 import {
   type CustomEntry,
   type ExtensionContext,
   getAgentDir,
   type SessionEntry,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { isEmptyArray, isNil, isSoleArray } from "@harness/utils";
 import type { ReadSessionState } from "../types";
 
 const isReadSessionStateEntry = (

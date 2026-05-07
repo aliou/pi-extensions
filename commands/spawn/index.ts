@@ -8,8 +8,8 @@
  * custom message types so they display nicely in the TUI.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { SessionManager } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { SessionManager } from "@earendil-works/pi-coding-agent";
 import {
   buildSpawnSourceContent,
   getLastAssistantTextFromEntries,

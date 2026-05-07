@@ -1,5 +1,5 @@
-import { getSelectListTheme } from "@mariozechner/pi-coding-agent";
-import { Container, type SelectItem, SelectList } from "@mariozechner/pi-tui";
+import { getSelectListTheme } from "@earendil-works/pi-coding-agent";
+import { Container, type SelectItem, SelectList } from "@earendil-works/pi-tui";
 
 export class ThemeSelector extends Container {
   private selectList: SelectList;

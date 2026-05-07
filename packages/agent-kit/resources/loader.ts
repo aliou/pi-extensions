@@ -7,7 +7,7 @@ import {
   type ResourceLoader,
   type Skill,
   type Theme,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 export class SubagentResourceLoader implements ResourceLoader {
   private extensionsResult: LoadExtensionsResult = {

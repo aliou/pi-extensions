@@ -1,9 +1,9 @@
 import type {
   AgentToolResult,
   ToolRenderResultOptions,
-} from "@mariozechner/pi-coding-agent";
-import { getMarkdownTheme, type Theme } from "@mariozechner/pi-coding-agent";
-import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
+import { Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
 import type { SubagentConfig } from "../../types";
 import type { SubagentDetails, SubagentToolCall } from "../types";
 import { renderThinking, renderToolCall } from "./activity";

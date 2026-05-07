@@ -6,14 +6,14 @@ import type {
   AgentToolResult,
   Theme,
   ToolRenderResultOptions,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import {
   DEFAULT_MAX_BYTES,
   formatSize,
   keyHint,
   truncateToVisualLines,
-} from "@mariozechner/pi-coding-agent";
-import { Box, Text, truncateToWidth } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { Box, Text, truncateToWidth } from "@earendil-works/pi-tui";
 import { sanitizeShellOutput } from "./sanitize";
 
 /** Lines to show when collapsed. Matches the native bash tool. */

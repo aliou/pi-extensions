@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import { isNil } from "@harness/utils/nil";
 import {
   type AgentSession,
   createAgentSession,
@@ -9,7 +8,8 @@ import {
   type SessionStartEvent,
   SettingsManager,
   type Skill,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { isNil } from "@harness/utils/nil";
 import type { TSchema } from "typebox";
 import type { SubagentModelResolver, SubagentModelSelection } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";

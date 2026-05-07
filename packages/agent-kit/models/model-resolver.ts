@@ -1,5 +1,5 @@
-import type { Api, Model, ThinkingLevel } from "@mariozechner/pi-ai";
-import type { ModelRegistry } from "@mariozechner/pi-coding-agent";
+import type { Api, Model, ThinkingLevel } from "@earendil-works/pi-ai";
+import type { ModelRegistry } from "@earendil-works/pi-coding-agent";
 import type { SubagentModel, SubagentResolvedModel } from "./types";
 
 export interface SubagentModelSelection {

@@ -1,11 +1,11 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getTargetSessionPath } from "./utils";
 
-vi.mock("@mariozechner/pi-coding-agent", async (importOriginal) => {
+vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
   const actual = await importOriginal<object>();
   return {
     ...actual,

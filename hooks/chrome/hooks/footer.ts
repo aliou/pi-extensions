@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createCustomFooter } from "../components/footer";
 
 export function setupFooterHook(pi: ExtensionAPI) {

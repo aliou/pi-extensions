@@ -1,5 +1,5 @@
+import type { Usage } from "@earendil-works/pi-ai";
 import type { Maybe } from "@harness/utils";
-import type { Usage } from "@mariozechner/pi-ai";
 import type { SubagentModel } from "../models";
 
 export type SubagentToolCallStatus = "running" | "success" | "error";

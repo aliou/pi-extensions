@@ -3,8 +3,8 @@
  */
 
 import { isAbsolute, resolve } from "node:path";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { extractBashTargets } from "./bash-parser";
 import { isInSessionsDir } from "./path-utils";
 import type { SessionAccessRequest } from "./types";

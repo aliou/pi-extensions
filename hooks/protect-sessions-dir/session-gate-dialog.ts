@@ -5,9 +5,9 @@
  * direct access to session files.
  */
 
-import type { Theme } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder } from "@mariozechner/pi-coding-agent";
-import type { Component } from "@mariozechner/pi-tui";
+import type { Theme } from "@earendil-works/pi-coding-agent";
+import { DynamicBorder } from "@earendil-works/pi-coding-agent";
+import type { Component } from "@earendil-works/pi-tui";
 import {
   Container,
   Key,
@@ -15,7 +15,7 @@ import {
   Spacer,
   Text,
   wrapTextWithAnsi,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import type { SessionGateResult } from "./types";
 
 export class SessionGateDialog implements Component {

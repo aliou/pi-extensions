@@ -1,5 +1,5 @@
+import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
-import { defineTool, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "typebox";
 
 export function createSessionTitleTools(pi: ExtensionAPI): SubagentToolSpec[] {

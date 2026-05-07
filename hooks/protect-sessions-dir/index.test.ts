@@ -1,11 +1,11 @@
 import { join, resolve } from "node:path";
-import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import type {
   ExtensionAPI,
   ExtensionContext,
   ToolCallEvent,
-} from "@mariozechner/pi-coding-agent";
-import { getAgentDir } from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
+import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import protectSessionsDirHook, { _resetForTesting } from "./index";
 

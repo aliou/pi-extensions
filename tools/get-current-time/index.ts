@@ -1,7 +1,7 @@
 import { ToolCallHeader } from "@aliou/pi-utils-ui";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { defineTool } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { defineTool } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 const GetCurrentTimeParams = Type.Object({

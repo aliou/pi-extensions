@@ -6,12 +6,12 @@ import {
   DEFAULT_MAX_LINES,
   formatSize,
   truncateHead,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 export {
   DEFAULT_MAX_BYTES as DEFAULT_PREVIEW_MAX_BYTES,
   DEFAULT_MAX_LINES as DEFAULT_PREVIEW_MAX_LINES,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 export interface TempFilePreviewResult {
   preview: string;

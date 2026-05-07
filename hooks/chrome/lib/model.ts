@@ -1,4 +1,4 @@
-import type { Theme, ThemeColor } from "@mariozechner/pi-coding-agent";
+import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 
 const FAST_SYMBOL = "\u26A1";
 

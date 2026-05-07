@@ -1,6 +1,6 @@
-import type { ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
-import { getMarkdownTheme } from "@mariozechner/pi-coding-agent";
-import { Loader, Markdown, Text, visibleWidth } from "@mariozechner/pi-tui";
+import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
+import { Loader, Markdown, Text, visibleWidth } from "@earendil-works/pi-tui";
 
 export const QQ_WIDGET_ID = "qq";
 

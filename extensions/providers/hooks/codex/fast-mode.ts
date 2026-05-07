@@ -1,12 +1,12 @@
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import {
   AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT,
   AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT,
 } from "@harness/events";
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
 import {
   CODEX_FAST_ENTRY_TYPE,
   DEFAULT_CODEX_FAST_MODE_ENABLED,

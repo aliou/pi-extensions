@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { relative, resolve } from "node:path";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { defineTool } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { defineTool } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { BLOCKED_PATHS } from "./blocked-paths";
 import { renderCall } from "./render";

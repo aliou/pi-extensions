@@ -1,4 +1,4 @@
-import type { BashSpawnContext } from "@mariozechner/pi-coding-agent";
+import type { BashSpawnContext } from "@earendil-works/pi-coding-agent";
 
 export type SpawnHookContributor = {
   id: string;

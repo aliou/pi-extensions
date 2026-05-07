@@ -1,7 +1,7 @@
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { relative } from "node:path";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { defineTool, truncateLine } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { defineTool, truncateLine } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { BLOCKED_PATHS } from "./blocked-paths";
 import { resolveSearchPaths } from "./path-utils";

@@ -1,4 +1,4 @@
-import { defineTool, SessionManager } from "@mariozechner/pi-coding-agent";
+import { defineTool, SessionManager } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { compactEntry, entrySearchText } from "./entry-utils";
 import { getTargetSessionPath } from "./utils";

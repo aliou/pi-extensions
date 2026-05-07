@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { setupCommands } from "./commands";
 import { configLoader } from "./config";
 import { setupHooks } from "./hooks";

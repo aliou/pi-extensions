@@ -6,7 +6,7 @@
  * prefix with the branch name only.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createGitBranchAutocompleteProvider } from "./provider";
 
 export default async function (pi: ExtensionAPI) {

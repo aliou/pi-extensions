@@ -1,4 +1,4 @@
-import type { ImageContent } from "@mariozechner/pi-ai";
+import type { ImageContent } from "@earendil-works/pi-ai";
 import type {
   AgentSession,
   ExtensionContext,
@@ -6,8 +6,8 @@ import type {
   Theme,
   ToolDefinition,
   ToolRenderResultOptions,
-} from "@mariozechner/pi-coding-agent";
-import type { Component } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import type { Component } from "@earendil-works/pi-tui";
 import type { Static, TSchema } from "typebox";
 import type { SubagentModel } from "./models";
 import type { SubagentToolCall } from "./runtime/types";

@@ -7,9 +7,9 @@ import type {
   AgentToolResult,
   Theme,
   ToolRenderResultOptions,
-} from "@mariozechner/pi-coding-agent";
-import { getMarkdownTheme, keyText } from "@mariozechner/pi-coding-agent";
-import { Container, Markdown, Text } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { getMarkdownTheme, keyText } from "@earendil-works/pi-coding-agent";
+import { Container, Markdown, Text } from "@earendil-works/pi-tui";
 import type { ReadUrlDetails } from "./types";
 import { DEFAULT_PREVIEW_MAX_LINES } from "./utils/temp-file-preview";
 

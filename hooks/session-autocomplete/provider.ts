@@ -4,13 +4,13 @@
 
 import type { SearchResult as SesameSearchResult } from "@aliou/sesame";
 import { search } from "@aliou/sesame";
-import { replaceAutocompletePrefix } from "@harness/completion";
-import { formatRelativeTime } from "@harness/utils/formatters";
 import type {
   AutocompleteItem,
   AutocompleteProvider,
   AutocompleteSuggestions,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
+import { replaceAutocompletePrefix } from "@harness/completion";
+import { formatRelativeTime } from "@harness/utils/formatters";
 import { openSesameDb } from "./db";
 import { searchByName } from "./search";
 import {

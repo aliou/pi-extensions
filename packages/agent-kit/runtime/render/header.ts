@@ -1,6 +1,6 @@
+import type { Theme } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { isNotNil, truncate } from "@harness/utils";
-import type { Theme } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
 import type { SubagentConfig } from "../../types";
 import type { ToolRenderContext } from "./types";
 

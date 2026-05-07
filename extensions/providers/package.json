@@ -30,10 +30,10 @@
     "@aliou/pi-utils-settings": "^0.11.0"
   },
   "peerDependencies": {
-    "@mariozechner/pi-coding-agent": "0.73.0"
+    "@earendil-works/pi-coding-agent": "*"
   },
   "peerDependenciesMeta": {
-    "@mariozechner/pi-coding-agent": {
+    "@earendil-works/pi-coding-agent": {
       "optional": true
     }
   }

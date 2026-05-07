@@ -7,17 +7,17 @@
 
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import type { ToolResultMessage } from "@earendil-works/pi-ai";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  ToolCallEvent,
+} from "@earendil-works/pi-coding-agent";
 import {
   AD_NOTIFY_ATTENTION_EVENT,
   AD_NOTIFY_DANGEROUS_EVENT,
   AD_NOTIFY_DONE_EVENT,
 } from "@harness/events";
-import type { ToolResultMessage } from "@mariozechner/pi-ai";
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  ToolCallEvent,
-} from "@mariozechner/pi-coding-agent";
 
 // Path to the native binary (resolved relative to this file)
 const PLAY_ALERT_SOUND_BINARY = fileURLToPath(

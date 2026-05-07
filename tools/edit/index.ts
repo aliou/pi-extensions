@@ -1,8 +1,8 @@
 import type {
   EditToolInput,
   ExtensionAPI,
-} from "@mariozechner/pi-coding-agent";
-import { createEditTool } from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { createEditTool } from "@earendil-works/pi-coding-agent";
 
 /**
  * Override the built-in edit tool to tolerate stray empty-string entries in

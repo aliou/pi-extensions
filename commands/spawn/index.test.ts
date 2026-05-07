@@ -1,12 +1,12 @@
+import type { Message } from "@earendil-works/pi-ai";
+import {
+  type CustomMessageEntry,
+  SessionManager,
+} from "@earendil-works/pi-coding-agent";
 import {
   createPiTestHarness,
   type PiTestHarness,
 } from "@harness/test-utils/pi-test-harness";
-import type { Message } from "@mariozechner/pi-ai";
-import {
-  type CustomMessageEntry,
-  SessionManager,
-} from "@mariozechner/pi-coding-agent";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import setupSpawnCommand from "./index";
 import {

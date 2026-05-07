@@ -1,10 +1,10 @@
 // biome-ignore lint/plugin: direct child_process usage is required in this helper where ExtensionAPI is unavailable.
 import { spawnSync } from "node:child_process";
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
   CombinedAutocompleteProvider,
   type SelectListTheme,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import type { Static } from "typebox";
 import {
   type ComponentState,

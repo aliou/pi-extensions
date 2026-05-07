@@ -1,6 +1,6 @@
-import type { Theme } from "@mariozechner/pi-coding-agent";
-import { getMarkdownTheme } from "@mariozechner/pi-coding-agent";
-import type { Component, TUI } from "@mariozechner/pi-tui";
+import type { Theme } from "@earendil-works/pi-coding-agent";
+import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
+import type { Component, TUI } from "@earendil-works/pi-tui";
 import {
   Key,
   Markdown,
@@ -8,7 +8,7 @@ import {
   truncateToWidth,
   visibleWidth,
   wrapTextWithAnsi,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 
 interface ToolInfo {
   name: string;
