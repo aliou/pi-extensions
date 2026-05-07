@@ -5,11 +5,7 @@ import type {
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
-import type { Static } from "typebox";
-import type { AskUserQuestionParams } from "./schema";
-import type { Answer, AskUserQuestionDetails, Question } from "./types";
-
-type Params = Static<typeof AskUserQuestionParams>;
+import type { Answer, AskUserQuestionDetails, Params, Question } from "./types";
 
 export function renderCall(args: Params, theme: Theme) {
   const count = args.questions?.length ?? 0;

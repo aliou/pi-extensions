@@ -1,6 +1,7 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
 import {
   type CombinedAutocompleteProvider,
+  type Component,
   Key,
   matchesKey,
   SelectList,
@@ -9,11 +10,7 @@ import {
   visibleWidth,
   wrapTextWithAnsi,
 } from "@earendil-works/pi-tui";
-import type { Static } from "typebox";
-import type { AskUserQuestionParams } from "./schema";
-import type { Answer, AskUserQuestionDetails, Question } from "./types";
-
-type Params = Static<typeof AskUserQuestionParams>;
+import type { Answer, AskUserQuestionDetails, Params, Question } from "./types";
 
 export interface ExecuteResult {
   content: Array<{ type: "text"; text: string }>;
@@ -34,77 +31,82 @@ export interface TuiLike {
   requestRender: () => void;
 }
 
-export function createAskUserComponent(
-  state: ComponentState,
-  params: Params,
-  questions: Question[],
-  autocompleteProvider: CombinedAutocompleteProvider,
-  theme: Theme,
-  selectListTheme: SelectListTheme,
-  tui: TuiLike,
-  done: (result: ExecuteResult | null) => void,
-): {
-  render(width: number): string[];
-  invalidate(): void;
-  handleInput(data: string): void;
-} {
-  let autocompleteList: SelectList | null = null;
-  let autocompletePrefix = "";
+export class AskUserComponent implements Component {
+  private autocompleteList: SelectList | null = null;
+  private autocompletePrefix = "";
 
-  const getAutocompleteList = () => autocompleteList;
-  const setAutocompleteList = (list: SelectList | null) => {
-    autocompleteList = list;
-  };
-  const getAutocompletePrefix = () => autocompletePrefix;
-  const setAutocompletePrefix = (prefix: string) => {
-    autocompletePrefix = prefix;
-  };
+  constructor(
+    private readonly state: ComponentState,
+    private readonly params: Params,
+    private readonly questions: Question[],
+    private readonly autocompleteProvider: CombinedAutocompleteProvider,
+    private readonly theme: Theme,
+    private readonly selectListTheme: SelectListTheme,
+    private readonly tui: TuiLike,
+    private readonly done: (result: ExecuteResult | null) => void,
+  ) {}
 
-  return {
-    render(width: number): string[] {
-      if (state.mode === "confirm") {
-        return renderConfirmScreen(width, questions, state.answers, theme);
-      }
+  render(width: number): string[] {
+    if (this.state.mode === "confirm") {
+      return renderConfirmScreen(
+        width,
+        this.questions,
+        this.state.answers,
+        this.theme,
+      );
+    }
 
-      if (state.mode === "other-input") {
-        return renderOtherInput(
-          width,
-          questions,
-          state,
-          theme,
-          getAutocompleteList(),
-        );
-      }
+    if (this.state.mode === "other-input") {
+      return renderOtherInput(
+        width,
+        this.questions,
+        this.state,
+        this.theme,
+        this.autocompleteList,
+      );
+    }
 
-      // mode === "question"
-      return renderQuestionScreen(width, questions, state, theme);
-    },
+    return renderQuestionScreen(width, this.questions, this.state, this.theme);
+  }
 
-    invalidate(): void {
-      // No-op, we call tui.requestRender() in handleInput
-    },
+  invalidate(): void {
+    // No-op, we call tui.requestRender() in handleInput
+  }
 
-    handleInput(data: string): void {
-      if (state.mode === "question") {
-        handleQuestionInput(data, state, questions, tui, done);
-      } else if (state.mode === "other-input") {
-        handleOtherInput(
-          data,
-          state,
-          questions,
-          tui,
-          autocompleteProvider,
-          selectListTheme,
-          getAutocompleteList,
-          setAutocompleteList,
-          getAutocompletePrefix,
-          setAutocompletePrefix,
-        );
-      } else if (state.mode === "confirm") {
-        handleConfirmInput(data, state, params, tui, done);
-      }
-    },
-  };
+  handleInput(data: string): void {
+    if (this.state.mode === "question") {
+      handleQuestionInput(
+        data,
+        this.state,
+        this.questions,
+        this.tui,
+        this.done,
+      );
+      return;
+    }
+
+    if (this.state.mode === "other-input") {
+      handleOtherInput(
+        data,
+        this.state,
+        this.questions,
+        this.tui,
+        this.autocompleteProvider,
+        this.selectListTheme,
+        () => this.autocompleteList,
+        (list) => {
+          this.autocompleteList = list;
+        },
+        () => this.autocompletePrefix,
+        (prefix) => {
+          this.autocompletePrefix = prefix;
+        },
+      );
+      return;
+    }
+
+    handleConfirmInput(data, this.state, this.params, this.tui, this.done);
+  }
 }
 
 function renderProgressDots(
