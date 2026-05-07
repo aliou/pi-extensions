@@ -25,10 +25,4 @@ export const MODEL_CANDIDATES: SubagentModel[] = [
     thinking: "off",
     weight: 1,
   },
-  {
-    provider: "openai-codex",
-    model: "gpt-5.3-codex-spark",
-    thinking: "off",
-    weight: 1,
-  },
 ];
