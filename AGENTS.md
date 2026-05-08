@@ -10,7 +10,7 @@ Internal workspace packages use the `@harness` scope and are private to this rep
 - `hooks/` - Event hooks (session protection, autocomplete, chrome, etc.)
 - `tools/` - Agent tools (`bash`, `grep`, `find`, `read_url`, `oracle`, etc.)
 - `extensions/` - Monolithic extensions still using their own `package.json` (`breadcrumbs`, `providers`)
-- `packages/` - Shared internal workspace packages (`@harness/*`)
+- `packages/` - Shared internal workspace packages. Each `@harness/*` package lives in its own subdirectory here (e.g. `packages/agent-kit/` → `@harness/agent-kit`). Do not search for these with librarian — read them directly from `./packages/<name>/`.
 - `tests/` - Test setup and docs. Shared test utilities live in `packages/test-utils`.
 
 ## Entry point convention
@@ -102,12 +102,15 @@ pnpm lint
 pnpm test
 ```
 
-Workspace packages:
+Workspace packages (all in `./packages/` — read directly, do not search with librarian):
 
-- `@harness/agent-kit` - Subagent framework used by harness tools and hooks.
-- `@harness/events` - Shared event names and event payload types.
-- `@harness/utils` - Shared generic utilities.
-- `@harness/test-utils` - Shared Vitest/Pi extension test harness utilities.
+| Directory | Package | Description |
+|---|---|---|
+| `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks |
+| `packages/completion/` | `@harness/completion` | Completion logic |
+| `packages/events/` | `@harness/events` | Shared event names and event payload types |
+| `packages/test-utils/` | `@harness/test-utils` | Shared Vitest/Pi extension test harness utilities |
+| `packages/utils/` | `@harness/utils` | Shared generic utilities |
 
 ## Custom header
 
