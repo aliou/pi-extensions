@@ -1,26 +1,18 @@
-import type { AssistantMessage, UserMessage } from "@earendil-works/pi-ai";
-import type {
-  ExtensionAPI,
-  SessionEntry,
-} from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineSubagent } from "@harness/agent-kit";
 import { isBlank } from "@harness/utils/string";
 import { Type } from "typebox";
+import { SESSION_TITLE_REFINE_EVERY } from "./constants";
 import { MODEL_CANDIDATES } from "./models";
-import {
-  buildPrompt,
-  SESSION_TITLE_SYSTEM_PROMPT,
-  type SessionTitleTurn,
-} from "./prompt";
+import { buildPrompt, SESSION_TITLE_SYSTEM_PROMPT } from "./prompt";
 import { createSessionTitleTools } from "./tools";
-
-const MAX_TURNS = 5;
+import { countCompletedAssistantTurns, getRecentTurns } from "./turns";
 
 export default async function sessionTitle(pi: ExtensionAPI): Promise<void> {
   const subagent = defineSubagent(pi, {
     name: "session_title",
     label: "Session Title",
-    description: "Generate a concise session title.",
+    description: "Generate or refine a concise session title.",
     systemPrompt: SESSION_TITLE_SYSTEM_PROMPT,
     tools: createSessionTitleTools(pi),
     models: MODEL_CANDIDATES,
@@ -31,27 +23,53 @@ export default async function sessionTitle(pi: ExtensionAPI): Promise<void> {
           assistantResponse: Type.String(),
         }),
       ),
+      currentTitle: Type.Optional(Type.String()),
     }),
     buildPrompt: (params) => ({ text: buildPrompt(params) }),
   });
 
   pi.on("turn_end", async (event, ctx) => {
-    if (!isBlank(pi.getSessionName())) return;
+    if (event.message.role !== "assistant") return;
+    if (event.message.stopReason !== "stop") return;
 
-    const message = event.message;
-    if (message.role !== "assistant") return;
-    if (message.stopReason !== "stop") return;
+    const entries = ctx.sessionManager.getBranch();
+    const turnCount = countCompletedAssistantTurns(entries);
 
-    const turns = getRecentTurns(ctx.sessionManager.getBranch());
+    const isInitial = turnCount === 1;
+    const isRefine =
+      turnCount > 1 && turnCount % SESSION_TITLE_REFINE_EVERY === 0;
+    if (!isInitial && !isRefine) return;
+
+    const turns = getRecentTurns(entries);
     if (turns.length === 0) return;
 
-    ctx.ui.notify("Generating session title...", "info");
+    const currentTitle = pi.getSessionName();
+
+    ctx.ui.notify(
+      isInitial ? "Generating session title..." : "Refining session title...",
+      "info",
+    );
 
     subagent
-      .execute("session-title", { turns }, ctx.signal, undefined, ctx)
+      .execute(
+        "session-title",
+        { turns, currentTitle },
+        ctx.signal,
+        undefined,
+        ctx,
+      )
       .then(() => {
         const title = pi.getSessionName();
-        if (!isBlank(title)) ctx.ui.notify(`Session title: ${title}`, "info");
+        if (!isBlank(title)) {
+          if (title !== currentTitle) {
+            ctx.ui.notify(
+              `Session title: from "${currentTitle}" to "${title}"`,
+              "info",
+            );
+          } else {
+            ctx.ui.notify(`Session title: ${title}`, "info");
+          }
+        }
       })
       .catch((error: unknown) => {
         const message =
@@ -59,49 +77,4 @@ export default async function sessionTitle(pi: ExtensionAPI): Promise<void> {
         ctx.ui.notify(`Session title generation failed: ${message}`, "error");
       });
   });
-}
-
-function getRecentTurns(entries: SessionEntry[]): SessionTitleTurn[] {
-  const turns: SessionTitleTurn[] = [];
-  let currentUserMessage: string | null = null;
-
-  for (const entry of entries) {
-    if (entry.type !== "message") continue;
-
-    const message = entry.message;
-    if (message.role === "user") {
-      currentUserMessage = getUserText(message);
-      continue;
-    }
-
-    if (message.role !== "assistant") continue;
-    if (!currentUserMessage) continue;
-    if (message.stopReason !== "stop") continue;
-
-    const assistantResponse = getAssistantText(message as AssistantMessage);
-    if (isBlank(assistantResponse)) continue;
-
-    turns.push({
-      userMessage: currentUserMessage,
-      assistantResponse,
-    });
-  }
-
-  return turns.slice(-MAX_TURNS);
-}
-
-function getUserText(message: UserMessage): string {
-  if (typeof message.content === "string") return message.content;
-
-  return message.content
-    .filter((content) => content.type === "text")
-    .map((content) => content.text)
-    .join("");
-}
-
-function getAssistantText(message: AssistantMessage): string {
-  return message.content
-    .filter((content) => content.type === "text")
-    .map((content) => content.text)
-    .join("");
 }

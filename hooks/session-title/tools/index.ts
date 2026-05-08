@@ -2,6 +2,10 @@ import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { truncate } from "@harness/utils";
 import { Type } from "typebox";
+import {
+  SESSION_TITLE_CHANGE_TYPE,
+  type SessionTitleChangeCustomEntry,
+} from "../constants";
 
 export function createSessionTitleTools(pi: ExtensionAPI): SubagentToolSpec[] {
   return [
@@ -20,12 +24,20 @@ export function createSessionTitleTools(pi: ExtensionAPI): SubagentToolSpec[] {
           }),
 
           async execute(_toolCallId, params) {
+            const previousTitle = pi.getSessionName();
             const title = truncate(params.title.trim(), 80);
             pi.setSessionName(title);
 
+            if (previousTitle !== title) {
+              pi.appendEntry<SessionTitleChangeCustomEntry>(
+                SESSION_TITLE_CHANGE_TYPE,
+                { previousTitle, title },
+              );
+            }
+
             return {
               content: [{ type: "text", text: title }],
-              details: { title },
+              details: { title, previousTitle },
             };
           },
         }),
