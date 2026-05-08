@@ -37,6 +37,36 @@ describe("string utilities", () => {
       const result = truncate("Test", -5);
       expect(result).toBe("...");
     });
+
+    it("should use custom ellipsis", () => {
+      const result = truncate("This is a very long string", 10, "…");
+      expect(result).toBe("This is a …");
+    });
+
+    it("should use multi-character custom ellipsis", () => {
+      const result = truncate("Hello world", 5, " [more]");
+      expect(result).toBe("Hello [more]");
+    });
+
+    it("should allow empty ellipsis", () => {
+      const result = truncate("Hello world", 5, "");
+      expect(result).toBe("Hello");
+    });
+
+    it("should use custom ellipsis with zero max length", () => {
+      const result = truncate("Test", 0, "---");
+      expect(result).toBe("---");
+    });
+
+    it("should use custom ellipsis with negative max length", () => {
+      const result = truncate("Test", -5, "…");
+      expect(result).toBe("…");
+    });
+
+    it("should not append ellipsis when string fits", () => {
+      const result = truncate("Short", 10, "!!");
+      expect(result).toBe("Short");
+    });
   });
 
   describe("isBlank", () => {

@@ -1,11 +1,15 @@
 import { isNil } from "./nil";
 
-export const truncate = (input: string, maxLength: number): string => {
+export const truncate = (
+  input: string,
+  maxLength: number,
+  ellipsis = "...",
+): string => {
   if (input.length <= maxLength) {
     return input;
   }
 
-  return `${input.slice(0, maxLength)}...`;
+  return `${input.slice(0, maxLength)}${ellipsis}`;
 };
 
 const isString = (value: unknown): value is string => {

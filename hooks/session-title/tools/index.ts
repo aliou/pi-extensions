@@ -1,5 +1,6 @@
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
+import { truncate } from "@harness/utils";
 import { Type } from "typebox";
 
 export function createSessionTitleTools(pi: ExtensionAPI): SubagentToolSpec[] {
@@ -19,11 +20,11 @@ export function createSessionTitleTools(pi: ExtensionAPI): SubagentToolSpec[] {
           }),
 
           async execute(_toolCallId, params) {
-            const title = params.title.trim().slice(0, 80);
+            const title = truncate(params.title.trim(), 80);
             pi.setSessionName(title);
 
             return {
-              content: [{ type: "text" as const, text: title }],
+              content: [{ type: "text", text: title }],
               details: { title },
             };
           },

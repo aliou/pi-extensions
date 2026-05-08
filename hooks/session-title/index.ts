@@ -45,23 +45,19 @@ export default async function sessionTitle(pi: ExtensionAPI): Promise<void> {
     const turns = getRecentTurns(ctx.sessionManager.getBranch());
     if (turns.length === 0) return;
 
-    try {
-      ctx.ui.notify("Generating session title...", "info");
+    ctx.ui.notify("Generating session title...", "info");
 
-      await subagent.execute(
-        "session-title",
-        { turns },
-        ctx.signal,
-        undefined,
-        ctx,
-      );
-
-      const title = pi.getSessionName();
-      if (!isBlank(title)) ctx.ui.notify(`Session title: ${title}`, "info");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      ctx.ui.notify(`Session title generation failed: ${message}`, "error");
-    }
+    subagent
+      .execute("session-title", { turns }, ctx.signal, undefined, ctx)
+      .then(() => {
+        const title = pi.getSessionName();
+        if (!isBlank(title)) ctx.ui.notify(`Session title: ${title}`, "info");
+      })
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        ctx.ui.notify(`Session title generation failed: ${message}`, "error");
+      });
   });
 }
 
