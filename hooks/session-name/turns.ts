@@ -1,8 +1,8 @@
 import type { AssistantMessage, UserMessage } from "@earendil-works/pi-ai";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 import { isBlank } from "@harness/utils/string";
-import { SESSION_TITLE_MAX_TURNS } from "./constants";
-import type { SessionTitleTurn } from "./types";
+import { SESSION_NAME_MAX_TURNS } from "./constants";
+import type { SessionNameTurn } from "./types";
 
 export function countCompletedAssistantTurns(entries: SessionEntry[]): number {
   let count = 0;
@@ -17,8 +17,8 @@ export function countCompletedAssistantTurns(entries: SessionEntry[]): number {
   return count;
 }
 
-export function getRecentTurns(entries: SessionEntry[]): SessionTitleTurn[] {
-  const turns: SessionTitleTurn[] = [];
+export function getRecentTurns(entries: SessionEntry[]): SessionNameTurn[] {
+  const turns: SessionNameTurn[] = [];
   let currentUserMessage: string | null = null;
 
   for (const entry of entries) {
@@ -43,7 +43,7 @@ export function getRecentTurns(entries: SessionEntry[]): SessionTitleTurn[] {
     });
   }
 
-  return turns.slice(-SESSION_TITLE_MAX_TURNS);
+  return turns.slice(-SESSION_NAME_MAX_TURNS);
 }
 
 function getUserText(message: UserMessage): string {

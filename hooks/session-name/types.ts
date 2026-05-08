@@ -1,4 +1,4 @@
-export interface SessionTitleTurn {
+export interface SessionNameTurn {
   userMessage: string;
   assistantResponse: string;
 }

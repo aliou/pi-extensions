@@ -64,7 +64,7 @@ Tools that spawn a subagent (oracle, reviewer, read-session, librarian) follow a
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
 | `session-autocomplete/` | `@` autocomplete for session names | `db.ts`, `search.ts`, `provider.ts` |
-| `session-title/` | Auto-name sessions | `index.ts` |
+| `session-name/` | Auto-name sessions | `index.ts` |
 
 ## Tools
 
