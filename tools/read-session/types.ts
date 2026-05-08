@@ -1,7 +1,9 @@
 import { type Static, Type } from "typebox";
 
 export const ReadSessionParams = Type.Object({
-  targetSessionId: Type.String({ description: "Session UUID" }),
+  targetSessionId: Type.String({
+    description: "Session UUID, UUID prefix, or path to a session .jsonl file",
+  }),
   goal: Type.String({
     description: "What information to extract from the session",
   }),

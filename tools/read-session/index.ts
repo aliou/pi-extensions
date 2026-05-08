@@ -11,7 +11,7 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     label: "Read Session",
     description: "Extract specific information from a past Pi coding session.",
     promptGuidelines: [
-      "read_session: Use to extract specific information from a past Pi coding session by session ID.",
+      "read_session: Use to extract specific information from a past Pi coding session by session ID, UUID prefix, or session .jsonl file path.",
       "read_session: Do not use for the current session or general codebase search.",
       "read_session: Provide a specific goal describing what information you want to extract.",
     ],
