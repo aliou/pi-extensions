@@ -61,13 +61,13 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
       .then(() => {
         const name = pi.getSessionName();
         if (!isBlank(name)) {
-          if (name !== currentName) {
+          if (isBlank(currentName) || name === currentName) {
+            ctx.ui.notify(`Session name: ${name}`, "info");
+          } else {
             ctx.ui.notify(
               `Session name: from "${currentName}" to "${name}"`,
               "info",
             );
-          } else {
-            ctx.ui.notify(`Session name: ${name}`, "info");
           }
         }
       })
