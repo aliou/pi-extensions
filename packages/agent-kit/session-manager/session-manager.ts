@@ -14,6 +14,10 @@ import type { TSchema } from "typebox";
 import type { SubagentModelResolver, SubagentModelSelection } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
+  collectSubagentToolGuidelines,
+  formatToolGuidelinesSection,
+} from "../resources/tool-guidelines";
+import {
   SUBAGENT_SESSION_CUSTOM_TYPE,
   type SubagentSessionRecord,
   type SubagentSessionRecordStore,
@@ -167,9 +171,20 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       this.subagentDir,
       this.config.systemPrompt,
       [...(this.config.skills ?? []), ...invocationSkills],
-      this.config.extensionPaths,
+      this.config.extensionPaths ?? [],
     );
     await resourceLoader.reload();
+
+    // Pi's buildSystemPrompt() skips tool promptGuidelines when a custom
+    // prompt is used. Collect them from custom + extension tools and inject
+    // via getAppendSystemPrompt() to restore the missing guidance.
+    const toolGuidelines = collectSubagentToolGuidelines(
+      this.config.tools,
+      cwd,
+      resourceLoader.getExtensions(),
+    );
+    const appendSystemPrompt = formatToolGuidelinesSection(toolGuidelines);
+    resourceLoader.setAppendSystemPrompt(appendSystemPrompt);
 
     const { session } = await createAgentSession({
       cwd,

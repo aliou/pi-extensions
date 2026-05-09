@@ -16,6 +16,8 @@ export class SubagentResourceLoader implements ResourceLoader {
     runtime: createExtensionRuntime(),
   };
 
+  private appendSystemPrompt: string[] = [];
+
   constructor(
     private cwd: string,
     private agentDir: string,
@@ -52,7 +54,17 @@ export class SubagentResourceLoader implements ResourceLoader {
   }
 
   getAppendSystemPrompt(): string[] {
-    return [];
+    return this.appendSystemPrompt;
+  }
+
+  /**
+   * Set extra lines to append to the system prompt.
+   *
+   * Must be called after reload() so that extension tool promptGuidelines
+   * can be collected from the loaded extensions.
+   */
+  setAppendSystemPrompt(lines: string[]): void {
+    this.appendSystemPrompt = lines;
   }
 
   extendResources() {}
