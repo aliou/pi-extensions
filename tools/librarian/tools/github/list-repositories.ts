@@ -1,6 +1,10 @@
 import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { type GitHubClient, parseJson, textResult } from "../lib/github-client";
+import {
+  type GitHubClient,
+  parseJson,
+  textResult,
+} from "../../lib/github-client";
 
 const Params = Type.Object({
   pattern: Type.Optional(

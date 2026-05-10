@@ -1,54 +1,42 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
-import { createGitHubClient } from "../lib/github-client";
-import { createCommitSearchTool } from "./commit-search";
-import { createDiffTool } from "./diff";
-import { createGlobGitHubTool } from "./glob-github";
-import { createListDirectoryGitHubTool } from "./list-directory-github";
-import { createListRepositoriesTool } from "./list-repositories";
-import { createReadGitHubTool } from "./read-github";
-import { createSearchGitHubTool } from "./search-github";
+import { createCheckoutRepoTool } from "./checkout-repo";
+import { createGitLogTool } from "./git-log";
+import { createGitShowTool } from "./git-show";
+import { createLibrarianGitHubTools } from "./github";
 
-export function createLibrarianGitHubTools(
-  pi: ExtensionAPI,
-): SubagentToolSpec[] {
-  const client = createGitHubClient(pi);
-
+/**
+ * Local-first tools for the Librarian subagent.
+ *
+ * Uses checkout_repo + native tools (ls, find, grep, read) for code
+ * exploration, and git_log/git_show for history and diffs.
+ */
+export function createLibrarianTools(pi: ExtensionAPI): SubagentToolSpec[] {
   return [
+    // Custom tools — repo checkout and git history
     {
-      name: "read_github",
+      name: "checkout_repo",
       type: "custom",
-      spec: (cwd) => createReadGitHubTool(client, cwd),
+      spec: (cwd) => createCheckoutRepoTool(pi, cwd),
     },
     {
-      name: "search_github",
+      name: "git_log",
       type: "custom",
-      spec: (cwd) => createSearchGitHubTool(client, cwd),
+      spec: (cwd) => createGitLogTool(pi, cwd),
     },
     {
-      name: "commit_search",
+      name: "git_show",
       type: "custom",
-      spec: (cwd) => createCommitSearchTool(client, cwd),
+      spec: (cwd) => createGitShowTool(pi, cwd),
     },
-    {
-      name: "diff",
-      type: "custom",
-      spec: (cwd) => createDiffTool(client, cwd),
-    },
-    {
-      name: "list_directory_github",
-      type: "custom",
-      spec: (cwd) => createListDirectoryGitHubTool(client, cwd),
-    },
-    {
-      name: "list_repositories",
-      type: "custom",
-      spec: (cwd) => createListRepositoriesTool(client, cwd),
-    },
-    {
-      name: "glob_github",
-      type: "custom",
-      spec: (cwd) => createGlobGitHubTool(client, cwd),
-    },
+
+    // GitHub discovery tools — find repos before cloning
+    ...createLibrarianGitHubTools(pi),
+
+    // Native tools — exploration and code reading
+    { name: "ls", type: "native" },
+    { name: "read", type: "native" },
+    { name: "find", type: "native" },
+    { name: "grep", type: "native" },
   ];
 }

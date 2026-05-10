@@ -5,7 +5,7 @@ import {
   normalizeRepository,
   parseJson,
   textResult,
-} from "../lib/github-client";
+} from "../../lib/github-client";
 
 const Params = Type.Object({
   pattern: Type.String({
