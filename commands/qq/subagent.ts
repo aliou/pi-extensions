@@ -3,6 +3,7 @@ import type {
   ExtensionCommandContext,
 } from "@earendil-works/pi-coding-agent";
 import { defineSubagent } from "@harness/agent-kit";
+import type { SubagentDetails } from "@harness/agent-kit/runtime";
 import { QqParams } from "./types";
 
 export async function runQqSubagent(
@@ -10,7 +11,7 @@ export async function runQqSubagent(
   ctx: ExtensionCommandContext,
   systemPrompt: string,
   userMessage: string,
-): Promise<string | undefined> {
+): Promise<SubagentDetails | undefined> {
   if (!ctx.model) return undefined;
 
   const qqSubagent = defineSubagent(pi, {
@@ -39,5 +40,5 @@ export async function runQqSubagent(
     ctx,
   );
 
-  return result.details.response;
+  return result.details;
 }

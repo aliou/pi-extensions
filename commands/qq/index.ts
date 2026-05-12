@@ -28,20 +28,18 @@ export default async function (pi: ExtensionAPI): Promise<void> {
       }
 
       const { userMessage, systemPrompt } = buildQqPrompt(ctx, question);
-      const model = ctx.model;
-
       showLoadingWidget(ctx, question);
 
       try {
-        const answer = await runQqSubagent(pi, ctx, systemPrompt, userMessage);
+        const details = await runQqSubagent(pi, ctx, systemPrompt, userMessage);
 
         clearQqWidget(ctx);
-        if (!answer) {
+        if (!details?.response) {
           ctx.ui.notify("No response generated", "warning");
           return;
         }
 
-        showResultWidget(ctx, question, answer, model);
+        showResultWidget(ctx, question, details.response, details);
       } catch (err) {
         clearQqWidget(ctx);
         ctx.ui.notify(
