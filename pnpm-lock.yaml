@@ -60,6 +60,9 @@ importers:
       '@harness/test-utils':
         specifier: workspace:*
         version: link:packages/test-utils
+      '@harness/ui':
+        specifier: workspace:*
+        version: link:packages/ui
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.7
@@ -107,6 +110,12 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@22.19.17)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.4)
+
+  packages/ui:
+    dependencies:
+      '@earendil-works/pi-tui':
+        specifier: 0.74.0
+        version: 0.74.0
 
   packages/utils: {}
 

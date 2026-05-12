@@ -45,6 +45,7 @@
     "@earendil-works/pi-coding-agent": "0.74.0",
     "@earendil-works/pi-tui": "0.74.0",
     "@harness/test-utils": "workspace:*",
+    "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
     "typebox": "*",
     "typescript": "^5.7.0",
