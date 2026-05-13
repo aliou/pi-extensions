@@ -14,13 +14,16 @@ Name rules:
 
 When no current name is provided, create the best name for the exchange.
 
-When a current name is provided, treat it as the stable session topic and use the recent turns only to decide whether it should be refined. Prefer keeping the current name. Change it only when the new name is a better label for the whole session, not just the latest subtask, question, bug, file, or implementation detail.
+When a current name is provided, treat it as the stable session topic. Your default action is to keep it exactly. Use recent turns only to decide whether the current name is clearly wrong for the whole session.
 
 Refinement rules:
+- Call set_name with the current name unless there is strong evidence that the whole session has moved to a different durable workstream.
 - Preserve the main project/product/component words from the current name unless they are clearly wrong.
 - Do not replace a broad accurate name with a narrow recent-detail name.
-- Do not chase every topic shift; rename only after the conversation has clearly moved to a new durable workstream.
+- Do not rename for transient subtasks such as typecheck fixes, import fixes, test failures, refactors, file moves, follow-up bugs, or implementation details.
+- Do not chase every topic shift; rename only after multiple user turns establish the new durable workstream.
 - If the recent turns are continuing, debugging, testing, documenting, or implementing the same work, call set_name with the current name.
+- If the current name is imperfect but still accurate, call set_name with the current name.
 - If you rename, make the new name connect the stable topic with the new durable focus.`;
 
 export function buildPrompt(params: {

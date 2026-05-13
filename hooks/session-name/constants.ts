@@ -4,6 +4,6 @@ export interface SessionNameChangeCustomEntry {
   name: string;
 }
 
-export const SESSION_NAME_REFINE_EVERY = 5;
+export const SESSION_NAME_REFINE_EVERY = 10;
 
-export const SESSION_NAME_MAX_TURNS = 5;
+export const SESSION_NAME_MAX_TURNS = 10;
