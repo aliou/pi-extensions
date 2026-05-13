@@ -9,24 +9,53 @@ type EventBridge = {
   map: EventMapper;
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object";
+}
+
 function mapGuardrailsDangerous(
   data: unknown,
 ): Record<string, unknown> | undefined {
-  if (!data || typeof data !== "object") return undefined;
+  if (!isRecord(data)) return undefined;
 
-  const raw = data as Record<string, unknown>;
   const description =
-    typeof raw.description === "string" ? raw.description : "dangerous command";
+    typeof data.description === "string"
+      ? data.description
+      : "dangerous command";
 
   const payload: Record<string, unknown> = {
     source: "defaults:event-compat:guardrails",
     description,
   };
 
-  if (typeof raw.command === "string") payload.command = raw.command;
-  if (typeof raw.pattern === "string") payload.pattern = raw.pattern;
-  if (typeof raw.toolName === "string") payload.toolName = raw.toolName;
-  if (typeof raw.toolCallId === "string") payload.toolCallId = raw.toolCallId;
+  if (typeof data.command === "string") payload.command = data.command;
+  if (typeof data.pattern === "string") payload.pattern = data.pattern;
+  if (typeof data.toolName === "string") payload.toolName = data.toolName;
+  if (typeof data.toolCallId === "string") payload.toolCallId = data.toolCallId;
+
+  return payload;
+}
+
+function mapGuardrailsRiskDetected(
+  data: unknown,
+): Record<string, unknown> | undefined {
+  if (!isRecord(data) || !isRecord(data.risk)) return undefined;
+
+  const risk = data.risk;
+  const action = isRecord(risk.action) ? risk.action : undefined;
+  const metadata = isRecord(risk.metadata) ? risk.metadata : undefined;
+  const description =
+    typeof risk.reason === "string" ? risk.reason : "dangerous command";
+
+  const payload: Record<string, unknown> = {
+    source: "defaults:event-compat:guardrails",
+    description,
+  };
+
+  if (typeof action?.command === "string") payload.command = action.command;
+  if (typeof metadata?.pattern === "string") payload.pattern = metadata.pattern;
+  if (typeof data.toolName === "string") payload.toolName = data.toolName;
+  if (typeof data.toolCallId === "string") payload.toolCallId = data.toolCallId;
 
   return payload;
 }
@@ -36,6 +65,11 @@ const BRIDGES: EventBridge[] = [
     from: "guardrails:dangerous",
     to: AD_NOTIFY_DANGEROUS_EVENT,
     map: mapGuardrailsDangerous,
+  },
+  {
+    from: "guardrails:risk:detected",
+    to: AD_NOTIFY_DANGEROUS_EVENT,
+    map: mapGuardrailsRiskDetected,
   },
 ];
 
