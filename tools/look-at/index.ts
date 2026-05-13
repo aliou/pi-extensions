@@ -12,8 +12,13 @@ import {
   referencesImageFiles,
 } from "./utils";
 
-const NUDGE_TEXT =
-  "\n\nNote: the current model cannot see images. Use look_at to analyze any image files referenced above.";
+const NUDGE_TEXT = `
+
+<pi_runtime_instruction source="look_at" user_visible="false">
+This instruction was inserted by the Pi look_at extension, not by the user.
+The user message is above this block.
+If the user referenced or attached image files, use the look_at tool to analyze them before answering.
+</pi_runtime_instruction>`;
 
 const TOOL_NAME = "look_at";
 
