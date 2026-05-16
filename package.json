@@ -47,6 +47,7 @@
     "@harness/test-utils": "workspace:*",
     "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
+    "memfs": "^4.57.2",
     "typebox": "*",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"

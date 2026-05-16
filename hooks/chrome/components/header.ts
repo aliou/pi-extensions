@@ -15,8 +15,7 @@ import { Container, Spacer, Text } from "@earendil-works/pi-tui";
 
 // Custom commands defined in harness extensions.
 const COMMANDS: { name: string; description: string }[] = [
-  { name: "qq", description: "quick question" },
-  { name: "qq:list", description: "side chat context" },
+  { name: "qq[:list]", description: "quick question/side chat context" },
   { name: "spawn", description: "new linked session" },
   { name: "continue", description: "resume recent session" },
   { name: "label", description: "bookmark current point" },
