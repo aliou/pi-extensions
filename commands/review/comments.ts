@@ -19,7 +19,7 @@ export function extractComments(annotatedDiff: string): ReviewComment[] {
       continue;
     }
 
-    if (isReviewComment(line)) {
+    if (currentLine > 0 && isReviewComment(line)) {
       comments.push({
         file: currentFile || "(unknown)",
         line: currentLine,
