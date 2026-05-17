@@ -9,5 +9,8 @@
     "./path": "./path.ts",
     "./string": "./string.ts",
     "./types": "./types.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-agent-core": "0.74.1"
   }
 }
