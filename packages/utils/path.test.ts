@@ -1,5 +1,7 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { encodePathSegments } from "./path";
+import { encodePathSegments, expandHomePath } from "./path";
 
 describe("path utilities", () => {
   describe("encodePathSegments", () => {
@@ -11,6 +13,19 @@ describe("path utilities", () => {
       expect(encodePathSegments("/docs//hello world.md")).toBe(
         "/docs//hello%20world.md",
       );
+    });
+  });
+
+  describe("expandHomePath", () => {
+    it("expands home paths", () => {
+      expect(expandHomePath("~")).toBe(homedir());
+      expect(expandHomePath("~/notes")).toBe(join(homedir(), "notes"));
+    });
+
+    it("leaves non-home paths unchanged", () => {
+      expect(expandHomePath("src/file.ts")).toBe("src/file.ts");
+      expect(expandHomePath("/tmp/file.ts")).toBe("/tmp/file.ts");
+      expect(expandHomePath("~aliou/file.ts")).toBe("~aliou/file.ts");
     });
   });
 });
