@@ -35,6 +35,9 @@ importers:
       '@harness/events':
         specifier: workspace:*
         version: link:packages/events
+      '@harness/nvim-undofile':
+        specifier: workspace:*
+        version: link:packages/nvim-undofile
       '@harness/utils':
         specifier: workspace:*
         version: link:packages/utils
@@ -104,6 +107,12 @@ importers:
         version: 0.74.1
 
   packages/events: {}
+
+  packages/nvim-undofile:
+    dependencies:
+      '@harness/utils':
+        specifier: workspace:*
+        version: link:../utils
 
   packages/test-utils:
     dependencies:
