@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import { homedir } from "node:os";
 import { resolve } from "node:path";
+import { expandHomePath } from "@harness/utils";
 
 export function splitSearchPathList(value: string): string[] {
   const paths: string[] = [];
@@ -36,11 +36,7 @@ export function splitSearchPathList(value: string): string[] {
 }
 
 export function resolveSearchPath(cwd: string, value: string): string {
-  let resolvedPath = value;
-  if (resolvedPath === "~" || resolvedPath.startsWith("~/")) {
-    resolvedPath = resolvedPath.replace(/^~/, homedir());
-  }
-  return resolve(cwd, resolvedPath);
+  return resolve(cwd, expandHomePath(value));
 }
 
 export function resolveSearchPaths(

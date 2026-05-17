@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
-import { homedir } from "node:os";
 import { relative, resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineTool } from "@earendil-works/pi-coding-agent";
+import { expandHomePath } from "@harness/utils";
 import { Type } from "typebox";
 import { BLOCKED_PATHS } from "./blocked-paths";
 import { renderCall } from "./render";
@@ -45,10 +45,7 @@ function createFindTool(pi: ExtensionAPI) {
         throw new Error("Search was aborted");
       }
 
-      let resolvedPath = searchPath || ".";
-      if (resolvedPath === "~" || resolvedPath.startsWith("~/")) {
-        resolvedPath = resolvedPath.replace(/^~/, homedir());
-      }
+      const resolvedPath = expandHomePath(searchPath || ".");
       const absoluteSearchPath = resolve(ctx.cwd, resolvedPath);
 
       if (BLOCKED_PATHS.has(absoluteSearchPath)) {
