@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import type {
   BashSpawnContext,
   ExtensionAPI,
+  ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import { createBashTool } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
@@ -32,8 +33,23 @@ export default function (pi: ExtensionAPI): void {
       (a, b) => (a.priority ?? 100) - (b.priority ?? 100),
     );
 
+  let didNotifyInstalledSpawnHooks = false;
+
   const registerContributor = (contributor: SpawnHookContributor) => {
     contributors.set(contributor.id, contributor);
+  };
+
+  const notifyInstalledSpawnHooks = (ctx: ExtensionContext) => {
+    if (didNotifyInstalledSpawnHooks || !ctx.hasUI) return;
+
+    const installed = getContributors();
+    if (installed.length === 0) return;
+
+    didNotifyInstalledSpawnHooks = true;
+    ctx.ui.notify(
+      `Bash spawn hooks installed: ${installed.map((c) => c.id).join(", ")}`,
+      "info",
+    );
   };
 
   const composedSpawnHook = (ctx: BashSpawnContext): BashSpawnContext => {
@@ -86,6 +102,7 @@ export default function (pi: ExtensionAPI): void {
       // Attach duration to details so renderResult can display it
       const durationMs = Date.now() - start;
       result.details = { ...result.details, _durationMs: durationMs };
+      notifyInstalledSpawnHooks(ctx);
       return result;
     },
   });
