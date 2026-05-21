@@ -2,8 +2,9 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import { ExternalEditorComponent } from "@harness/ui";
 import { err, isErr, ok, type Result, toError } from "@harness/utils";
-import { getEditor, openInSplit, runEditorInPlace } from "./editor";
+import { openInSplit } from "./editor";
 import { prepareDiffFile, resolveRange } from "./git";
 import { renderReviewMessage } from "./render";
 import {
@@ -23,20 +24,8 @@ export default async function (pi: ExtensionAPI) {
     getArgumentCompletions,
     handler: async (args, ctx) => {
       await runReviewCommand(pi, args, ctx, async (diffFile) => {
-        const editor = getEditor();
-        const exitCode = await ctx.ui.custom<number | null>(
-          (tui, _theme, _keybindings, done) => {
-            let result: number | null = 1;
-            tui.stop();
-            try {
-              result = runEditorInPlace(editor, diffFile);
-            } finally {
-              tui.start();
-              tui.requestRender(true);
-              done(result);
-            }
-            return { render: () => [], invalidate: () => {} };
-          },
+        const exitCode = await ctx.ui.custom(
+          ExternalEditorComponent.create(diffFile),
         );
 
         return ok(exitCode);

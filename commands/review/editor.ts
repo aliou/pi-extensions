@@ -1,28 +1,15 @@
+// biome-ignore lint/plugin/pi-no-node-exec: It's fine for now
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, unlinkSync } from "node:fs";
+import { getEditor } from "@harness/ui";
 import { err, ok, type Result } from "@harness/utils";
 
 export type SplitEnvironment = "tmux" | "ghostty" | "unknown";
-
-export function getEditor(): string {
-  return process.env.VISUAL || process.env.EDITOR || "nvim";
-}
 
 export function detectSplitEnvironment(): SplitEnvironment {
   if (process.env.TMUX) return "tmux";
   if (process.env.TERM_PROGRAM === "ghostty") return "ghostty";
   return "unknown";
-}
-
-export function runEditorInPlace(
-  editor: string,
-  diffFile: string,
-): number | null {
-  const result = spawnSync(editor, [diffFile], {
-    stdio: "inherit",
-    env: process.env,
-  });
-  return result.status;
 }
 
 export async function openInSplit(

@@ -4,7 +4,9 @@
   "type": "module",
   "exports": {
     ".": "./index.ts",
-    "./border": "./border.ts"
+    "./border": "./border.ts",
+    "./custom": "./custom.ts",
+    "./editor": "./editor.ts"
   },
   "dependencies": {
     "@earendil-works/pi-tui": "0.74.1"
