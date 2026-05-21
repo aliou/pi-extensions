@@ -12,7 +12,6 @@ import type {
   SessionLinkMarkerDetails,
   SessionLinkMessage,
   SessionLinkSourceDetails,
-  SessionLinkType,
 } from "./types";
 
 function resolveSessionName(sessionFile: string): string {
@@ -34,10 +33,9 @@ export function renderMarker(
   if (!details?.targetSessionFile) return undefined;
 
   const displayName = resolveSessionName(details.targetSessionFile);
-  const linkType: SessionLinkType = details.linkType ?? "handoff";
-  const labelText =
-    linkType === "continue" ? "Continues in " : "Handed off to ";
-  const displayText = `${theme.fg("muted", labelText)}${theme.fg("accent", displayName)}`;
+  const labelSuffix =
+    details.contextStrategy === "last-assistant" ? " with last message" : "";
+  const displayText = `${theme.fg("muted", "Continues in ")}${theme.fg("accent", displayName)}${theme.fg("muted", labelSuffix)}`;
 
   const box = new Box(1, 1, (t) => theme.bg("customMessageBg", t));
   box.addChild(new Text(displayText, 0, 0));
@@ -54,10 +52,9 @@ export function renderSource(
 
   const { expanded } = options;
   const displayName = resolveSessionName(details.parentSessionFile);
-  const linkType: SessionLinkType = details.linkType ?? "handoff";
-  const labelText =
-    linkType === "continue" ? "Continued from " : "Continuing from ";
-  const header = `${theme.fg("muted", labelText)}${theme.fg("accent", displayName)}`;
+  const labelSuffix =
+    details.contextStrategy === "last-assistant" ? " with last message" : "";
+  const header = `${theme.fg("muted", "Continues from ")}${theme.fg("accent", displayName)}${theme.fg("muted", labelSuffix)}`;
 
   const content = messageContentToText(message.content);
 

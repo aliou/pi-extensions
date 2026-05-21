@@ -73,11 +73,12 @@ describe("breadcrumbs /spawn command", () => {
     ]);
 
     const setEditorText = vi.fn();
+    const custom = vi.fn(async () => "last") as never;
 
     pi = await createPiTestHarness(setupSpawnCommand, {
       context: {
         sessionManager: parentSm,
-        ui: { setEditorText },
+        ui: { setEditorText, custom },
       },
     });
 
@@ -112,6 +113,7 @@ describe("breadcrumbs /spawn command", () => {
     const details = sourceEntry.details as SessionLinkSourceDetails;
     expect(details.goal).toBe("focus on tests");
     expect(details.linkType).toBe("continue");
+    expect(details.contextStrategy).toBe("last-assistant");
   });
 
   it("omits the last-message section when there is no assistant message", async () => {
@@ -124,7 +126,10 @@ describe("breadcrumbs /spawn command", () => {
     ]);
 
     pi = await createPiTestHarness(setupSpawnCommand, {
-      context: { sessionManager: parentSm },
+      context: {
+        sessionManager: parentSm,
+        ui: { custom: vi.fn(async () => "last") as never },
+      },
     });
 
     await pi.command("spawn").execute("");

@@ -56,5 +56,5 @@ ${parentLastMessage}`;
 
   return `Session spawned from ${parentSessionId}. Use \`read_session\` to access the parent session context:
 
-read_session({ sessionId: "${parentSessionId}", goal: "Get the last assistant message with context" })`;
+read_session({ sessionId: "${parentSessionId}", goal: "Get more context about the parent session" })`;
 }
