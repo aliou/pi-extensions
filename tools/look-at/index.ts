@@ -4,7 +4,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineSubagent } from "@harness/agent-kit";
 import { MODEL_CANDIDATES } from "./models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
-import { LookAtParams } from "./types";
+import { LookAtParams, type LookAtParamsInput } from "./types";
 import {
   disableTool,
   isVisionCapable,
@@ -17,7 +17,7 @@ const NUDGE_TEXT = `
 <pi_runtime_instruction source="look_at" user_visible="false">
 This instruction was inserted by the Pi look_at extension, not by the user.
 The user message is above this block.
-If the user referenced or attached image files, use the look_at tool to analyze them before answering.
+The user has referenced or attached image files; use the look_at tool to analyze them before answering.
 </pi_runtime_instruction>`;
 
 const TOOL_NAME = "look_at";
@@ -83,7 +83,43 @@ Always provide a clear objective describing what you want to learn from the imag
     },
   });
 
-  pi.registerTool(subagent.tool);
+  pi.registerTool({
+    ...subagent.tool,
+
+    async execute(
+      toolCallId,
+      params: LookAtParamsInput,
+      signal,
+      onUpdate,
+      ctx,
+    ) {
+      const absolutePath = resolve(ctx.cwd, params.path);
+      const mimeType = mimeTypeFromPath(absolutePath);
+
+      const result = await subagent.tool.execute(
+        toolCallId,
+        params,
+        signal,
+        onUpdate,
+        ctx,
+      );
+
+      if (!mimeType) return result;
+
+      const buffer = readFileSync(absolutePath);
+      return {
+        ...result,
+        content: [
+          ...result.content,
+          {
+            type: "image" as const,
+            data: buffer.toString("base64"),
+            mimeType,
+          },
+        ],
+      };
+    },
+  });
 
   pi.on("agent_start", (_evt, ctx) => {
     const model = ctx.model;
@@ -97,11 +133,7 @@ Always provide a clear objective describing what you want to learn from the imag
   });
 
   pi.on("model_select", (evt, _ctx) => {
-    if (isVisionCapable(evt.model)) {
-      disableTool(pi, TOOL_NAME);
-    } else {
-      enableTool(pi);
-    }
+    isVisionCapable(evt.model) ? disableTool(pi, TOOL_NAME) : enableTool(pi);
   });
 
   pi.on("input", (event, ctx) => {

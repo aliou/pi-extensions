@@ -1,4 +1,4 @@
-import Type from "typebox";
+import { type Static, Type } from "typebox";
 
 export const LookAtParams = Type.Object({
   path: Type.String({
@@ -15,3 +15,5 @@ export const LookAtParams = Type.Object({
     }),
   ),
 });
+
+export type LookAtParamsInput = Static<typeof LookAtParams>;
