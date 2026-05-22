@@ -1,4 +1,4 @@
-import type { ModelOverride } from "./config";
+import type { ModelOverride } from "../model-overrides";
 import type { ModelsJsonConfig } from "./models-json";
 
 export interface DriftedModelOverride {
