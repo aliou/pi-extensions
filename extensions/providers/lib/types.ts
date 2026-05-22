@@ -4,7 +4,7 @@
 
 /** Base fields shared by all limit kinds. */
 export interface BaseLimit {
-  provider: "anthropic" | "openai-codex" | "synthetic" | "opencode-go";
+  provider: "anthropic" | "openai-codex" | "synthetic";
   /** Stable identifier, e.g. "anthropic:five-hour" or "codex:spark:secondary". */
   id: string;
   /** Human-readable name, e.g. "5-hour window". */
@@ -83,7 +83,7 @@ export type NormalizedLimit =
 export type ProviderStatus = "operational" | "degraded" | "outage" | "unknown";
 
 export interface ProviderSnapshot {
-  provider: "anthropic" | "openai-codex" | "synthetic" | "opencode-go";
+  provider: "anthropic" | "openai-codex" | "synthetic";
   displayName: string;
   status: ProviderStatus;
   statusMessage?: string;
