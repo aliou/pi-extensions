@@ -4,7 +4,7 @@ import { join } from "node:path";
 import type { LimitSample, NormalizedLimit } from "./types";
 
 const MAX_SAMPLES_PER_LIMIT = 30;
-const CLEANUP_AGE_MS = 10 * 24 * 60 * 60 * 1000; // 10 days.
+const CLEANUP_AGE_MS = 45 * 24 * 60 * 60 * 1000; // 45 days (~1.5 months).
 const HISTORY_DIR = join(
   process.env.XDG_CACHE_HOME || join(homedir(), ".cache"),
   "pi",
