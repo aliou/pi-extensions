@@ -41,6 +41,15 @@ export interface SubagentPromptResult {
   images?: ImageContent[];
 }
 
+export interface SubagentSessionConfig {
+  /**
+   * When true (default), the subagent forwards the parent Pi session ID
+   * to the provider, grouping all API calls under the parent session.
+   * When false, the subagent uses its own session ID for provider calls.
+   */
+  inheritSessionId?: boolean;
+}
+
 export interface SubagentConfig<Params extends TSchema = TSchema> {
   name: string;
   label: string;
@@ -51,6 +60,7 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   skills?: Skill[];
   extensionPaths?: string[];
   models: SubagentModel[];
+  session?: SubagentSessionConfig;
 
   parameters: Params;
   buildPrompt: (

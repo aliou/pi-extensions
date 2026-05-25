@@ -16,6 +16,7 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     systemPrompt: SESSION_NAME_SYSTEM_PROMPT,
     tools: createSessionNameTools(pi),
     models: MODEL_CANDIDATES,
+    session: { inheritSessionId: false },
     parameters: Type.Object({
       turns: Type.Array(
         Type.Object({

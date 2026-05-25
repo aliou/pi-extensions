@@ -28,6 +28,7 @@ export async function runQqSubagent(
         weight: 1,
       },
     ],
+    session: { inheritSessionId: false },
     parameters: QqParams,
     buildPrompt: (params) => ({ text: params.prompt }),
   });
