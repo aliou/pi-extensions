@@ -20,9 +20,10 @@ export interface ModelOverride {
  */
 export const MODEL_OVERRIDES: Record<string, Record<string, ModelOverride>> = {
   anthropic: {
+    "claude-sonnet-4-6": { contextWindow: 272_000 },
     "claude-opus-4-6": { contextWindow: 272_000 },
     "claude-opus-4-7": { contextWindow: 272_000 },
-    "claude-sonnet-4-6": { contextWindow: 272_000 },
+    "claude-opus-4-8": { contextWindow: 272_000 },
   },
   "openai-codex": {
     "gpt-5.3-codex-spark": {
