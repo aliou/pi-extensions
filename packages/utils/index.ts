@@ -6,7 +6,7 @@ export {
   formatTimeRemaining,
 } from "./formatters";
 export { isNil, isNotNil } from "./nil";
-export { encodePathSegments, expandHomePath } from "./path";
+export { collapseHomePath, encodePathSegments, expandHomePath } from "./path";
 export type { Result } from "./result";
 export {
   err,

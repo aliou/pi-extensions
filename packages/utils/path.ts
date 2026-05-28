@@ -13,3 +13,10 @@ export function expandHomePath(path: string): string {
   if (path.startsWith("~/")) return join(homedir(), path.slice(2));
   return path;
 }
+
+/** Collapse `$HOME` prefix to `~`. Inverse of `expandHomePath`. */
+export function collapseHomePath(path: string): string {
+  const home = homedir();
+  if (home && path.startsWith(home)) return `~${path.slice(home.length)}`;
+  return path;
+}
