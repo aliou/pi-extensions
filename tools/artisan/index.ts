@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineSubagent } from "@harness/agent-kit";
+import { createSubagent } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { MODEL_CANDIDATES } from "./models";
 import { ARTISAN_SYSTEM_PROMPT, buildPrompt } from "./prompt";
@@ -22,7 +22,7 @@ const extensionPaths = [
 ];
 
 export default async function artisan(pi: ExtensionAPI): Promise<void> {
-  const subagent = defineSubagent(pi, {
+  const subagent = createSubagent(pi, {
     name: "artisan",
     label: "Artisan",
     description:
@@ -40,8 +40,5 @@ export default async function artisan(pi: ExtensionAPI): Promise<void> {
     models: MODEL_CANDIDATES,
   });
 
-  subagent.subscribe(pi);
-
-  pi.registerTool(subagent.tool);
-  pi.registerTool(subagent.resumeTool);
+  subagent.register({ resumeTool: true });
 }

@@ -14,7 +14,19 @@ import { SubagentSessionManager } from "./session-manager";
 import { SubagentSessionRecordStore } from "./session-records";
 import type { SubagentConfig } from "./types";
 
-export function defineSubagent<Params extends TSchema>(
+export type SubagentRunOptions<Params extends TSchema> = {
+  callId?: string;
+  signal?: AbortSignal;
+  onUpdate?: Parameters<SubagentRuntime<Params>["execute"]>[2];
+  ctx: Parameters<SubagentRuntime<Params>["execute"]>[3];
+};
+
+export type SubagentRegisterOptions = {
+  tool?: boolean;
+  resumeTool?: boolean;
+};
+
+export function createSubagent<Params extends TSchema>(
   pi: ExtensionAPI,
   config: SubagentConfig<Params>,
 ) {
@@ -22,68 +34,81 @@ export function defineSubagent<Params extends TSchema>(
   const records = new SubagentSessionRecordStore(pi);
   const sessions = new SubagentSessionManager(config, models, records);
 
-  const execute = async (
-    toolCallId: string,
+  const runWithParams = async (
     params: Static<Params>,
-    signal: AbortSignal | undefined,
-    onUpdate: Parameters<SubagentRuntime<Params>["execute"]>[2],
-    ctx: Parameters<SubagentRuntime<Params>["execute"]>[3],
+    options: SubagentRunOptions<Params>,
   ) => {
-    const invocationSkills = config.resolveSkills?.(params, ctx) ?? [];
-    return sessions.withNewSession(ctx, invocationSkills, async (session) => {
-      return new SubagentRuntime(config, session, signal).execute(
-        toolCallId,
-        params,
-        onUpdate,
-        ctx,
-      );
-    });
+    const invocationSkills = config.resolveSkills?.(params, options.ctx) ?? [];
+    return sessions.withNewSession(
+      options.ctx,
+      invocationSkills,
+      async (session) => {
+        return new SubagentRuntime(config, session, options.signal).execute(
+          options.callId ?? config.name,
+          params,
+          options.onUpdate,
+          options.ctx,
+        );
+      },
+    );
   };
 
-  const tool = defineTool({
-    name: config.name,
-    label: config.label,
-    description: config.description,
-    promptGuidelines: config.promptGuidelines,
-    parameters: config.parameters,
-    renderCall: (args, theme, ctx) =>
-      // TODO: correctly cast this with the params type
-      renderSubagentCall(config, args as Record<string, unknown>, theme, ctx),
-    renderResult: (result, options, theme, ctx) =>
-      renderSubagentResult(config, result, options, theme, ctx),
-    execute,
-  });
+  const run = async (prompt: string, options: SubagentRunOptions<Params>) => {
+    return runWithParams({ prompt } as Static<Params>, options);
+  };
 
-  const resumeTool = defineTool({
-    name: `resume_${config.name}`,
-    label: `Resume ${config.label}`,
-    description: `Resume a previous ${config.label} session using its sessionId`,
-    parameters: createResumeSubagentParamsSchema(config.parameters),
-    renderCall: (args, theme, ctx) =>
-      renderSubagentCall(config, args, theme, ctx),
-    renderResult: (result, options, theme, ctx) =>
-      renderSubagentResult(config, result, options, theme, ctx),
+  const asTool = () =>
+    defineTool({
+      name: config.name,
+      label: config.label,
+      description: config.description,
+      promptGuidelines: config.promptGuidelines,
+      parameters: config.parameters,
+      renderCall: (args, theme, ctx) =>
+        renderSubagentCall(config, args as Record<string, unknown>, theme, ctx),
+      renderResult: (result, options, theme, ctx) =>
+        renderSubagentResult(config, result, options, theme, ctx),
+      execute(toolCallId, params, signal, onUpdate, ctx) {
+        return runWithParams(params as Static<Params>, {
+          callId: toolCallId,
+          signal,
+          onUpdate,
+          ctx,
+        });
+      },
+    });
 
-    async execute(
-      toolCallId,
-      params: ResumeSubagentParams<Params>,
-      signal,
-      onUpdate,
-      ctx,
-    ) {
-      const { sessionId, ...restParams } = params;
-      const session = await sessions.resume(sessionId, ctx);
-      const runtime = new SubagentRuntime<Params>(config, session, signal);
-      return runtime.execute(
+  const asResumeTool = () =>
+    defineTool({
+      name: `resume_${config.name}`,
+      label: `Resume ${config.label}`,
+      description: `Resume a previous ${config.label} session using its sessionId`,
+      parameters: createResumeSubagentParamsSchema(config.parameters),
+      renderCall: (args, theme, ctx) =>
+        renderSubagentCall(config, args, theme, ctx),
+      renderResult: (result, options, theme, ctx) =>
+        renderSubagentResult(config, result, options, theme, ctx),
+
+      async execute(
         toolCallId,
-        restParams as Static<Params>,
+        params: ResumeSubagentParams<Params>,
+        signal,
         onUpdate,
         ctx,
-      );
-    },
-  });
+      ) {
+        const { sessionId, ...restParams } = params;
+        const session = await sessions.resume(sessionId, ctx);
+        const runtime = new SubagentRuntime<Params>(config, session, signal);
+        return runtime.execute(
+          toolCallId,
+          restParams as Static<Params>,
+          onUpdate,
+          ctx,
+        );
+      },
+    });
 
-  const subscribe = (pi: ExtensionAPI) => {
+  const subscribe = () => {
     pi.on("session_start", (event, ctx) => {
       sessions.handleSessionStart(event, ctx);
     });
@@ -93,5 +118,25 @@ export function defineSubagent<Params extends TSchema>(
     });
   };
 
-  return { tool, resumeTool, execute, subscribe };
+  const register = (options: SubagentRegisterOptions = {}) => {
+    subscribe();
+
+    if (options.tool ?? true) {
+      pi.registerTool(asTool());
+    }
+
+    if (options.resumeTool ?? false) {
+      pi.registerTool(asResumeTool());
+    }
+  };
+
+  return {
+    config,
+    run,
+    runWithParams,
+    asTool,
+    asResumeTool,
+    subscribe,
+    register,
+  };
 }

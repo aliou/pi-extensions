@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineSubagent } from "@harness/agent-kit";
+import { createSubagent } from "@harness/agent-kit";
 import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, LIBRAIAN_SYSTEM_PROMPT } from "./prompt";
 import { createLibrarianTools } from "./tools";
@@ -8,7 +8,7 @@ import { LibrarianParams } from "./types";
 export default async function librarian(pi: ExtensionAPI): Promise<void> {
   const tools = createLibrarianTools(pi);
 
-  const subagent = defineSubagent(pi, {
+  const subagent = createSubagent(pi, {
     name: "librarian",
     label: "Librarian",
     description:
@@ -24,8 +24,5 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     models: MODEL_CANDIDATES,
   });
 
-  subagent.subscribe(pi);
-
-  pi.registerTool(subagent.tool);
-  pi.registerTool(subagent.resumeTool);
+  subagent.register({ resumeTool: true });
 }

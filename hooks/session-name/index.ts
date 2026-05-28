@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineSubagent } from "@harness/agent-kit";
+import { createSubagent } from "@harness/agent-kit";
 import { isBlank } from "@harness/utils/string";
 import { Type } from "typebox";
 import { SESSION_NAME_REFINE_EVERY } from "./constants";
@@ -9,7 +9,7 @@ import { createSessionNameTools } from "./tools";
 import { countCompletedAssistantTurns, getRecentTurns } from "./turns";
 
 export default async function sessionName(pi: ExtensionAPI): Promise<void> {
-  const subagent = defineSubagent(pi, {
+  const subagent = createSubagent(pi, {
     name: "session_name",
     label: "Session Name",
     description: "Generate or refine a concise session name.",
@@ -52,12 +52,9 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     );
 
     subagent
-      .execute(
-        "session-name",
+      .runWithParams(
         { turns, currentName },
-        ctx.signal,
-        undefined,
-        ctx,
+        { callId: "session-name", signal: ctx.signal, ctx },
       )
       .then(() => {
         const name = pi.getSessionName();

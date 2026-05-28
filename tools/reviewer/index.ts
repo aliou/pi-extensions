@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineSubagent } from "@harness/agent-kit";
+import { createSubagent } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, REVIEWER_SYSTEM_PROMPT } from "./prompt";
@@ -19,7 +19,7 @@ const extensionPaths = ["./tools", "npm:@aliou/pi-synthetic"];
 export default async function reviewer(pi: ExtensionAPI): Promise<void> {
   const tools = [...nativeTools, ...createReviewerTools(pi)];
 
-  const subagent = defineSubagent(pi, {
+  const subagent = createSubagent(pi, {
     name: "reviewer",
     label: "Reviewer",
     description:
@@ -37,8 +37,5 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     models: MODEL_CANDIDATES,
   });
 
-  subagent.subscribe(pi);
-
-  pi.registerTool(subagent.tool);
-  pi.registerTool(subagent.resumeTool);
+  subagent.register({ resumeTool: true });
 }

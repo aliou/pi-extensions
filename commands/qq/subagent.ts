@@ -2,7 +2,7 @@ import type {
   ExtensionAPI,
   ExtensionCommandContext,
 } from "@earendil-works/pi-coding-agent";
-import { defineSubagent } from "@harness/agent-kit";
+import { createSubagent } from "@harness/agent-kit";
 import type { SubagentDetails } from "@harness/agent-kit/runtime";
 import { QqParams } from "./types";
 
@@ -14,7 +14,7 @@ export async function runQqSubagent(
 ): Promise<SubagentDetails | undefined> {
   if (!ctx.model) return undefined;
 
-  const qqSubagent = defineSubagent(pi, {
+  const qqSubagent = createSubagent(pi, {
     name: "qq",
     label: "QQ",
     description: "Answer a quick side question",
@@ -33,12 +33,9 @@ export async function runQqSubagent(
     buildPrompt: (params) => ({ text: params.prompt }),
   });
 
-  const result = await qqSubagent.execute(
-    "qq",
+  const result = await qqSubagent.runWithParams(
     { prompt: userMessage },
-    undefined,
-    undefined,
-    ctx,
+    { callId: "qq", ctx },
   );
 
   return result.details;

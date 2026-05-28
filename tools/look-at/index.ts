@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineSubagent } from "@harness/agent-kit";
+import { createSubagent } from "@harness/agent-kit";
 import { MODEL_CANDIDATES } from "./models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
 import { LookAtParams, type LookAtParamsInput } from "./types";
@@ -30,7 +30,7 @@ function enableTool(pi: ExtensionAPI) {
 }
 
 export default function lookAt(pi: ExtensionAPI): void {
-  const subagent = defineSubagent(pi, {
+  const subagent = createSubagent(pi, {
     name: TOOL_NAME,
     label: "Look At",
     description: `Analyze an image file using a vision-capable model. Returns a text description of the image content.
@@ -83,8 +83,11 @@ Always provide a clear objective describing what you want to learn from the imag
     },
   });
 
+  const tool = subagent.asTool();
+  subagent.subscribe();
+
   pi.registerTool({
-    ...subagent.tool,
+    ...tool,
 
     async execute(
       toolCallId,
@@ -96,7 +99,7 @@ Always provide a clear objective describing what you want to learn from the imag
       const absolutePath = resolve(ctx.cwd, params.path);
       const mimeType = mimeTypeFromPath(absolutePath);
 
-      const result = await subagent.tool.execute(
+      const result = await tool.execute(
         toolCallId,
         params,
         signal,

@@ -1,12 +1,12 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineSubagent } from "@harness/agent-kit";
+import { createSubagent } from "@harness/agent-kit";
 import { MODEL_CANDIDATES } from "./models";
 import { SYSTEM_PROMPT } from "./prompt";
 import { tools } from "./tools";
 import { ReadSessionParams } from "./types";
 
 export default async function readSession(pi: ExtensionAPI): Promise<void> {
-  const { tool, subscribe } = defineSubagent(pi, {
+  const subagent = createSubagent(pi, {
     name: "read_session",
     label: "Read Session",
     description: "Extract specific information from a past Pi coding session.",
@@ -39,6 +39,5 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     },
   });
 
-  pi.registerTool(tool);
-  subscribe(pi);
+  subagent.register();
 }
