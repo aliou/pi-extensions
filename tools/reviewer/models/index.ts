@@ -1,14 +1,3 @@
-import type { SubagentModel } from "@harness/agent-kit/models";
+import registry from "@harness/model-registry";
 
-export const MODEL_CANDIDATES: SubagentModel[] = [
-  {
-    provider: "anthropic",
-    model: "claude-sonnet-4-6",
-    thinking: "medium",
-  },
-  {
-    provider: "openrouter",
-    model: "~anthropic/claude-sonnet-latest",
-    thinking: "medium",
-  },
-];
+export const MODEL_CANDIDATES = registry.get("ad:medium:sota");

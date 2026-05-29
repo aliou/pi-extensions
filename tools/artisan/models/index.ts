@@ -1,9 +1,3 @@
-import type { SubagentModel } from "@harness/agent-kit/models";
+import registry from "@harness/model-registry";
 
-export const MODEL_CANDIDATES: SubagentModel[] = [
-  {
-    provider: "anthropic",
-    model: "claude-opus-4-8",
-    thinking: "medium",
-  },
-];
+export const MODEL_CANDIDATES = registry.get("ad:large:sota");

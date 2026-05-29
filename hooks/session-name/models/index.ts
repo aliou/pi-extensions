@@ -1,9 +1,3 @@
-import type { SubagentModel } from "@harness/agent-kit/models";
+import registry from "@harness/model-registry";
 
-export const MODEL_CANDIDATES: SubagentModel[] = [
-  {
-    provider: "neuralwatt",
-    model: "glm-5-fast",
-    thinking: "off",
-  },
-];
+export const MODEL_CANDIDATES = registry.get("ad:small:text");
