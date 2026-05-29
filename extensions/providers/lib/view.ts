@@ -1,12 +1,12 @@
-import { formatCurrency, formatTimeRemaining } from "@harness/utils/formatters";
-import { assessRisk, getPacePercent, getProjectedPercent } from "./engine";
 import type {
   FixedWindowLimit,
   LimitViewModel,
   NormalizedLimit,
   RefillableLimit,
   RegenBudgetLimit,
-} from "./types";
+} from "@harness/provider-usage";
+import { formatCurrency, formatTimeRemaining } from "@harness/utils/formatters";
+import { assessRisk, getPacePercent, getProjectedPercent } from "./engine";
 
 function fixedWindowViewModel(limit: FixedWindowLimit): LimitViewModel {
   const pacePercent = getPacePercent(limit);

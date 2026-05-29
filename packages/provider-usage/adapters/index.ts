@@ -1,6 +1,5 @@
 import type { AuthStorage } from "@earendil-works/pi-coding-agent";
 import { withCache } from "../cache";
-import { recordSnapshotSamples } from "../history";
 import type { ProviderSnapshot } from "../types";
 import type { ProviderAdapter } from "./base";
 import { claudeAdapter } from "./claude";
@@ -22,7 +21,7 @@ const adapters: Record<ProviderKey, ProviderAdapter> = {
 };
 
 /**
- * Fetches a single provider's data with caching and history recording.
+ * Fetches a single provider's data with caching.
  */
 export async function fetchProvider(
   key: ProviderKey,
@@ -36,11 +35,6 @@ export async function fetchProvider(
     () => adapter.fetch(authStorage, signal),
     force,
   );
-
-  // Record samples for burn rate estimation (fire-and-forget).
-  if (!snapshot.error && snapshot.limits.length > 0) {
-    recordSnapshotSamples(snapshot.limits).catch(() => {});
-  }
 
   return snapshot;
 }

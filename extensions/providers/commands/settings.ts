@@ -3,13 +3,13 @@ import {
   type SettingsSection,
 } from "@aliou/pi-utils-settings";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { PROVIDER_KEYS } from "@harness/provider-usage";
 import {
   configLoader,
   PROVIDER_DISPLAY_NAMES,
   type ProvidersConfig,
   type ResolvedConfig,
 } from "../config";
-import { PROVIDER_KEYS } from "../lib/adapters";
 
 export function registerProvidersSettings(pi: ExtensionAPI): void {
   registerSettingsCommand<ProvidersConfig, ResolvedConfig>(pi, {

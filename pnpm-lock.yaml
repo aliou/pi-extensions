@@ -41,6 +41,9 @@ importers:
       '@harness/nvim-undofile':
         specifier: workspace:*
         version: link:packages/nvim-undofile
+      '@harness/provider-usage':
+        specifier: workspace:*
+        version: link:packages/provider-usage
       '@harness/utils':
         specifier: workspace:*
         version: link:packages/utils
@@ -122,6 +125,12 @@ importers:
       '@harness/utils':
         specifier: workspace:*
         version: link:../utils
+
+  packages/provider-usage:
+    dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: 0.74.1
+        version: 0.74.1(ws@8.20.0)(zod@3.25.76)
 
   packages/test-utils:
     dependencies:

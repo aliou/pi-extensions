@@ -39,6 +39,7 @@
     "@harness/events": "workspace:*",
     "@harness/model-registry": "workspace:*",
     "@harness/nvim-undofile": "workspace:*",
+    "@harness/provider-usage": "workspace:*",
     "@harness/utils": "workspace:*"
   },
   "devDependencies": {

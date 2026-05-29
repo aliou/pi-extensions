@@ -9,13 +9,13 @@ import {
   visibleWidth,
   wrapTextWithAnsi,
 } from "@earendil-works/pi-tui";
-import { fetchAllProviders } from "../lib/adapters";
-import { getSeverityColor } from "../lib/engine";
 import type {
   LimitViewModel,
   NormalizedLimit,
   ProviderSnapshot,
-} from "../lib/types";
+} from "@harness/provider-usage";
+import { fetchAllProviders } from "@harness/provider-usage";
+import { getSeverityColor } from "../lib/engine";
 import { buildViewModels } from "../lib/view";
 
 // === Width-safe rendering ===
