@@ -5,6 +5,5 @@ export const MODEL_CANDIDATES: SubagentModel[] = [
     provider: "anthropic",
     model: "claude-opus-4-8",
     thinking: "medium",
-    weight: 1,
   },
 ];

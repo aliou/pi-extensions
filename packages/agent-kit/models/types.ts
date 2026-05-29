@@ -4,7 +4,6 @@ export interface SubagentModel {
   provider: string;
   model: string;
   thinking: ThinkingLevel | "off";
-  weight: number;
 }
 
 export interface SubagentResolvedModel {

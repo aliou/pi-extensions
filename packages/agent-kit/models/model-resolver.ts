@@ -54,22 +54,6 @@ export class SubagentModelResolver {
   private pickCandidate(
     modelRegistry: ModelRegistry,
   ): { model: Model<Api>; config: SubagentModel } | null {
-    if (this.candidates.length === 0) return null;
-
-    const totalWeight = this.candidates.reduce(
-      (sum, candidate) => sum + candidate.weight,
-      0,
-    );
-    let roll = Math.random() * totalWeight;
-
-    for (const candidate of this.candidates) {
-      roll -= candidate.weight;
-      if (roll <= 0) {
-        const model = modelRegistry.find(candidate.provider, candidate.model);
-        if (model) return { model, config: candidate };
-      }
-    }
-
     for (const candidate of this.candidates) {
       const model = modelRegistry.find(candidate.provider, candidate.model);
       if (model) return { model, config: candidate };
