@@ -24,6 +24,10 @@ import {
 } from "../session-records";
 import type { SubagentConfig } from "../types";
 
+const DEFAULT_SUBAGENT_EXTENSION_PATHS = [
+  "./debug/hooks/provider-response-headers",
+];
+
 export class SubagentSessionManager<Params extends TSchema = TSchema> {
   private settingsManager = SettingsManager.inMemory({
     compaction: { enabled: false },
@@ -170,7 +174,10 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       cwd,
       this.config.systemPrompt,
       [...(this.config.skills ?? []), ...invocationSkills],
-      this.config.extensionPaths ?? [],
+      mergeExtensionPaths(
+        DEFAULT_SUBAGENT_EXTENSION_PATHS,
+        this.config.extensionPaths ?? [],
+      ),
     );
     await resourceLoader.reload();
 
@@ -264,4 +271,8 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       return undefined;
     }
   }
+}
+
+function mergeExtensionPaths(...pathGroups: string[][]): string[] {
+  return [...new Set(pathGroups.flat())];
 }
