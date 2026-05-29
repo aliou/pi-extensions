@@ -168,7 +168,6 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
 
     const resourceLoader = new SubagentResourceLoader(
       cwd,
-      this.subagentDir,
       this.config.systemPrompt,
       [...(this.config.skills ?? []), ...invocationSkills],
       this.config.extensionPaths ?? [],

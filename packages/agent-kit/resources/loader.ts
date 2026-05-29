@@ -1,10 +1,13 @@
 import {
   createExtensionRuntime,
+  DefaultPackageManager,
   discoverAndLoadExtensions,
+  getAgentDir,
   type LoadExtensionsResult,
   type PromptTemplate,
   type ResourceDiagnostic,
   type ResourceLoader,
+  SettingsManager,
   type Skill,
   type Theme,
 } from "@earendil-works/pi-coding-agent";
@@ -20,10 +23,10 @@ export class SubagentResourceLoader implements ResourceLoader {
 
   constructor(
     private cwd: string,
-    private agentDir: string,
     private systemPrompt: string,
     private skills: Skill[],
     private extensionPaths: string[] = [],
+    private packageAgentDir: string = getAgentDir(),
   ) {}
 
   getExtensions(): LoadExtensionsResult {
@@ -70,10 +73,47 @@ export class SubagentResourceLoader implements ResourceLoader {
   extendResources() {}
 
   async reload(): Promise<void> {
+    const extensionPaths = await this.resolveExtensionPaths();
+
     this.extensionsResult = await discoverAndLoadExtensions(
-      this.extensionPaths,
+      extensionPaths,
       this.cwd,
-      this.agentDir,
+      this.packageAgentDir,
     );
   }
+
+  private async resolveExtensionPaths(): Promise<string[]> {
+    const localPaths: string[] = [];
+    const packageSources: string[] = [];
+
+    for (const extensionPath of this.extensionPaths) {
+      if (isPackageSource(extensionPath)) {
+        packageSources.push(extensionPath);
+        continue;
+      }
+
+      localPaths.push(extensionPath);
+    }
+
+    if (packageSources.length === 0) {
+      return localPaths;
+    }
+
+    const packageManager = new DefaultPackageManager({
+      cwd: this.cwd,
+      agentDir: this.packageAgentDir,
+      settingsManager: SettingsManager.create(this.cwd, this.packageAgentDir),
+    });
+    const resolved =
+      await packageManager.resolveExtensionSources(packageSources);
+    const packageExtensionPaths = resolved.extensions
+      .filter((extension) => extension.enabled)
+      .map((extension) => extension.path);
+
+    return [...localPaths, ...packageExtensionPaths];
+  }
+}
+
+function isPackageSource(extensionPath: string): boolean {
+  return extensionPath.startsWith("npm:") || extensionPath.startsWith("git:");
 }
