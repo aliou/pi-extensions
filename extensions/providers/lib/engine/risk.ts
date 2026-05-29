@@ -1,4 +1,3 @@
-import { estimateBurnRate } from "../history";
 import type {
   FixedWindowLimit,
   NormalizedLimit,
@@ -7,7 +6,8 @@ import type {
   RiskAssessment,
   Severity,
   ThresholdProfile,
-} from "../types";
+} from "@harness/provider-usage";
+import { estimateBurnRate } from "@harness/provider-usage";
 import { getProfile } from "./profiles";
 import {
   getPacePercent,

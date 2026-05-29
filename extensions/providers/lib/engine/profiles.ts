@@ -1,4 +1,4 @@
-import type { ThresholdProfile } from "../types";
+import type { ThresholdProfile } from "@harness/provider-usage";
 
 /** Default profile for most providers/windows. */
 const DEFAULT_PROFILE: ThresholdProfile = {

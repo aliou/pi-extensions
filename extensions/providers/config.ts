@@ -1,5 +1,5 @@
 import { ConfigLoader } from "@aliou/pi-utils-settings";
-import type { ProviderKey } from "./lib/adapters";
+import type { ProviderKey } from "@harness/provider-usage";
 
 // --- Types ---
 

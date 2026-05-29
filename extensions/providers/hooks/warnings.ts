@@ -2,11 +2,15 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import type {
+  NormalizedLimit,
+  RiskAssessment,
+  Severity,
+} from "@harness/provider-usage";
+import { fetchProvider, toProviderKey } from "@harness/provider-usage";
 import { formatTimeRemaining } from "@harness/utils/formatters";
 import { getProviderSettings } from "../config";
-import { fetchProvider, toProviderKey } from "../lib/adapters";
 import { findHighRiskLimits } from "../lib/engine";
-import type { NormalizedLimit, RiskAssessment, Severity } from "../lib/types";
 
 const COOLDOWN_MS = 60 * 60 * 1000; // 60 minutes
 
