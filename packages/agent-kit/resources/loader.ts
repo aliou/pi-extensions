@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   createExtensionRuntime,
   DefaultPackageManager,
@@ -92,7 +95,7 @@ export class SubagentResourceLoader implements ResourceLoader {
         continue;
       }
 
-      localPaths.push(extensionPath);
+      localPaths.push(this.resolveLocalExtensionPath(extensionPath));
     }
 
     if (packageSources.length === 0) {
@@ -111,6 +114,48 @@ export class SubagentResourceLoader implements ResourceLoader {
       .map((extension) => extension.path);
 
     return [...localPaths, ...packageExtensionPaths];
+  }
+
+  private resolveLocalExtensionPath(extensionPath: string): string {
+    if (path.isAbsolute(extensionPath)) return extensionPath;
+    if (extensionPath.startsWith("~") || extensionPath.startsWith("file:")) {
+      return extensionPath;
+    }
+    return path.resolve(getHarnessPackageRoot(), extensionPath);
+  }
+}
+
+let harnessPackageRoot: string | undefined;
+
+function getHarnessPackageRoot(): string {
+  harnessPackageRoot ??= findHarnessPackageRoot();
+  return harnessPackageRoot;
+}
+
+function findHarnessPackageRoot(): string {
+  let current = path.dirname(fileURLToPath(import.meta.url));
+
+  while (true) {
+    const packageJsonPath = path.join(current, "package.json");
+    if (existsSync(packageJsonPath) && isHarnessPackageRoot(packageJsonPath)) {
+      return current;
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) return path.dirname(fileURLToPath(import.meta.url));
+    current = parent;
+  }
+}
+
+function isHarnessPackageRoot(packageJsonPath: string): boolean {
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
+      pi?: { extensions?: unknown };
+    };
+    return Array.isArray(packageJson.pi?.extensions);
+  } catch (_error) {
+    void _error;
+    return false;
   }
 }
 
