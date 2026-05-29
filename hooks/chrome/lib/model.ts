@@ -2,13 +2,23 @@ import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 
 const FAST_SYMBOL = "\u26A1";
 
-function getCodexStatusPrefix(
-  provider: string | undefined,
-  codexFastModeEnabled = false,
-): string {
-  if (provider !== "openai-codex") return "";
+/**
+ * Set of providers with fast mode currently enabled.
+ * Updated by the chrome footer via the AD_MODEL_FAST_MODE_CHANGED_EVENT.
+ */
+const fastModeProviders = new Set<string>();
 
-  return codexFastModeEnabled ? `${FAST_SYMBOL} ` : "";
+export function setFastModeProvider(provider: string, enabled: boolean): void {
+  if (enabled) {
+    fastModeProviders.add(provider);
+  } else {
+    fastModeProviders.delete(provider);
+  }
+}
+
+function getFastPrefix(provider: string | undefined): string {
+  if (!provider || !fastModeProviders.has(provider)) return "";
+  return `${FAST_SYMBOL} `;
 }
 
 const THINKING_LEVEL_COLOR_MAP: Record<string, ThemeColor> = {
@@ -33,9 +43,8 @@ export function buildModelLine(
   modelId: string | undefined,
   hasReasoning: boolean,
   thinkingLevel: string,
-  codexFastModeEnabled = false,
 ): string {
-  const prefix = getCodexStatusPrefix(provider, codexFastModeEnabled);
+  const prefix = getFastPrefix(provider);
   const providerName = `${prefix}${provider ?? "unknown"}`;
   const modelPart = `${providerName}/${modelId ?? "no-model"}:`;
 
@@ -63,8 +72,7 @@ export function buildModelIdLine(
   theme: Theme,
   modelId: string | undefined,
   provider?: string | undefined,
-  codexFastModeEnabled = false,
 ): string {
-  const prefix = getCodexStatusPrefix(provider, codexFastModeEnabled);
+  const prefix = getFastPrefix(provider);
   return theme.fg("thinkingMinimal", `${prefix}${modelId ?? "no-model"}`);
 }

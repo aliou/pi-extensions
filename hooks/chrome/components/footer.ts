@@ -13,13 +13,15 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
-  AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT,
-  AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT,
-  AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT,
-  type AdProvidersCodexFastModeChangedEvent,
+  AD_MODEL_FAST_MODE_CHANGED_EVENT,
+  type AdModelFastModeChangedEvent,
 } from "@harness/events";
 import { GitStatusWatcher } from "../lib/git-status";
-import { buildModelIdLine, buildModelLine } from "../lib/model";
+import {
+  buildModelIdLine,
+  buildModelLine,
+  setFastModeProvider,
+} from "../lib/model";
 import { buildPathParts } from "../lib/path-parts";
 import {
   buildMinimalStatsParts,
@@ -34,17 +36,13 @@ import {
 export function createCustomFooter(pi: ExtensionAPI) {
   let ctx: ExtensionContext | undefined;
   let requestRender: (() => void) | undefined;
-  let codexFastModeEnabled = false;
   let gitStatusWatcher: GitStatusWatcher | undefined;
 
-  pi.events.on(AD_PROVIDERS_CODEX_FAST_MODE_READY_EVENT, () => {
-    if (!ctx) return;
-    pi.events.emit(AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT, { ctx });
-  });
-
-  pi.events.on(AD_PROVIDERS_CODEX_FAST_MODE_CHANGED_EVENT, (data: unknown) => {
-    const event = (data ?? {}) as Partial<AdProvidersCodexFastModeChangedEvent>;
-    codexFastModeEnabled = event.enabled === true;
+  pi.events.on(AD_MODEL_FAST_MODE_CHANGED_EVENT, (data: unknown) => {
+    const event = (data ?? {}) as Partial<AdModelFastModeChangedEvent>;
+    if (event.provider != null) {
+      setFastModeProvider(event.provider, event.enabled === true);
+    }
     if (!ctx) return;
     requestRender?.();
   });
@@ -146,7 +144,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
         theme,
         ctx.model?.id,
         ctx.model?.provider,
-        codexFastModeEnabled,
       );
       line2 = truncateToWidth(modelIdLine, width, "...");
     } else {
@@ -167,7 +164,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
         ctx.model?.id,
         hasReasoning,
         thinkingLevel ?? "off",
-        codexFastModeEnabled,
       );
       const modelWidth = visibleWidth(modelLine);
 
@@ -210,7 +206,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
   return {
     setup: (context: ExtensionContext) => {
       ctx = context;
-      pi.events.emit(AD_PROVIDERS_CODEX_FAST_MODE_REQUEST_EVENT, { ctx });
       ctx.ui.setFooter((tui, theme, footerData) => {
         requestRender = () => tui.requestRender?.();
 
