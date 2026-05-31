@@ -3,6 +3,38 @@ import { Type } from "typebox";
 import { compactEntry, flattenTree } from "./entry-utils";
 import { getTargetSessionPath } from "./utils";
 
+const SESSION_LINK_MARKER_TYPE = "session-link-marker";
+const SESSION_LINK_SOURCE_TYPE = "session-link-source";
+
+type SessionLinkDetails = {
+  targetSessionFile?: string;
+  parentSessionFile?: string;
+};
+
+const getSessionLinkDetails = (
+  entry: unknown,
+  customType: string,
+): SessionLinkDetails | undefined => {
+  if (!entry || typeof entry !== "object") return undefined;
+  const candidate = entry as {
+    type?: string;
+    customType?: string;
+    details?: unknown;
+  };
+
+  if (candidate.type !== "custom_message") return undefined;
+  if (candidate.customType !== customType) return undefined;
+  if (!candidate.details || typeof candidate.details !== "object") {
+    return undefined;
+  }
+
+  return candidate.details as SessionLinkDetails;
+};
+
+const uniqueStrings = (values: Array<string | undefined>): string[] => [
+  ...new Set(values.filter((value): value is string => !!value)),
+];
+
 export const sessionOverview = defineTool({
   name: "get_session_overview",
   label: "Get Session Overview",
@@ -22,6 +54,18 @@ export const sessionOverview = defineTool({
       .filter((id, index, ids) => ids.indexOf(id) === index && sm.getLabel(id));
     const leaves = flattenTree(tree).filter(
       (e) => sm.getChildren(e.id).length === 0,
+    );
+    const parentSessionPath =
+      sm.getHeader()?.parentSession ??
+      entries
+        .map((entry) => getSessionLinkDetails(entry, SESSION_LINK_SOURCE_TYPE))
+        .find((details) => details?.parentSessionFile)?.parentSessionFile;
+    const childSessionPaths = uniqueStrings(
+      entries.map(
+        (entry) =>
+          getSessionLinkDetails(entry, SESSION_LINK_MARKER_TYPE)
+            ?.targetSessionFile,
+      ),
     );
 
     const overview = {
@@ -45,7 +89,8 @@ export const sessionOverview = defineTool({
       compactionCount: entries.filter((e) => e.type === "compaction").length,
       branchCount: leaves.length,
       labelCount: labels.length,
-      parentSessionPath: sm.getHeader()?.parentSession,
+      parentSessionPath,
+      childSessionPaths,
     };
 
     return {
