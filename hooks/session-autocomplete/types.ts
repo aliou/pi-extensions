@@ -10,7 +10,7 @@ export interface ResolvedRef {
 export const SESSION_AUTOCOMPLETE_PREFIX = "@@";
 
 /** Match `@@` plus an optional token at end of text before cursor. */
-export const AT_TOKEN_RE = /@@([^\s@]*)$/;
+export const AT_TOKEN_RE = /@@([^@]*)$/;
 
 /** Match `@@<uuid>` markers anywhere in text. */
 export const AT_UUID_RE =

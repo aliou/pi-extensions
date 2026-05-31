@@ -21,17 +21,16 @@ export function tildePath(p: string): string {
 export function searchByName(
   db: SesameDb,
   token: string,
-  cwd: string,
-  limit: number,
+  cwd?: string,
 ): SesameSearchResult[] {
   const stmt = db.prepare(
     `SELECT id as sessionId, source, path, cwd, name, created_at as createdAt, modified_at as modifiedAt
      FROM sessions
-     WHERE cwd LIKE ? AND name LIKE ?
-     ORDER BY modified_at DESC
-     LIMIT ?`,
+     WHERE (? IS NULL OR cwd LIKE ?) AND name LIKE ?
+     ORDER BY modified_at DESC`,
   );
-  const rows = stmt.all(`${cwd}%`, `%${token}%`, limit) as Array<{
+  const cwdFilter = cwd ? `${cwd}%` : null;
+  const rows = stmt.all(cwdFilter, cwdFilter, `%${token}%`) as Array<{
     sessionId: string;
     source: string;
     path: string;

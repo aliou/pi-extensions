@@ -4,7 +4,7 @@
  * On `@@<token>` in the input editor, searches the Sesame index for sessions
  * matching the token (or lists recent sessions for bare `@@`). On accept, the
  * completion inserts `@@<uuid>`. The `@@<uuid>` marker stays in the user
- * message and is resolved to hidden context in `before_agent_start`.
+ * message and is resolved to a runtime instruction appended to the input.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -13,9 +13,24 @@ import { createSessionAutocompleteProvider } from "./provider";
 import { tildePath } from "./search";
 import { AT_UUID_RE, type ResolvedRef } from "./types";
 
-/** Pending `@@<uuid>` refs resolved during `input`, consumed in `before_agent_start`. */
-// TODO:  this is not needed, the before_agent_start includes the prompt, and so we can deduce the refs from there.
-let pendingRefs: ResolvedRef[] = [];
+function buildSessionRefsInstruction(refs: ResolvedRef[]): string {
+  const lines = refs.map((ref) => {
+    const name = ref.name || "(untitled)";
+    const cwdDisplay = tildePath(ref.cwd);
+    return `  <session id="${ref.id}" name="${name}" cwd="${cwdDisplay}" created="${ref.created}" modified="${ref.modified}">
+    Use read_session({ sessionId: "${ref.id}", goal: "..." }) to access its content.
+  </session>`;
+  });
+
+  return `
+
+<pi_runtime_instruction source="session_autocomplete" user_visible="false">
+  This instruction was inserted by the Pi session-autocomplete extension, not by the user.
+  The user message is above this block.
+  The user referenced the following sessions:
+${lines.join("\n")}
+</pi_runtime_instruction>`;
+}
 
 export default async function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
@@ -27,14 +42,11 @@ export default async function (pi: ExtensionAPI) {
     );
   });
 
-  // On `input`, resolve `@@<uuid>` markers via DB
+  // On `input`, resolve `@@<uuid>` markers via DB and append tool guidance.
   pi.on("input", async (event) => {
     const text = event.text;
     const db = openSesameDb();
-    if (!db) {
-      pendingRefs = [];
-      return { action: "continue" } as const;
-    }
+    if (!db) return { action: "continue" } as const;
 
     try {
       const refs: ResolvedRef[] = [];
@@ -47,42 +59,19 @@ export default async function (pi: ExtensionAPI) {
         if (sessionId && !seen.has(sessionId)) {
           seen.add(sessionId);
           const ref = resolveSessionRefFromDb(db, sessionId);
-          if (ref) {
-            refs.push(ref);
-          }
+          if (ref) refs.push(ref);
         }
         match = re.exec(text);
       }
 
-      pendingRefs = refs;
+      if (refs.length === 0) return { action: "continue" } as const;
+
+      return {
+        action: "transform",
+        text: text + buildSessionRefsInstruction(refs),
+      } as const;
     } finally {
       db.close();
     }
-
-    // Text is NOT modified — `@@<uuid>` stays as-is in the user message
-    return { action: "continue" } as const;
-  });
-
-  // On `before_agent_start`, inject hidden context for resolved refs
-  pi.on("before_agent_start", async () => {
-    if (pendingRefs.length === 0) return;
-
-    const lines = pendingRefs.map((ref) => {
-      const name = ref.name || "(untitled)";
-      const cwdDisplay = tildePath(ref.cwd);
-      return `- session ${ref.id}: name="${name}", cwd=${cwdDisplay}, created=${ref.created}, modified=${ref.modified}\n  Use read_session({ sessionId: "${ref.id}", goal: "..." }) to access its content.`;
-    });
-
-    const content = `The user referenced the following sessions:\n${lines.join("\n")}`;
-
-    pendingRefs = [];
-
-    return {
-      message: {
-        customType: "breadcrumbs:session-ref",
-        content,
-        display: false,
-      },
-    } as const;
   });
 }

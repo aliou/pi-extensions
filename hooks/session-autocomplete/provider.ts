@@ -11,6 +11,7 @@ import type {
 } from "@earendil-works/pi-tui";
 import { replaceAutocompletePrefix } from "@harness/completion";
 import { formatRelativeTime } from "@harness/utils/formatters";
+import { collapseHomePath } from "@harness/utils/path";
 import { openSesameDb } from "./db";
 import { searchByName } from "./search";
 import {
@@ -20,13 +21,36 @@ import {
   SESSION_AUTOCOMPLETE_PREFIX,
 } from "./types";
 
+interface SessionToken {
+  token: string;
+  global: boolean;
+  prefix: string;
+}
+
 /**
- * Extract the `@@<token>` at the end of `textBeforeCursor`.
- * Returns the token (empty string for bare `@@`) or undefined if no match.
+ * Extract the `@@<token>` or `@@@<token>` at the end of `textBeforeCursor`.
+ * `@@@` searches all indexed sessions instead of filtering to the current cwd.
  */
-function extractSessionToken(textBeforeCursor: string): string | undefined {
+function extractSessionToken(
+  textBeforeCursor: string,
+): SessionToken | undefined {
+  const globalMatch = textBeforeCursor.match(/@@@([^@]*)$/);
+  if (globalMatch) {
+    return {
+      token: globalMatch[1] ?? "",
+      global: true,
+      prefix: "@@@",
+    };
+  }
+
   const match = textBeforeCursor.match(AT_TOKEN_RE);
-  return match ? (match[1] ?? "") : undefined;
+  return match
+    ? {
+        token: match[1] ?? "",
+        global: false,
+        prefix: SESSION_AUTOCOMPLETE_PREFIX,
+      }
+    : undefined;
 }
 
 export function createSessionAutocompleteProvider(
@@ -47,9 +71,9 @@ export function createSessionAutocompleteProvider(
     ): Promise<AutocompleteSuggestions | null> {
       const currentLine = lines[cursorLine] ?? "";
       const textBeforeCursor = currentLine.slice(0, cursorCol);
-      const token = extractSessionToken(textBeforeCursor);
+      const sessionToken = extractSessionToken(textBeforeCursor);
 
-      if (token === undefined) {
+      if (sessionToken === undefined) {
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
@@ -71,13 +95,16 @@ export function createSessionAutocompleteProvider(
       }
 
       try {
+        const { token, global } = sessionToken;
         const query = token === "" ? "*" : token;
+        const searchCwd = global ? undefined : cwd;
 
-        // Use session-name LIKE for short tokens (FTS is ~10s for single chars)
-        const useFts = token === "" || token.length >= FTS_MIN_TOKEN_LEN;
+        // Use session-name LIKE for recent sessions and short tokens
+        // (FTS is ~10s for single chars).
+        const useFts = token.length >= FTS_MIN_TOKEN_LEN;
         const results = useFts
-          ? search(db, query, { cwd, limit: 20 })
-          : searchByName(db, token, cwd, 20);
+          ? search(db, query, searchCwd ? { cwd: searchCwd } : undefined)
+          : searchByName(db, token, searchCwd);
 
         if (options.signal.aborted) {
           return current.getSuggestions(lines, cursorLine, cursorCol, options);
@@ -95,19 +122,26 @@ export function createSessionAutocompleteProvider(
         const items: AutocompleteItem[] = filtered.map(
           (r: SesameSearchResult) => {
             const name = r.name || "(untitled session)";
+            const shortId = r.sessionId.slice(0, 8);
             const modified = r.modifiedAt || "";
+            const relativeTime = modified ? formatRelativeTime(modified) : "";
+            const score = r.score ? ` · ${r.score.toFixed(2)}` : "";
+            const cwdDisplay =
+              global && r.cwd ? ` · ${collapseHomePath(r.cwd)}` : "";
 
             return {
               value: `${SESSION_AUTOCOMPLETE_PREFIX}${r.sessionId}`,
-              label: name,
-              description: modified ? formatRelativeTime(modified) : undefined,
+              label: relativeTime
+                ? `${shortId} · ${relativeTime}${score}`
+                : `${shortId}${score}`,
+              description: `${name}${cwdDisplay}`,
             };
           },
         );
 
         return {
           items,
-          prefix: `${SESSION_AUTOCOMPLETE_PREFIX}${token}`,
+          prefix: `${sessionToken.prefix}${token}`,
         };
       } catch (_error) {
         void _error;
