@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { referencesImageFiles } from "./utils";
+import { detectSupportedImageMimeType, referencesImageFiles } from "./utils";
 
 describe("referencesImageFiles", () => {
   it.each([
@@ -101,10 +101,6 @@ describe("referencesImageFiles", () => {
       desc: "gif extension",
       input: "look at demo.gif",
     },
-    {
-      desc: "svg extension",
-      input: "the logo is at assets/logo.svg",
-    },
   ])("detects image: $desc", ({ input }) => {
     expect(referencesImageFiles(input)).toBe(true);
   });
@@ -133,7 +129,55 @@ describe("referencesImageFiles", () => {
       desc: "code block only",
       input: "```\nconst x = 42;\nconsole.log(x);\n```\n\nthat's what i got.",
     },
+    { desc: "svg extension", input: "the logo is at assets/logo.svg" },
+    { desc: "bmp extension", input: "the bitmap is at assets/image.bmp" },
   ])("rejects non-image: $desc", ({ input }) => {
     expect(referencesImageFiles(input)).toBe(false);
+  });
+});
+
+describe("detectSupportedImageMimeType", () => {
+  it.each([
+    {
+      desc: "png",
+      input: Buffer.from(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000049444154",
+        "hex",
+      ),
+      expected: "image/png",
+    },
+    {
+      desc: "jpeg",
+      input: Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+      expected: "image/jpeg",
+    },
+    {
+      desc: "gif",
+      input: Buffer.from("GIF89a", "ascii"),
+      expected: "image/gif",
+    },
+    {
+      desc: "webp",
+      input: Buffer.from("RIFFxxxxWEBP", "ascii"),
+      expected: "image/webp",
+    },
+  ])("detects $desc", ({ input, expected }) => {
+    expect(detectSupportedImageMimeType(input)).toBe(expected);
+  });
+
+  it("rejects h264 bytes mislabeled as png by extension", () => {
+    const h264Bytes = Buffer.from([
+      0x00, 0x00, 0x00, 0x01, 0x67, 0x64, 0x00, 0x2a,
+    ]);
+
+    expect(detectSupportedImageMimeType(h264Bytes)).toBeNull();
+  });
+
+  it("rejects invalid png signature without IHDR", () => {
+    const invalidPng = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+
+    expect(detectSupportedImageMimeType(invalidPng)).toBeNull();
   });
 });

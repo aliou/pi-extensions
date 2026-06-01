@@ -6,9 +6,9 @@ import { MODEL_CANDIDATES } from "./models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
 import { LookAtParams, type LookAtParamsInput } from "./types";
 import {
+  detectSupportedImageMimeType,
   disableTool,
   isVisionCapable,
-  mimeTypeFromPath,
   referencesImageFiles,
 } from "./utils";
 
@@ -61,11 +61,11 @@ Always provide a clear objective describing what you want to learn from the imag
     parameters: LookAtParams,
     buildPrompt(params, ctx) {
       const absolutePath = resolve(ctx.cwd, params.path);
-      const mimeType = mimeTypeFromPath(absolutePath);
+      const buffer = readFileSync(absolutePath);
+      const mimeType = detectSupportedImageMimeType(buffer);
       if (!mimeType)
         throw new Error(`Unsupported image format for ${absolutePath}`);
 
-      const buffer = readFileSync(absolutePath);
       const userText = params.context
         ? `Context: ${params.context}\n\nObjective: ${params.objective}`
         : params.objective;
@@ -96,31 +96,7 @@ Always provide a clear objective describing what you want to learn from the imag
       onUpdate,
       ctx,
     ) {
-      const absolutePath = resolve(ctx.cwd, params.path);
-      const mimeType = mimeTypeFromPath(absolutePath);
-
-      const result = await tool.execute(
-        toolCallId,
-        params,
-        signal,
-        onUpdate,
-        ctx,
-      );
-
-      if (!mimeType) return result;
-
-      const buffer = readFileSync(absolutePath);
-      return {
-        ...result,
-        content: [
-          ...result.content,
-          {
-            type: "image" as const,
-            data: buffer.toString("base64"),
-            mimeType,
-          },
-        ],
-      };
+      return tool.execute(toolCallId, params, signal, onUpdate, ctx);
     },
   });
 
