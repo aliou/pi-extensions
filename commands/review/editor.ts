@@ -1,4 +1,3 @@
-// biome-ignore lint/plugin/pi-no-node-exec: It's fine for now
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, unlinkSync } from "node:fs";
 import { getEditor } from "@harness/ui";
