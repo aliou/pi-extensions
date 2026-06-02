@@ -4,6 +4,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
 import { MODEL_CANDIDATES } from "./models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
+import { renderLookAtDetails, renderLookAtHeader } from "./render";
 import { LookAtParams, type LookAtParamsInput } from "./types";
 import {
   detectSupportedImageMimeType,
@@ -59,6 +60,8 @@ Always provide a clear objective describing what you want to learn from the imag
     tools: [],
     models: MODEL_CANDIDATES,
     parameters: LookAtParams,
+    renderHeader: renderLookAtHeader,
+    renderDetails: renderLookAtDetails,
     buildPrompt(params, ctx) {
       const absolutePath = resolve(ctx.cwd, params.path);
       const buffer = readFileSync(absolutePath);
