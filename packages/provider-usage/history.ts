@@ -1,10 +1,9 @@
-import { appendFile, mkdir, readdir, readFile, unlink } from "node:fs/promises";
+import { appendFile, mkdir, readdir, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { LimitSample, NormalizedLimit } from "./types";
 
 const MAX_SAMPLES_PER_LIMIT = 30;
-const CLEANUP_AGE_MS = 45 * 24 * 60 * 60 * 1000; // 45 days (~1.5 months).
 const HISTORY_DIR = join(
   process.env.XDG_CACHE_HOME || join(homedir(), ".cache"),
   "pi",
@@ -34,29 +33,6 @@ function bucketName(epochMs: number): string {
 
 function currentBucketPath(): string {
   return join(HISTORY_DIR, bucketName(Date.now()));
-}
-
-async function cleanupOldFiles(): Promise<void> {
-  try {
-    const files = await readdir(HISTORY_DIR);
-    const now = Date.now();
-    for (const file of files) {
-      if (!file.endsWith(".jsonl")) continue;
-      // Parse date from filename: YYYY-MM-DD-HH.jsonl
-      const match = file.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})\.jsonl$/);
-      if (!match) continue;
-      const fileDate = new Date(
-        `${match[1]}-${match[2]}-${match[3]}T${match[4]}:00:00Z`,
-      );
-      if (Number.isNaN(fileDate.getTime())) continue;
-      if (now - fileDate.getTime() > CLEANUP_AGE_MS) {
-        await unlink(join(HISTORY_DIR, file)).catch(() => {});
-      }
-    }
-  } catch (_error) {
-    void _error;
-    // Directory may not exist yet.
-  }
 }
 
 async function loadAllFiles(): Promise<void> {
@@ -102,7 +78,6 @@ async function loadAllFiles(): Promise<void> {
 async function ensureLoaded(): Promise<void> {
   if (loaded) return;
   loaded = true;
-  await cleanupOldFiles();
   await loadAllFiles();
 }
 
