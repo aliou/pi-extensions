@@ -45,6 +45,10 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
     this.details.prompt = prompt;
   }
 
+  setParams(params: unknown) {
+    this.details.params = params;
+  }
+
   applyEvent(event: AgentSessionEvent) {
     switch (event.type) {
       case "message_update": {

@@ -9,10 +9,34 @@ export function renderThinking(
   theme: Theme,
 ) {
   const indicator = running
-    ? theme.fg("accent", "・")
+    ? theme.fg("accent", "·")
     : theme.fg("success", "✓");
   const reasoning = extractParagraphs(content, 1) || "Thinking";
   return new Markdown(`${indicator} ${reasoning}`, 0, 0, getMarkdownTheme());
+}
+
+/**
+ * Render a single subagent tool-call line: status indicator + action label +
+ * optional detail text. Use this from a tool's `render` to keep it a one-liner
+ * and consistent across subagents.
+ */
+export function renderSubagentToolLine(
+  toolCall: SubagentToolCall,
+  theme: Theme,
+  action: string,
+  details = "",
+) {
+  return new Text(
+    [
+      formatToolCallIndicator(toolCall, theme),
+      theme.fg("toolTitle", action),
+      details ? theme.fg("thinkingMinimal", details) : undefined,
+    ]
+      .filter(Boolean)
+      .join(" "),
+    0,
+    0,
+  );
 }
 
 export function renderToolCall(toolCall: SubagentToolCall, theme: Theme) {
@@ -30,7 +54,7 @@ export function renderToolCall(toolCall: SubagentToolCall, theme: Theme) {
 function formatToolCallIndicator(toolCall: SubagentToolCall, theme: Theme) {
   switch (toolCall.status) {
     case "running":
-      return theme.fg("accent", "・");
+      return theme.fg("accent", "·");
     case "success":
       return theme.fg("success", "✓");
     case "error":

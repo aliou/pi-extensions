@@ -10,13 +10,20 @@ import { renderThinking, renderToolCall } from "./activity";
 import { formatCollapsedHint } from "./footer";
 import { Separator } from "./separator";
 import type { ToolRenderContext } from "./types";
+import { extractParagraphs } from "./utils";
+
+/**
+ * Show the full response when collapsed if it is shorter than this; otherwise
+ * only show the first paragraph as a preview.
+ */
+const COLLAPSED_PREVIEW_CHARS = 600;
 
 export function renderSubagentResult(
   config: SubagentConfig,
   result: AgentToolResult<unknown>,
   options: ToolRenderResultOptions,
   theme: Theme,
-  _ctx: ToolRenderContext,
+  ctx: ToolRenderContext,
 ) {
   const container = new Container();
   container.addChild(new Spacer(1));
@@ -28,21 +35,72 @@ export function renderSubagentResult(
       .map((item) => item.text)
       .join("\n");
     container.addChild(
-      new Text(theme.fg("muted", text || "Starting..."), 0, 0),
+      text
+        ? new Markdown(text, 0, 0, getMarkdownTheme())
+        : new Text(theme.fg("muted", "Starting..."), 0, 0),
     );
     return container;
   }
 
-  if (details.status === "running" || options.isPartial) {
-    container.addChild(renderRunning(config, details, options, theme));
+  if (options.expanded) {
+    const detailsBlock = config.renderDetails?.(details.params, theme, ctx.cwd);
+    if (detailsBlock) {
+      container.addChild(detailsBlock);
+      container.addChild(new Separator(theme));
+    }
+  }
+
+  const running = details.status === "running" || options.isPartial;
+  let footerPrefix: string | undefined;
+  if (running) {
+    container.addChild(renderRunning(config, details, options, theme, ctx.cwd));
   } else {
-    container.addChild(renderFinished(config, details, options, theme));
+    const text = details.response ?? details.error ?? "";
+    if (options.expanded) {
+      container.addChild(new Markdown(text, 0, 0, getMarkdownTheme()));
+    } else {
+      const collapsed = renderCollapsedResponse(text);
+      container.addChild(collapsed.component);
+      footerPrefix = collapsed.footerPrefix;
+    }
   }
 
   container.addChild(new Spacer(1));
-  container.addChild(new Text(formatCollapsedHint(details, options), 0, 0));
+  container.addChild(
+    new Text(formatCollapsedHint(details, options, footerPrefix), 0, 0),
+  );
 
   return container;
+}
+
+function renderCollapsedResponse(text: string) {
+  const trimmed = text.trim();
+  if (trimmed.length <= COLLAPSED_PREVIEW_CHARS) {
+    return { component: new Markdown(trimmed, 0, 0, getMarkdownTheme()) };
+  }
+
+  const paragraphs = splitParagraphs(trimmed);
+  const hiddenParagraphs = Math.max(0, paragraphs.length - 1);
+  const preview = truncatePreview(extractParagraphs(trimmed, 1));
+  return {
+    component: new Markdown(preview, 0, 0, getMarkdownTheme()),
+    footerPrefix:
+      hiddenParagraphs > 0
+        ? `${hiddenParagraphs} ${hiddenParagraphs === 1 ? "paragraph" : "paragraphs"} more`
+        : undefined,
+  };
+}
+
+function truncatePreview(text: string) {
+  if (text.length <= COLLAPSED_PREVIEW_CHARS) return text;
+  return `${text.slice(0, COLLAPSED_PREVIEW_CHARS).trimEnd()}…`;
+}
+
+function splitParagraphs(text: string) {
+  return text
+    .trim()
+    .split(/\n\s*\n/)
+    .filter((paragraph) => paragraph.trim().length > 0);
 }
 
 function renderRunning(
@@ -50,25 +108,28 @@ function renderRunning(
   details: SubagentDetails,
   options: ToolRenderResultOptions,
   theme: Theme,
+  cwd: string,
 ) {
   const container = new Container();
 
   if (!options.expanded) {
-    const recentToolCalls = details.toolCalls.slice(-3);
+    const recentActivity = renderRecentActivity(
+      config,
+      details,
+      options,
+      theme,
+      cwd,
+    );
 
-    if (recentToolCalls.length === 0) {
+    if (!recentActivity) {
       container.addChild(
         new Text(theme.fg("muted", "Waiting for subagent activity..."), 0, 0),
       );
     } else {
-      for (const toolCall of recentToolCalls) {
-        container.addChild(
-          renderConfiguredToolCall(config, toolCall, options, theme),
-        );
-      }
+      container.addChild(recentActivity);
     }
   } else {
-    const activity = renderActivity(config, details, options, theme);
+    const activity = renderActivity(config, details, options, theme, cwd);
 
     if (!activity) {
       container.addChild(
@@ -82,11 +143,42 @@ function renderRunning(
   return container;
 }
 
+function renderRecentActivity(
+  config: SubagentConfig,
+  details: SubagentDetails,
+  options: ToolRenderResultOptions,
+  theme: Theme,
+  cwd: string,
+) {
+  const latestItems = details.activity.slice(-3);
+  if (latestItems.length === 0) return undefined;
+  return renderActivityItems(config, details, latestItems, options, theme, cwd);
+}
+
 function renderActivity(
   config: SubagentConfig,
   details: SubagentDetails,
   options: ToolRenderResultOptions,
   theme: Theme,
+  cwd: string,
+) {
+  return renderActivityItems(
+    config,
+    details,
+    details.activity,
+    options,
+    theme,
+    cwd,
+  );
+}
+
+function renderActivityItems(
+  config: SubagentConfig,
+  details: SubagentDetails,
+  items: SubagentDetails["activity"],
+  options: ToolRenderResultOptions,
+  theme: Theme,
+  cwd: string,
 ) {
   const toolCallsById = new Map(
     details.toolCalls.map((toolCall) => [toolCall.toolCallId, toolCall]),
@@ -94,7 +186,7 @@ function renderActivity(
   const container = new Container();
   let renderedCount = 0;
 
-  for (const item of details.activity) {
+  for (const item of items) {
     switch (item.type) {
       case "thinking":
         container.addChild(
@@ -107,7 +199,7 @@ function renderActivity(
         if (!toolCall) break;
 
         container.addChild(
-          renderConfiguredToolCall(config, toolCall, options, theme),
+          renderConfiguredToolCall(config, toolCall, options, theme, cwd),
         );
         renderedCount += 1;
         break;
@@ -124,38 +216,18 @@ function renderActivity(
   return container;
 }
 
-function renderFinished(
-  config: SubagentConfig,
-  details: SubagentDetails,
-  options: ToolRenderResultOptions,
-  theme: Theme,
-) {
-  const text = details.response ?? details.error ?? "";
-
-  const container = new Container();
-  const activity = options.expanded
-    ? renderActivity(config, details, options, theme)
-    : undefined;
-  if (activity) {
-    container.addChild(activity);
-    container.addChild(new Separator(theme));
-  }
-
-  container.addChild(new Markdown(text, 0, 0, getMarkdownTheme()));
-  return container;
-}
-
 function renderConfiguredToolCall(
   config: SubagentConfig,
   toolCall: SubagentToolCall,
   options: ToolRenderResultOptions,
   theme: Theme,
+  cwd: string,
 ) {
   const renderer = config.tools.find(
     (tool) => tool.name === toolCall.toolName,
   )?.render;
 
   return (
-    renderer?.(toolCall, options, theme) ?? renderToolCall(toolCall, theme)
+    renderer?.(toolCall, options, theme, cwd) ?? renderToolCall(toolCall, theme)
   );
 }

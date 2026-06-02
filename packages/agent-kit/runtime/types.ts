@@ -43,6 +43,7 @@ export interface SubagentDetails {
 
   model?: SubagentModel;
   prompt: string;
+  params?: unknown;
 
   status: SubagentStatus;
   thinking: boolean;

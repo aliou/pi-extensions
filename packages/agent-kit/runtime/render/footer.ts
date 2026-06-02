@@ -12,13 +12,14 @@ import {
 export function formatCollapsedHint(
   details: SubagentDetails,
   options: ToolRenderResultOptions,
+  prefix?: string,
 ) {
   const hint = keyHint(
     "app.tools.expand",
     options.expanded ? "to collapse" : "to expand",
   );
   const metadata = [
-    hint,
+    prefix ? `${prefix}, ${hint}` : hint,
     formatModel(details.model),
     formatDuration(details.startedAt, details.endedAt),
     formatCost(details.usage.cost.total),

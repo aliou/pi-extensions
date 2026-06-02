@@ -2,6 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
 import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, LIBRAIAN_SYSTEM_PROMPT } from "./prompt";
+import { renderLibrarianDetails, renderLibrarianHeader } from "./render";
 import { createLibrarianTools } from "./tools";
 import { LibrarianParams } from "./types";
 
@@ -19,6 +20,8 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: LIBRAIAN_SYSTEM_PROMPT,
     parameters: LibrarianParams,
+    renderHeader: renderLibrarianHeader,
+    renderDetails: renderLibrarianDetails,
     buildPrompt,
     tools,
     models: MODEL_CANDIDATES,

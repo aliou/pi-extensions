@@ -38,6 +38,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
       this.signal?.throwIfAborted();
       const promptResult = this.config.buildPrompt(params, ctx);
       this.state.setPrompt(promptResult.text);
+      this.state.setParams(params);
       this.unsubscribe = this.session.subscribe((event) => {
         this.handleEvent(event, onUpdate);
       });

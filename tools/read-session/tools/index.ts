@@ -1,10 +1,15 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import {
+  renderHeaderMarkdown,
+  renderSubagentToolLine,
+  type ToolRenderContext,
+} from "@harness/agent-kit/runtime";
 import type {
   SubagentToolCall,
   SubagentToolSpec,
 } from "@harness/agent-kit/types";
-import { truncate } from "@harness/utils";
+import { isNotNil } from "@harness/utils";
+import type { ReadSessionParamsType } from "../types";
 import { branchEntries } from "./branch-entries";
 import { findEntries } from "./find-entries";
 import { labels } from "./labels";
@@ -12,38 +17,57 @@ import { readEntry } from "./read-entry";
 import { sessionOverview } from "./session-overview";
 import { treeOutline } from "./tree-outline";
 
+export function renderReadSessionHeader(
+  args: ReadSessionParamsType & { sessionId?: string },
+  theme: Theme,
+  _ctx: ToolRenderContext,
+) {
+  const target = args.targetSessionId ? `${args.targetSessionId} ` : "";
+  return renderHeaderMarkdown({
+    label: "Read Session",
+    body: `${target}${args.goal ?? ""}`,
+    theme,
+    resuming: isNotNil(args.sessionId),
+  });
+}
+
 export const tools: SubagentToolSpec[] = [
   {
     type: "custom",
     name: sessionOverview.name,
     spec: () => sessionOverview,
     render: (toolCall, _options, theme) =>
-      renderLine(toolCall, theme, "Get Overview", ""),
+      renderSubagentToolLine(toolCall, theme, "Get Overview"),
   },
   {
     type: "custom",
     name: branchEntries.name,
     spec: () => branchEntries,
     render: (toolCall, _options, theme) =>
-      renderLine(toolCall, theme, "Read branch", formatBranchDetails(toolCall)),
+      renderSubagentToolLine(
+        toolCall,
+        theme,
+        "Read branch",
+        formatBranchDetails(toolCall),
+      ),
   },
   {
     type: "custom",
     name: readEntry.name,
     spec: () => readEntry,
     render: (toolCall, _options, theme) =>
-      renderLine(toolCall, theme, "Read", formatArg(toolCall, "id")),
+      renderSubagentToolLine(toolCall, theme, "Read", arg(toolCall, "id")),
   },
   {
     type: "custom",
     name: findEntries.name,
     spec: () => findEntries,
     render: (toolCall, _options, theme) =>
-      renderLine(
+      renderSubagentToolLine(
         toolCall,
         theme,
         "Search",
-        quote(formatArg(toolCall, "query")),
+        quote(arg(toolCall, "query")),
       ),
   },
   {
@@ -51,37 +75,20 @@ export const tools: SubagentToolSpec[] = [
     name: labels.name,
     spec: () => labels,
     render: (toolCall, _options, theme) =>
-      renderLine(toolCall, theme, "List labels", ""),
+      renderSubagentToolLine(toolCall, theme, "List labels"),
   },
   {
     type: "custom",
     name: treeOutline.name,
     spec: () => treeOutline,
     render: (toolCall, _options, theme) =>
-      renderLine(toolCall, theme, "Tree outline", ""),
+      renderSubagentToolLine(toolCall, theme, "Tree outline"),
   },
 ];
 
-function renderLine(
-  toolCall: SubagentToolCall,
-  theme: Theme,
-  action: string,
-  details: string,
-) {
-  return new Text(
-    [
-      formatIndicator(toolCall, theme),
-      theme.fg("toolTitle", action),
-      theme.fg("thinkingMinimal", details),
-    ].join(" "),
-    0,
-    0,
-  );
-}
-
 function formatBranchDetails(toolCall: SubagentToolCall) {
   const parts = [
-    toolCall.args.leafId ? `leaf ${formatArg(toolCall, "leafId")}` : undefined,
+    toolCall.args.leafId ? `leaf ${arg(toolCall, "leafId")}` : undefined,
     toolCall.args.limit ? `last ${String(toolCall.args.limit)}` : undefined,
     toolCall.args.fromEnd ? "leaf-to-root" : "root-to-leaf",
   ];
@@ -89,23 +96,12 @@ function formatBranchDetails(toolCall: SubagentToolCall) {
   return parts.filter(Boolean).join(", ");
 }
 
-function formatArg(toolCall: SubagentToolCall, name: string) {
+function arg(toolCall: SubagentToolCall, name: string) {
   const value = toolCall.args[name];
   if (value === undefined || value === null) return "?";
-  return truncate(String(value), 56);
+  return String(value);
 }
 
 function quote(value: string) {
-  return `“${value}”`;
-}
-
-function formatIndicator(toolCall: SubagentToolCall, theme: Theme): string {
-  switch (toolCall.status) {
-    case "running":
-      return theme.fg("accent", "・");
-    case "success":
-      return theme.fg("success", "✓");
-    case "error":
-      return theme.fg("error", "✗");
-  }
+  return `\u201c${value}\u201d`;
 }

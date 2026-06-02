@@ -10,6 +10,7 @@ import type {
 import type { Component } from "@earendil-works/pi-tui";
 import type { Static, TSchema } from "typebox";
 import type { SubagentModel } from "./models";
+import type { ToolRenderContext } from "./runtime/render/types";
 import type { SubagentToolCall } from "./runtime/types";
 
 export type { SubagentModel } from "./models";
@@ -25,7 +26,24 @@ export type SubagentToolRenderer = (
   toolCall: SubagentToolCall,
   options: SubagentRenderOptions,
   theme: Theme,
+  cwd: string,
 ) => Component;
+
+export type SubagentHeaderRenderer<Params extends TSchema = TSchema> = (
+  args: Static<Params>,
+  theme: Theme,
+  ctx: ToolRenderContext,
+) => Component;
+
+/**
+ * Render extra call details (e.g. context, file list) shown only when the
+ * subagent result is expanded. Return undefined to render nothing.
+ */
+export type SubagentDetailsRenderer<Params extends TSchema = TSchema> = (
+  args: Static<Params>,
+  theme: Theme,
+  cwd: string,
+) => Component | undefined;
 
 export type SubagentToolSpec =
   | { name: string; type: "native"; render?: SubagentToolRenderer }
@@ -63,6 +81,8 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   session?: SubagentSessionConfig;
 
   parameters: Params;
+  renderHeader?: SubagentHeaderRenderer<Params>;
+  renderDetails?: SubagentDetailsRenderer<Params>;
   buildPrompt: (
     params: Static<Params>,
     ctx: ExtensionContext,

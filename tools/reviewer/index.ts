@@ -3,15 +3,24 @@ import { createSubagent } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, REVIEWER_SYSTEM_PROMPT } from "./prompt";
+import {
+  renderReviewerDetails,
+  renderReviewerHeader,
+  reviewerToolRenderers,
+} from "./render";
 import { createReviewerTools } from "./tools";
 import { ReviewerParams } from "./types";
 
 const nativeTools: SubagentToolSpec[] = [
-  { name: "read", type: "native" },
-  { name: "grep", type: "native" },
-  { name: "find", type: "native" },
-  { name: "read_url", type: "native" },
-  { name: "synthetic_web_search", type: "native" },
+  { name: "read", type: "native", render: reviewerToolRenderers.read },
+  { name: "grep", type: "native", render: reviewerToolRenderers.grep },
+  { name: "find", type: "native", render: reviewerToolRenderers.find },
+  { name: "read_url", type: "native", render: reviewerToolRenderers.read_url },
+  {
+    name: "synthetic_web_search",
+    type: "native",
+    render: reviewerToolRenderers.synthetic_web_search,
+  },
 ];
 
 const extensionPaths = ["./tools", "npm:@aliou/pi-synthetic"];
@@ -31,6 +40,8 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: REVIEWER_SYSTEM_PROMPT,
     parameters: ReviewerParams,
+    renderHeader: renderReviewerHeader,
+    renderDetails: renderReviewerDetails,
     buildPrompt,
     tools,
     extensionPaths,
