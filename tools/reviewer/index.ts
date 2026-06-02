@@ -40,6 +40,7 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: REVIEWER_SYSTEM_PROMPT,
     parameters: ReviewerParams,
+    resumable: true,
     renderHeader: renderReviewerHeader,
     renderDetails: renderReviewerDetails,
     buildPrompt,
@@ -48,5 +49,5 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     models: MODEL_CANDIDATES,
   });
 
-  subagent.register({ resumeTool: true });
+  subagent.register();
 }

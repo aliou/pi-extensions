@@ -23,7 +23,6 @@ export type SubagentRunOptions<Params extends TSchema> = {
 
 export type SubagentRegisterOptions = {
   tool?: boolean;
-  resumeTool?: boolean;
 };
 
 export function createSubagent<Params extends TSchema>(
@@ -51,10 +50,6 @@ export function createSubagent<Params extends TSchema>(
         );
       },
     );
-  };
-
-  const run = async (prompt: string, options: SubagentRunOptions<Params>) => {
-    return runWithParams({ prompt } as Static<Params>, options);
   };
 
   const asTool = () =>
@@ -125,17 +120,14 @@ export function createSubagent<Params extends TSchema>(
       pi.registerTool(asTool());
     }
 
-    if (options.resumeTool ?? false) {
+    if (config.resumable ?? false) {
       pi.registerTool(asResumeTool());
     }
   };
 
   return {
-    config,
-    run,
     runWithParams,
     asTool,
-    asResumeTool,
     subscribe,
     register,
   };

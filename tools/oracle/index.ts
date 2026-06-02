@@ -51,6 +51,7 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: ORACLE_SYSTEM_PROMPT,
     parameters: OracleParams,
+    resumable: true,
     renderHeader: renderOracleHeader,
     renderDetails: renderOracleDetails,
     buildPrompt,
@@ -59,5 +60,5 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     models: MODEL_CANDIDATES,
   });
 
-  subagent.register({ resumeTool: true });
+  subagent.register();
 }

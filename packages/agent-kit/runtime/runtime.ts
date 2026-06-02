@@ -67,16 +67,16 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
         this.state.markSuccess(response);
       }
 
+      const content = this.config.resumable
+        ? appendSubagentSessionFooter(
+            response ?? "",
+            this.config.name,
+            this.session.sessionId,
+          )
+        : (response ?? "");
+
       return {
-        content: [
-          textContent(
-            appendSubagentSessionFooter(
-              response ?? "",
-              this.config.name,
-              this.session.sessionId,
-            ),
-          ),
-        ],
+        content: [textContent(content)],
         details: this.state.snapshot(),
       };
     } catch (err: unknown) {

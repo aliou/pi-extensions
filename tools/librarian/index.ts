@@ -20,6 +20,7 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: LIBRAIAN_SYSTEM_PROMPT,
     parameters: LibrarianParams,
+    resumable: true,
     renderHeader: renderLibrarianHeader,
     renderDetails: renderLibrarianDetails,
     buildPrompt,
@@ -27,5 +28,5 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     models: MODEL_CANDIDATES,
   });
 
-  subagent.register({ resumeTool: true });
+  subagent.register();
 }

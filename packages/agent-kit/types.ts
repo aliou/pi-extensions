@@ -79,6 +79,7 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   extensionPaths?: string[];
   models: SubagentModel[];
   session?: SubagentSessionConfig;
+  resumable?: boolean;
 
   parameters: Params;
   renderHeader?: SubagentHeaderRenderer<Params>;
