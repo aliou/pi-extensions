@@ -1,5 +1,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { AD_NOTIFY_DANGEROUS_EVENT } from "@harness/events";
+import {
+  AD_NOTIFY_ATTENTION_EVENT,
+  AD_NOTIFY_DANGEROUS_EVENT,
+} from "@harness/events";
 
 type EventMapper = (data: unknown) => Record<string, unknown> | undefined;
 
@@ -60,6 +63,33 @@ function mapGuardrailsRiskDetected(
   return payload;
 }
 
+function mapGuardrailsActionPrompted(
+  data: unknown,
+): Record<string, unknown> | undefined {
+  if (!isRecord(data)) return undefined;
+  if (data.feature !== "pathAccess") return undefined;
+
+  const prompt = isRecord(data.prompt) ? data.prompt : undefined;
+  if (prompt?.kind !== "confirmation") return undefined;
+
+  const context = isRecord(data.context) ? data.context : undefined;
+  const description =
+    typeof data.reason === "string"
+      ? data.reason
+      : "Path access requires confirmation";
+
+  const payload: Record<string, unknown> = {
+    source: "defaults:event-compat:guardrails",
+    description,
+  };
+
+  if (typeof context?.toolName === "string") {
+    payload.toolName = context.toolName;
+  }
+
+  return payload;
+}
+
 const BRIDGES: EventBridge[] = [
   {
     from: "guardrails:dangerous",
@@ -70,6 +100,11 @@ const BRIDGES: EventBridge[] = [
     from: "guardrails:risk:detected",
     to: AD_NOTIFY_DANGEROUS_EVENT,
     map: mapGuardrailsRiskDetected,
+  },
+  {
+    from: "guardrails:action:prompted",
+    to: AD_NOTIFY_ATTENTION_EVENT,
+    map: mapGuardrailsActionPrompted,
   },
 ];
 
