@@ -14,8 +14,6 @@
       "./commands",
       "./hooks",
       "./tools",
-      "-./tools/edit-nvim-undo/index.ts",
-      "-./tools/write-nvim-undo/index.ts",
       "./extensions/breadcrumbs",
       "./extensions/providers"
     ]
@@ -38,7 +36,6 @@
     "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",
     "@harness/model-registry": "workspace:*",
-    "@harness/nvim-undofile": "workspace:*",
     "@harness/provider-usage": "workspace:*",
     "@harness/utils": "workspace:*"
   },
