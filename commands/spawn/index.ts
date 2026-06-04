@@ -100,7 +100,7 @@ export default async function (pi: ExtensionAPI) {
           sm.appendCustomMessageEntry<SessionLinkSourceDetails>(
             SESSION_LINK_SOURCE_TYPE,
             sourceContent,
-            contextStrategy !== "none",
+            true,
             {
               parentSessionFile: parentFile ?? "",
               goal: note,

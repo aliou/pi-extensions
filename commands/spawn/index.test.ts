@@ -116,6 +116,48 @@ describe("breadcrumbs /spawn command", () => {
     expect(details.contextStrategy).toBe("last-assistant");
   });
 
+  it("only identifies parent session in blank mode", async () => {
+    const parentSm = seedParentSession([
+      {
+        role: "user",
+        content: "What should I work on?",
+        timestamp: Date.now(),
+      },
+      assistantMessage(["Parent context that should stay out"]),
+    ]);
+
+    pi = await createPiTestHarness(setupSpawnCommand, {
+      context: {
+        sessionManager: parentSm,
+        ui: { custom: vi.fn(async () => "blank") as never },
+      },
+    });
+
+    await pi.command("spawn").execute("");
+
+    const childSm = pi.getChildSessionManager();
+    assert(childSm, "childSm should be defined");
+
+    const entries = childSm.getEntries();
+    const sourceEntry = entries.find(
+      (e): e is CustomMessageEntry =>
+        e.type === "custom_message" &&
+        (e as CustomMessageEntry).customType === SESSION_LINK_SOURCE_TYPE,
+    );
+
+    assert(sourceEntry, "sourceEntry should be defined");
+    expect(sourceEntry.display).toBe(true);
+    const content =
+      typeof sourceEntry.content === "string" ? sourceEntry.content : "";
+    expect(content).toBe(`Session spawned from ${parentSm.getSessionId()}.`);
+    expect(content).not.toContain("read_session(");
+    expect(content).not.toContain("Get more context");
+    expect(content).not.toContain("Parent context that should stay out");
+
+    const details = sourceEntry.details as SessionLinkSourceDetails;
+    expect(details.contextStrategy).toBe("none");
+  });
+
   it("omits the last-message section when there is no assistant message", async () => {
     const parentSm = seedParentSession([
       {
