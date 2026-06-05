@@ -83,6 +83,7 @@ Tools that spawn a subagent (oracle, reviewer, read-session, librarian) follow a
 | `read-session/` | `read_session` | Subagent session reader |
 | `read-url/` | `read_url` | URL fetch with handler chain and preview |
 | `reviewer/` | `reviewer` | Diff/code review |
+| `scout/` | `scout` | Local codebase understanding |
 
 ## Monolithic extensions
 
