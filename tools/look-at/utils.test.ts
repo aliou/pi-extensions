@@ -1,138 +1,139 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 import { detectSupportedImageMimeType, referencesImageFiles } from "./utils";
 
 describe("referencesImageFiles", () => {
-  it.each([
-    // ── Real user messages from sessions ────────────────────────────────
-    {
-      desc: "screenshot with trailing prose",
-      input:
-        "why does it duplicate my message? /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-01 at 08.49.52 PM@2x.png on submit it showed mine with blue bg and again in grey",
-    },
-    {
-      desc: "screenshot in middle of multi-sentence message",
-      input:
-        "fix the detail view issues when there are images. for long form articles (like this one /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-05 at 08.15.30 PM@2x.png ) make sure to render the correct data",
-    },
-    {
-      desc: "two screenshots side by side",
-      input:
-        "/Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-10 at 12.18.39 PM@2x.png /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-10 at 12.18.32 PM@2x.png\n\nwhen collapsed, you can see the",
-    },
-    {
-      desc: "screenshot at end of short message",
-      input:
-        "here's what i see in the ui : /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-04 at 01.03.43 PM@2x.png",
-    },
-    {
-      desc: "screenshot after frustrated opener",
-      input:
-        "show the tool calls inline instead of try to do some cleanup. /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-01 at 08.17.02 PM@2x.png",
-    },
-    {
-      desc: "screenshot with instruction after it",
-      input:
-        "ok, now make a version that is suitable for discord: /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-04-15 at 06.36.59 PM@2x.png focus on the quality",
-    },
-    {
-      desc: "two screenshots with commentary between",
-      input:
-        "some stuff seem to have been lost : /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-09 at 07.06.01 PM@2x.png the previous version was better. /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-09 at 07.06.33 PM@2x.png",
-    },
-    {
-      desc: "screenshots on own lines after prose",
-      input:
-        "ok, restart the server and then tell me how to test this:\n/Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-11 at 12.32.49 PM@2x.png\n/Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-11 at 12.32.53 PM@2x.png",
-    },
-    {
-      desc: "jpeg from clipboard path",
-      input:
-        "seems like it still fails /Users/alioudiallo/Library/Group Containers/group.com.apple.coreservices.useractivityd/shared-pasteboard/items/B412A257-6609-4E86-B0C1-B1880CAC193D/IMG_4738.jpeg here's the output",
-    },
-    {
-      desc: "png inside deeply nested dir with spaces",
-      input:
-        "in particular, the photo of the box: /Users/alioudiallo/Downloads/Playdate Media Kit 4.0/Playdate photos/Playdate-box-photo-1.png",
-    },
-    {
-      desc: "screenshot after code block",
-      input:
-        "```\n── Tic-Tac-Toe ──\n   ○  │     │  ✕\n─────┼─────┼─────\n     │     │\n─────┼─────┼─────\n     │     │\n```\n\n/Users/alioudiallo/Pictures/screenshots/Screenshot 2026-04-17 at 03.35.59 PM@2x.png",
-    },
-    {
-      desc: "screenshot after list",
-      input:
-        "there's seems to be an issue: in the dashboard i see this: /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-04-13 at 04.44.13 PM@2x.png\n\nthis deosnt' match what we show currently",
-    },
-    {
-      desc: "screenshot as only content",
-      input:
-        "/Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-30 at 09.08.32 PM@2x.png",
-    },
-    {
-      desc: "screenshot after 'now seeing nothing:'",
-      input:
-        "now seeting nothing: /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-04-02 at 10.30.03 AM@2x.png",
-    },
-    {
-      desc: "bare relative path to png",
-      input: "read packages/ai/test/data/red-circle.png",
-    },
-    {
-      desc: "screen recording with frame as png",
-      input:
-        "seeing /Users/alioudiallo/Pictures/screenshots/Screenshot 2026-03-15 at 01.15.44 PM@2x.png",
-    },
-    // ── Simple path-only cases ────────────────────────────────────────
-    {
-      desc: "jpg at end of string",
-      input: "/Users/alioudiallo/Desktop/mindful-palettes/MP072.jpg",
-    },
-    {
-      desc: "jpeg from photos library",
-      input:
-        "/Users/alioudiallo/Pictures/Photos Library.photoslibrary/resources/derivatives/1/187EACAF-45D6-4917-B8BE-9362A6E8849F_1_102_o.jpeg",
-    },
-    {
-      desc: "webp extension",
-      input: "check this out ~/screenshots/diagram.webp please",
-    },
-    {
-      desc: "gif extension",
-      input: "look at demo.gif",
-    },
-  ])("detects image: $desc", ({ input }) => {
-    expect(referencesImageFiles(input)).toBe(true);
+  const tmpDirs: string[] = [];
+
+  afterEach(() => {
+    // temp dirs cleaned up by OS, just clear the ref list
+    tmpDirs.length = 0;
   });
 
-  it.each([
-    { desc: "plain text", input: "read this file src/index.ts" },
-    { desc: "empty string", input: "" },
-    {
-      desc: "PNG as a word in prose",
-      input: "I converted the PNG data to base64",
-    },
-    {
-      desc: ".ts file path",
-      input: "look at extensions/tools/look-at/index.ts",
-    },
-    { desc: "png in domain name", input: "check https://png.example.com/api" },
-    { desc: ".json file", input: "read package.json" },
-    { desc: "word with png-like ending", input: "the mapping function" },
-    { desc: ".md file", input: "read README.md" },
-    {
-      desc: "real message with no images",
-      input:
-        "ok, restart the server and then tell me how to test this. make sure the env vars are set correctly.",
-    },
-    {
-      desc: "code block only",
-      input: "```\nconst x = 42;\nconsole.log(x);\n```\n\nthat's what i got.",
-    },
-    { desc: "svg extension", input: "the logo is at assets/logo.svg" },
-    { desc: "bmp extension", input: "the bitmap is at assets/image.bmp" },
-  ])("rejects non-image: $desc", ({ input }) => {
-    expect(referencesImageFiles(input)).toBe(false);
+  function makeTemp(filename: string, content: Buffer): string {
+    const dir = mkdtempSync(join(homedir(), ".pi-test-"));
+    tmpDirs.push(dir);
+    const filePath = join(dir, filename);
+    writeFileSync(filePath, content);
+    return filePath;
+  }
+
+  it("detects an existing .png file path", () => {
+    const pngSig = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+      0x49, 0x48, 0x44, 0x52,
+    ]);
+    const path = makeTemp("test.png", pngSig);
+    expect(referencesImageFiles(`check out ${path}`, "/tmp")).toBe(true);
+  });
+
+  it("detects an existing .jpg file path", () => {
+    const jpgSig = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+    const path = makeTemp("photo.jpg", jpgSig);
+    expect(referencesImageFiles(`look at ${path}`, "/tmp")).toBe(true);
+  });
+
+  it("detects an existing relative path", () => {
+    const pngSig = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+      0x49, 0x48, 0x44, 0x52,
+    ]);
+    const dir = mkdtempSync(join(homedir(), ".pi-test-"));
+    tmpDirs.push(dir);
+    writeFileSync(join(dir, "image.png"), pngSig);
+    const relPath = "image.png";
+    expect(referencesImageFiles(`check ${relPath}`, dir)).toBe(true);
+  });
+
+  it("detects existing path with spaces (macOS screenshot style)", () => {
+    const pngSig = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+      0x49, 0x48, 0x44, 0x52,
+    ]);
+    const dir = mkdtempSync(join(homedir(), ".pi-test-"));
+    tmpDirs.push(dir);
+    const fileName = "Screenshot 2026-03-01 at 08.49.52 PM@2x.png";
+    writeFileSync(join(dir, fileName), pngSig);
+    const fullPath = join(dir, fileName);
+    expect(
+      referencesImageFiles(
+        `why does it break? ${fullPath} on submit it showed mine`,
+        "/tmp",
+      ),
+    ).toBe(true);
+  });
+
+  it("does NOT match a non-existent path", () => {
+    expect(
+      referencesImageFiles("/Users/nonexistent/nope/screenshot.png", "/tmp"),
+    ).toBe(false);
+  });
+
+  it("does NOT match a URL with .png", () => {
+    expect(
+      referencesImageFiles("curl https://example.com/assets/logo.png", "/tmp"),
+    ).toBe(false);
+  });
+
+  it("does NOT match .png in prose without a real file", () => {
+    expect(
+      referencesImageFiles("I converted the PNG data to base64", "/tmp"),
+    ).toBe(false);
+  });
+
+  it("does NOT match non-image extensions", () => {
+    expect(referencesImageFiles("read src/index.ts", "/tmp")).toBe(false);
+  });
+
+  it("does NOT match empty string", () => {
+    expect(referencesImageFiles("", "/tmp")).toBe(false);
+  });
+
+  it("does NOT match .json or .md paths", () => {
+    expect(referencesImageFiles("read package.json", "/tmp")).toBe(false);
+    expect(referencesImageFiles("read README.md", "/tmp")).toBe(false);
+  });
+
+  it("does NOT match svg or bmp extensions", () => {
+    expect(referencesImageFiles("the logo is at assets/logo.svg", "/tmp")).toBe(
+      false,
+    );
+    expect(
+      referencesImageFiles("the bitmap is at assets/image.bmp", "/tmp"),
+    ).toBe(false);
+  });
+
+  it("does NOT match text without file refs", () => {
+    expect(referencesImageFiles("just some text", "/tmp")).toBe(false);
+  });
+
+  it("handles .webp extension", () => {
+    const webpSig = Buffer.from("RIFFxxxxWEBP", "ascii");
+    const path = makeTemp("diagram.webp", webpSig);
+    expect(referencesImageFiles(`check ${path}`, "/tmp")).toBe(true);
+  });
+
+  it("handles .gif extension", () => {
+    const gifSig = Buffer.from("GIF89a", "ascii");
+    const path = makeTemp("demo.gif", gifSig);
+    expect(referencesImageFiles(`look at ${path}`, "/tmp")).toBe(true);
+  });
+
+  it("handles .jpeg extension", () => {
+    const jpgSig = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+    const path = makeTemp("photo.jpeg", jpgSig);
+    expect(referencesImageFiles(`check ${path}`, "/tmp")).toBe(true);
+  });
+
+  it("does not match .png inside a curl URL that happens to include a local path", () => {
+    expect(
+      referencesImageFiles(
+        `curl 'https://code.378labs.dev/user/repo/actions/runs/2/jobs/0/attempt/1/logs' -H 'Accept: text/html' && curl 'https://code.378labs.dev/assets/logo.png'`,
+        "/tmp",
+      ),
+    ).toBe(false);
   });
 });
 

@@ -9,17 +9,9 @@ import { LookAtParams, type LookAtParamsInput } from "./types";
 import {
   detectSupportedImageMimeType,
   disableTool,
+  injectLookAtGuidance,
   isVisionCapable,
-  referencesImageFiles,
 } from "./utils";
-
-const NUDGE_TEXT = `
-
-<pi_runtime_instruction source="look_at" user_visible="false">
-This instruction was inserted by the Pi look_at extension, not by the user.
-The user message is above this block.
-The user has referenced or attached image files; use the look_at tool to analyze them before answering.
-</pi_runtime_instruction>`;
 
 const TOOL_NAME = "look_at";
 
@@ -118,24 +110,17 @@ Always provide a clear objective describing what you want to learn from the imag
     isVisionCapable(evt.model) ? disableTool(pi, TOOL_NAME) : enableTool(pi);
   });
 
-  pi.on("input", (event, ctx) => {
-    const isEnabled = pi.getActiveTools().includes(TOOL_NAME);
-    if (!isEnabled) return;
+  // When the active model cannot see images, detect referenced image files in
+  // the conversation and append look_at guidance to those user messages. The
+  // context event is non-destructive: changes are re-applied each LLM call and
+  // never persisted to the session file.
+  pi.on("context", (event, ctx) => {
+    if (!pi.getActiveTools().includes(TOOL_NAME)) return;
 
     const model = ctx.model;
-    if (!model) return;
+    if (!model || isVisionCapable(model)) return;
 
-    if (isVisionCapable(model)) {
-      return;
-    }
-
-    const hasImageRefs = referencesImageFiles(event.text);
-    const hasAttachedImages = Boolean(event.images?.length);
-
-    if (!hasImageRefs && !hasAttachedImages) {
-      return;
-    }
-
-    return { action: "transform", text: event.text + NUDGE_TEXT };
+    if (!injectLookAtGuidance(event.messages, ctx.cwd)) return;
+    return { messages: event.messages };
   });
 }
