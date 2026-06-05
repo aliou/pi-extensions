@@ -6,6 +6,8 @@ import { renderScoutDetails, renderScoutHeader } from "./render";
 import { createScoutTools } from "./tools";
 import { ScoutParams } from "./types";
 
+const extensionPaths = ["./tools/read", "./tools/find", "./tools/grep"];
+
 export default async function scout(pi: ExtensionAPI): Promise<void> {
   const tools = createScoutTools(pi);
 
@@ -27,6 +29,7 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
     renderDetails: renderScoutDetails,
     buildPrompt,
     tools,
+    extensionPaths,
     models: MODEL_CANDIDATES,
   });
 
