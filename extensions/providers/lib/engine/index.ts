@@ -1,5 +1,7 @@
 export { getProfile } from "./profiles";
 export {
+  getCurrentMonthPacePercent,
+  getCurrentMonthProjectedPercent,
   getPacePercent,
   getProjectedPercent,
   isRegenSoon,

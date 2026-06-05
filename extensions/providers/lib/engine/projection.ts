@@ -35,6 +35,34 @@ export function getProjectedPercent(
   return Math.max(0, (usedPercent / effective) * 100);
 }
 
+/**
+ * Returns how far through the current calendar month we are (0-100).
+ * The month is computed from the first day at 00:00 through the first day of
+ * the next month at 00:00, so February/leap years and 30/31-day months are
+ * handled by Date instead of hard-coded durations.
+ */
+export function getCurrentMonthPacePercent(now = new Date()): number {
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const totalMs = end.getTime() - start.getTime();
+  if (!Number.isFinite(totalMs) || totalMs <= 0) return 0;
+  const elapsedMs = now.getTime() - start.getTime();
+  return Math.max(0, Math.min(100, (elapsedMs / totalMs) * 100));
+}
+
+/**
+ * Projects end-of-month usage assuming a linear consumption rate across the
+ * current calendar month.
+ */
+export function getCurrentMonthProjectedPercent(
+  usedPercent: number,
+  now = new Date(),
+): number {
+  const pacePercent = getCurrentMonthPacePercent(now);
+  if (pacePercent <= 0) return Math.max(0, usedPercent);
+  return Math.max(0, (usedPercent / pacePercent) * 100);
+}
+
 // =============================================================================
 // Refillable projection (net-burn with discrete tick simulation)
 // =============================================================================

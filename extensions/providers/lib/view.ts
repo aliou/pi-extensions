@@ -6,7 +6,13 @@ import type {
   RegenBudgetLimit,
 } from "@harness/provider-usage";
 import { formatCurrency, formatTimeRemaining } from "@harness/utils/formatters";
-import { assessRisk, getPacePercent, getProjectedPercent } from "./engine";
+import {
+  assessRisk,
+  getCurrentMonthPacePercent,
+  getCurrentMonthProjectedPercent,
+  getPacePercent,
+  getProjectedPercent,
+} from "./engine";
 
 function fixedWindowViewModel(limit: FixedWindowLimit): LimitViewModel {
   const pacePercent = getPacePercent(limit);
@@ -54,7 +60,9 @@ function budgetViewModel(limit: RegenBudgetLimit): LimitViewModel {
       limit.maxAmountMinor) *
     100;
   const percent = Math.round(usedPercent);
-  const usageLabel = `${percent}%/${formatCurrency(limit.maxAmountMinor, limit.currency)}`;
+  const amountLabel = formatCurrency(limit.maxAmountMinor, limit.currency);
+  const usageLabel = `${percent}%`;
+  const isClaudeExtraUsage = limit.id === "anthropic:extra-usage";
 
   let renewsLabel: string | undefined;
   if (limit.nextRegenAt) {
@@ -68,11 +76,15 @@ function budgetViewModel(limit: RegenBudgetLimit): LimitViewModel {
   return {
     id: limit.id,
     title: limit.name,
-    subtitle: limit.period,
+    subtitle: `${limit.period}, ${amountLabel}`,
     usageLabel,
     usedPercent,
     renewsLabel,
     severity: "none",
+    pacePercent: isClaudeExtraUsage ? getCurrentMonthPacePercent() : undefined,
+    projectedPercent: isClaudeExtraUsage
+      ? getCurrentMonthProjectedPercent(usedPercent)
+      : usedPercent,
   };
 }
 

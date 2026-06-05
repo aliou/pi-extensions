@@ -52,6 +52,10 @@ function parseISO8601(s: string | undefined | null): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+function startOfNextMonth(now: Date): Date {
+  return new Date(now.getFullYear(), now.getMonth() + 1, 1);
+}
+
 function timeoutSignal(ms: number, signal?: AbortSignal): AbortSignal {
   const t = AbortSignal.timeout(ms);
   return signal ? AbortSignal.any([signal, t]) : t;
@@ -100,8 +104,8 @@ function buildExtraUsage(
     maxAmountMinor: limitCents,
     remainingAmountMinor: Math.max(0, limitCents - usedCents),
     period: "Monthly",
-    nextRegenAt: null,
-    nextRegenAmountMinor: null,
+    nextRegenAt: startOfNextMonth(now),
+    nextRegenAmountMinor: limitCents,
     updatedAt: now,
   };
 }

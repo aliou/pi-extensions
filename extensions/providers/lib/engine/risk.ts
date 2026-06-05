@@ -10,6 +10,7 @@ import type {
 import { estimateBurnRate } from "@harness/provider-usage";
 import { getProfile } from "./profiles";
 import {
+  getCurrentMonthProjectedPercent,
   getPacePercent,
   getProjectedPercent,
   isRegenSoon,
@@ -148,10 +149,15 @@ function assessBudget(
     100;
   const remaining = limit.remainingAmountMinor;
 
+  const projectedPercent =
+    limit.id === "anthropic:extra-usage"
+      ? getCurrentMonthProjectedPercent(usedPercent)
+      : usedPercent;
+
   const base: RiskAssessment = {
     limitId: limit.id,
     severity: "none",
-    projectedPercent: usedPercent,
+    projectedPercent,
   };
 
   // Determine severity from both percent and absolute thresholds.
