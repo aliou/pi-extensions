@@ -110,21 +110,18 @@ export function createSessionAutocompleteProvider(
           return current.getSuggestions(lines, cursorLine, cursorCol, options);
         }
 
-        // Filter out current session from results
-        const filtered = results.filter(
-          (r: SesameSearchResult) => r.sessionId !== currentSessionId,
-        );
-
-        if (filtered.length === 0) {
+        if (results.length === 0) {
           return current.getSuggestions(lines, cursorLine, cursorCol, options);
         }
 
-        const items: AutocompleteItem[] = filtered.map(
+        const items: AutocompleteItem[] = results.map(
           (r: SesameSearchResult) => {
+            const isCurrent = r.sessionId === currentSessionId;
             const name = r.name || "(untitled session)";
             const shortId = r.sessionId.slice(0, 8);
             const modified = r.modifiedAt || "";
             const relativeTime = modified ? formatRelativeTime(modified) : "";
+            const currentLabel = isCurrent ? " ・" : "";
             const score = r.score ? ` · ${r.score.toFixed(2)}` : "";
             const cwdDisplay =
               global && r.cwd ? ` · ${collapseHomePath(r.cwd)}` : "";
@@ -132,8 +129,8 @@ export function createSessionAutocompleteProvider(
             return {
               value: `${SESSION_AUTOCOMPLETE_PREFIX}${r.sessionId}`,
               label: relativeTime
-                ? `${shortId} · ${relativeTime}${score}`
-                : `${shortId}${score}`,
+                ? `${shortId}${currentLabel} · ${relativeTime}${score}`
+                : `${shortId}${currentLabel}${score}`,
               description: `${name}${cwdDisplay}`,
             };
           },
