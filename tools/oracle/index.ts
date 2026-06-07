@@ -32,11 +32,7 @@ const tools: SubagentToolSpec[] = [
   },
 ];
 
-const extensionPaths = [
-  "./tools",
-  "./extensions/breadcrumbs",
-  "npm:@aliou/pi-synthetic",
-];
+const extensionPaths = ["./tools", "npm:@aliou/pi-synthetic"];
 
 export default async function oracle(pi: ExtensionAPI): Promise<void> {
   const subagent = createSubagent(pi, {

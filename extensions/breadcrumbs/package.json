@@ -1,8 +1,0 @@
-{
-  "pi": {
-    "extensions": [
-      "./tools/find-sessions/index.ts",
-      "./tools/list-sessions/index.ts"
-    ]
-  }
-}

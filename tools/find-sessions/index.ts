@@ -13,12 +13,9 @@ import type {
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
+import type { SearchOptions, SessionResult } from "@harness/session-store";
+import { searchSessions } from "@harness/session-store";
 import { Type } from "typebox";
-import {
-  type SearchOptions,
-  type SessionSearchResult,
-  searchSessions,
-} from "../../lib/session-search";
 
 const FindSessionsParams = Type.Object({
   query: Type.String({
@@ -67,19 +64,18 @@ interface FindSessionsDetails {
     limit?: number;
   };
   resultCount: number;
-  results: SessionSearchResult[];
+  results: SessionResult[];
 }
 
 type ExecuteResult = AgentToolResult<FindSessionsDetails>;
 
 function renderSessionCard(
-  session: SessionSearchResult,
+  session: SessionResult,
   query: string,
   theme: Theme,
 ): string[] {
   const date = (session.created || session.modified || "").slice(0, 10);
   const title = session.name || "(untitled)";
-  const firstMessage = session.firstMessage || "(no messages yet)";
   const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;
   const snippet = session.matchedSnippet?.replace(/\s+/g, " ").trim();
   const lines: string[] = [];
@@ -96,10 +92,6 @@ function renderSessionCard(
       `${theme.fg("muted", "│")} ${theme.fg("muted", "score:")} ${theme.fg("success", session.score.toFixed(3))}`,
     );
   }
-
-  lines.push(
-    `${theme.fg("muted", "│")} ${theme.fg("muted", "first:")} ${theme.fg("toolOutput", firstMessage)}`,
-  );
 
   if (snippet) {
     lines.push(
@@ -173,9 +165,9 @@ Uses Sesame indexed search.`,
       };
 
       // Execute search
-      let results: SessionSearchResult[] = [];
+      let results: SessionResult[] = [];
       try {
-        results = await searchSessions(searchOpts);
+        results = searchSessions(searchOpts);
         // Filter out current session - users searching for sessions want to find other sessions, not the one they're in
         results = results.filter((r) => r.id !== currentSessionId);
       } catch (err) {
@@ -214,7 +206,6 @@ Uses Sesame indexed search.`,
           created: r.created,
           modified: r.modified,
           messageCount: r.messageCount,
-          firstMessage: r.firstMessage,
           matchedSnippet: r.matchedSnippet,
           score: r.score,
         })),
@@ -294,7 +285,7 @@ Uses Sesame indexed search.`,
               0,
               10,
             );
-            const label = session.name || session.firstMessage || "(untitled)";
+            const label = session.name || "(untitled)";
             const preview =
               label.length > 48 ? `${label.slice(0, 48)}...` : label;
             const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;

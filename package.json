@@ -14,7 +14,6 @@
       "./commands",
       "./hooks",
       "./tools",
-      "./extensions/breadcrumbs",
       "./extensions/providers"
     ]
   },

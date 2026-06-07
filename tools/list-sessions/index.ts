@@ -1,21 +1,20 @@
 /**
  * List Sessions tool - list sessions for a given directory.
  *
- * Reads session files from the encoded cwd directory under the Pi sessions root
- * and extracts metadata (id, name, message count) from each file.
+ * Queries the Sesame DB for session metadata instead of reading files.
  */
 
 import { ToolBody, ToolCallHeader, ToolFooter } from "@aliou/pi-utils-ui";
 import type {
   AgentToolResult,
   ExtensionAPI,
-  ExtensionContext,
   Theme,
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
+import type { SessionResult } from "@harness/session-store";
+import { listSessions } from "@harness/session-store";
 import { Type } from "typebox";
-import { listSessions, type SessionListResult } from "../../lib/session-search";
 
 const ListSessionsParams = Type.Object({
   cwd: Type.String({
@@ -49,7 +48,7 @@ interface ListSessionsDetails {
   limit: number;
   depth: number;
   resultCount: number;
-  results: SessionListResult[];
+  results: SessionResult[];
 }
 
 type ExecuteResult = AgentToolResult<ListSessionsDetails>;
@@ -83,7 +82,7 @@ WHEN TO USE:
 - See what sessions exist without a keyword search
 - List sessions from child directories with depth parameter
 
-RESULTS: Returns sessions sorted by modification date (newest first) with metadata including name, message count, and first user message.`,
+RESULTS: Returns sessions sorted by modification date (newest first) with metadata including name, message count, and dates.`,
     promptSnippet:
       "List recent Pi sessions for a directory, optionally including child directories.",
     promptGuidelines: [
@@ -99,13 +98,13 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
       params: ListSessionsParamsType,
       _signal: AbortSignal | undefined,
       _onUpdate: unknown,
-      _ctx: ExtensionContext,
+      _ctx: unknown,
     ): Promise<ExecuteResult> {
       const { cwd, limit = 20, depth = 0 } = params;
 
-      let results: SessionListResult[] = [];
+      let results: SessionResult[] = [];
       try {
-        results = listSessions(cwd, limit, depth);
+        results = listSessions({ cwd, limit, depth });
       } catch (err) {
         console.error("[list-sessions] Error:", err);
         return {
@@ -141,7 +140,6 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
           created: r.created,
           modified: r.modified,
           messageCount: r.messageCount,
-          firstMessage: r.firstMessage,
         })),
       });
 
@@ -218,7 +216,7 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
               0,
               10,
             );
-            const label = session.name || session.firstMessage || "(untitled)";
+            const label = session.name || "(untitled)";
             const preview =
               label.length > 48 ? `${label.slice(0, 48)}...` : label;
             const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;
@@ -234,7 +232,6 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
               10,
             );
             const title = session.name || "(untitled)";
-            const firstMessage = session.firstMessage || "(no messages yet)";
             const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;
 
             if (lines.length > 0) lines.push("");
@@ -246,9 +243,6 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
                 `${theme.fg("muted", "│")} ${theme.fg("muted", "dir:")} ${theme.fg("accent", session.cwd)}`,
               );
             }
-            lines.push(
-              `${theme.fg("muted", "│")} ${theme.fg("muted", "first:")} ${theme.fg("toolOutput", firstMessage)}`,
-            );
             lines.push(theme.fg("muted", "└─"));
           }
         }
