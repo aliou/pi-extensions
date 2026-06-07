@@ -1,0 +1,14 @@
+{
+  "name": "@harness/session-store",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./types": "./types.ts"
+  },
+  "dependencies": {
+    "@aliou/sesame": "^0.8.0",
+    "@earendil-works/pi-coding-agent": "0.74.1",
+    "@harness/utils": "workspace:*"
+  }
+}
