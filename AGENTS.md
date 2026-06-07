@@ -107,9 +107,11 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `bash/` | `bash` | Adds `cwd` param, spawn hooks, sanitization |
 | `edit/` | `edit` | Passthrough |
 | `find/` | `find` | Adds `glob`, blocked paths |
+| `find-sessions/` | `find_sessions` | Session keyword search via `@harness/session-store` |
 | `get-current-time/` | `get_current_time` | Passthrough |
 | `grep/` | `grep` | Adds `literal`, `context`, blocked paths, custom render |
 | `librarian/` | `librarian`, `resume_librarian` | Codebase-understanding subagent |
+| `list-sessions/` | `list_sessions` | Session directory listing via `@harness/session-store` |
 | `look-at/` | `look_at` | Image analysis |
 | `oracle/` | `oracle`, `resume_oracle` | Senior advisor subagent |
 | `read/` | `read` | Passthrough |
@@ -122,7 +124,6 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 
 These extensions still use their own `package.json` with `pi.extensions` and are discovered separately:
 
-- `breadcrumbs/` - Session history tools (`find_sessions`, `list_sessions`). `read_session` now lives in `tools/read-session/`.
 - `providers/` - Rate-limit alerts, usage widgets, dashboards, and provider controls.
 
 Do not add new monolithic extensions. Migrate legacy extension code into `commands/`, `hooks/`, `tools/`, and `packages/` over time when practical.
@@ -147,6 +148,7 @@ Workspace packages:
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
 | `packages/model-registry/` | `@harness/model-registry` | Model/provider metadata helpers |
 | `packages/provider-usage/` | `@harness/provider-usage` | Provider usage adapters, normalization, cache, and history |
+| `packages/session-store/` | `@harness/session-store` | Session directory access, Sesame search, and listing |
 | `packages/test-utils/` | `@harness/test-utils` | Shared Vitest/Pi extension test harness utilities |
 | `packages/ui/` | `@harness/ui` | Shared TUI components/helpers |
 | `packages/utils/` | `@harness/utils` | Shared generic utilities |
