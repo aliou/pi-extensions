@@ -11,14 +11,14 @@
 
 import type { UserMessage } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { openSesameDb, resolveSessionRefFromDb } from "./db";
-import { createSessionAutocompleteProvider } from "./provider";
+import type { SessionRef } from "@harness/session-store";
 import {
   buildSessionRefsContent,
   extractSessionIds,
   messageText,
-} from "./search";
-import type { ResolvedRef } from "./types";
+  resolveSessionRef,
+} from "@harness/session-store";
+import { createSessionAutocompleteProvider } from "./provider";
 
 export default async function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
@@ -39,19 +39,13 @@ export default async function (pi: ExtensionAPI) {
     const ids = extractSessionIds(messageText(last.content));
     if (ids.length === 0) return;
 
-    const db = openSesameDb();
-    if (!db) return;
-    try {
-      const refs = ids
-        .map((id) => resolveSessionRefFromDb(db, id))
-        .filter((ref): ref is ResolvedRef => ref != null);
-      if (refs.length === 0) return;
+    const refs = ids
+      .map((id) => resolveSessionRef(id))
+      .filter((ref): ref is SessionRef => ref != null);
+    if (refs.length === 0) return;
 
-      appendGuidance(last, buildSessionRefsContent(refs));
-      return { messages: event.messages };
-    } finally {
-      db.close();
-    }
+    appendGuidance(last, buildSessionRefsContent(refs));
+    return { messages: event.messages };
   });
 }
 

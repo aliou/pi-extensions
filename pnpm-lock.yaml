@@ -41,6 +41,9 @@ importers:
       '@harness/provider-usage':
         specifier: workspace:*
         version: link:packages/provider-usage
+      '@harness/session-store':
+        specifier: workspace:*
+        version: link:packages/session-store
       '@harness/utils':
         specifier: workspace:*
         version: link:packages/utils

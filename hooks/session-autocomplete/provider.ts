@@ -2,18 +2,16 @@
  * Session autocomplete provider for `@@<token>` completion.
  */
 
-import type { SearchResult as SesameSearchResult } from "@aliou/sesame";
-import { search } from "@aliou/sesame";
 import type {
   AutocompleteItem,
   AutocompleteProvider,
   AutocompleteSuggestions,
 } from "@earendil-works/pi-tui";
 import { replaceAutocompletePrefix } from "@harness/completion";
+import type { SessionResult } from "@harness/session-store";
+import { searchSessions, searchSessionsByName } from "@harness/session-store";
 import { formatRelativeTime } from "@harness/utils/formatters";
 import { collapseHomePath } from "@harness/utils/path";
-import { openSesameDb } from "./db";
-import { searchByName } from "./search";
 import {
   AT_TOKEN_RE,
   DEBOUNCE_MS,
@@ -89,11 +87,6 @@ export function createSessionAutocompleteProvider(
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
-      const db = openSesameDb();
-      if (!db) {
-        return current.getSuggestions(lines, cursorLine, cursorCol, options);
-      }
-
       try {
         const { token, global } = sessionToken;
         const query = token === "" ? "*" : token;
@@ -103,8 +96,8 @@ export function createSessionAutocompleteProvider(
         // (FTS is ~10s for single chars).
         const useFts = token.length >= FTS_MIN_TOKEN_LEN;
         const results = useFts
-          ? search(db, query, searchCwd ? { cwd: searchCwd } : undefined)
-          : searchByName(db, token, searchCwd);
+          ? searchSessions({ query, cwd: searchCwd })
+          : searchSessionsByName(token, searchCwd);
 
         if (options.signal.aborted) {
           return current.getSuggestions(lines, cursorLine, cursorCol, options);
@@ -114,27 +107,25 @@ export function createSessionAutocompleteProvider(
           return current.getSuggestions(lines, cursorLine, cursorCol, options);
         }
 
-        const items: AutocompleteItem[] = results.map(
-          (r: SesameSearchResult) => {
-            const isCurrent = r.sessionId === currentSessionId;
-            const name = r.name || "(untitled session)";
-            const shortId = r.sessionId.slice(0, 8);
-            const modified = r.modifiedAt || "";
-            const relativeTime = modified ? formatRelativeTime(modified) : "";
-            const currentLabel = isCurrent ? " ・" : "";
-            const score = r.score ? ` · ${r.score.toFixed(2)}` : "";
-            const cwdDisplay =
-              global && r.cwd ? ` · ${collapseHomePath(r.cwd)}` : "";
+        const items: AutocompleteItem[] = results.map((r: SessionResult) => {
+          const isCurrent = r.id === currentSessionId;
+          const name = r.name || "(untitled session)";
+          const shortId = r.id.slice(0, 8);
+          const modified = r.modified || "";
+          const relativeTime = modified ? formatRelativeTime(modified) : "";
+          const currentLabel = isCurrent ? " \u30fb" : "";
+          const score = r.score ? ` \u00b7 ${r.score.toFixed(2)}` : "";
+          const cwdDisplay =
+            global && r.cwd ? ` \u00b7 ${collapseHomePath(r.cwd)}` : "";
 
-            return {
-              value: `${SESSION_AUTOCOMPLETE_PREFIX}${r.sessionId}`,
-              label: relativeTime
-                ? `${shortId}${currentLabel} · ${relativeTime}${score}`
-                : `${shortId}${currentLabel}${score}`,
-              description: `${name}${cwdDisplay}`,
-            };
-          },
-        );
+          return {
+            value: `${SESSION_AUTOCOMPLETE_PREFIX}${r.id}`,
+            label: relativeTime
+              ? `${shortId}${currentLabel} \u00b7 ${relativeTime}${score}`
+              : `${shortId}${currentLabel}${score}`,
+            description: `${name}${cwdDisplay}`,
+          };
+        });
 
         return {
           items,
@@ -143,8 +134,6 @@ export function createSessionAutocompleteProvider(
       } catch (_error) {
         void _error;
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
-      } finally {
-        db.close();
       }
     },
 

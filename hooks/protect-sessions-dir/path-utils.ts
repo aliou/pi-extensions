@@ -2,8 +2,11 @@
  * Session directory path utilities and approval state.
  */
 
-import { isAbsolute, join, relative, resolve } from "node:path";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
+import { isAbsolute, relative, resolve } from "node:path";
+import { isInSessionsDir as _isInSessionsDir } from "@harness/session-store";
+
+// Re-export for local consumers (e.g. gate.ts)
+export { _isInSessionsDir as isInSessionsDir };
 
 // ---------------------------------------------------------------------------
 // Approval state (module scope, per Pi runtime)
@@ -19,22 +22,16 @@ export function _resetForTesting(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Session dir helpers
+// Session dir re-exports
 // ---------------------------------------------------------------------------
 
-function getSessionsDir(): string {
-  return join(getAgentDir(), "sessions");
-}
+// isInSessionsDir is now imported from @harness/session-store.
+// getSessionsDir is also available there but not re-exported to avoid
+// proliferating direct session-dir access.
 
-/**
- * Check if a resolved absolute path falls within the sessions directory.
- */
-export function isInSessionsDir(path: string): boolean {
-  const sessionsDir = getSessionsDir();
-  const absolutePath = resolve(path);
-  const rel = relative(sessionsDir, absolutePath);
-  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
-}
+// ---------------------------------------------------------------------------
+// Approval helpers
+// ---------------------------------------------------------------------------
 
 /**
  * Check if a path is covered by any approved subtree.

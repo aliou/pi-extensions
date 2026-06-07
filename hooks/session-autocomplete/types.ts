@@ -1,11 +1,3 @@
-export interface ResolvedRef {
-  id: string;
-  name: string;
-  cwd: string;
-  created: string;
-  modified: string;
-}
-
 /** Prefix for session autocomplete references. */
 export const SESSION_AUTOCOMPLETE_PREFIX = "@@";
 
