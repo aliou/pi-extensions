@@ -1,23 +1,62 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createToolContext } from "@harness/test-utils/pi-context";
 import { createPiTestHarness } from "@harness/test-utils/pi-test-harness";
-import { afterEach, assert, describe, expect, it, vi } from "vitest";
+import { vol } from "memfs";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import editExtension, { prepareEditArguments } from "./index";
 
-const tempDirs: string[] = [];
+vi.mock("node:fs", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs;
+});
 
-afterEach(async () => {
-  await Promise.all(
-    tempDirs.map((dir) =>
-      rm(dir, {
-        recursive: true,
-        force: true,
-      }),
-    ),
-  );
-  tempDirs.length = 0;
+vi.mock("node:fs/promises", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs.promises;
+});
+
+vi.mock("node:os", () => ({
+  tmpdir: () => "/tmp",
+}));
+
+// Inject memfs operations into the native edit tool so it reads/writes
+// from the in-memory volume instead of the real filesystem.
+vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
+  const actual = await importOriginal<object>();
+  const originalCreateEditTool = (actual as Record<string, unknown>)
+    .createEditTool as typeof import("@earendil-works/pi-coding-agent").createEditTool;
+
+  return {
+    ...actual,
+    createEditTool: (
+      cwd: string,
+      options?: Parameters<typeof originalCreateEditTool>[1],
+    ) => {
+      const memfsOps = {
+        readFile: (path: string) =>
+          vol.promises
+            .readFile(path)
+            .then((b) => (typeof b === "string" ? Buffer.from(b) : b)),
+        writeFile: (path: string, content: string) =>
+          vol.promises.writeFile(path, content),
+        access: (path: string, mode?: number) =>
+          vol.promises.access(path, mode),
+      };
+      return originalCreateEditTool(cwd, {
+        ...options,
+        operations: memfsOps as Parameters<
+          typeof originalCreateEditTool
+        >[1] extends { operations?: infer O } | undefined
+          ? O
+          : never,
+      });
+    },
+  };
+});
+
+beforeEach(() => {
+  vol.reset();
+  vol.fromJSON({ "/tmp/.keep": "" });
 });
 
 describe("defaults edit tool", () => {
@@ -30,7 +69,6 @@ describe("defaults edit tool", () => {
   it("strips empty-string edits in prepareArguments", async () => {
     const pi = await createPiTestHarness(editExtension);
     const tool = pi.tool("edit").registered;
-
     assert(tool.prepareArguments, "prepareArguments should be defined");
 
     const prepared = tool.prepareArguments({
@@ -108,12 +146,12 @@ describe("defaults edit tool", () => {
     const tool = pi.tool("edit").registered;
     assert(tool.prepareArguments, "prepareArguments should be defined");
 
-    const cwd = await mkdtemp(join(tmpdir(), "pi-edit-tool-"));
-    tempDirs.push(cwd);
+    const cwd = "/tmp/pi-edit-tool-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
 
     const relativePath = "sample.txt";
     const absolutePath = join(cwd, relativePath);
-    await writeFile(absolutePath, "hello\nworld\n", "utf8");
+    vol.writeFileSync(absolutePath, "hello\nworld\n");
 
     const prepared = tool.prepareArguments({
       path: absolutePath,
@@ -134,7 +172,7 @@ describe("defaults edit tool", () => {
       createToolContext({ cwd }),
     );
 
-    const content = await readFile(absolutePath, "utf8");
+    const content = vol.readFileSync(absolutePath, "utf8") as string;
 
     expect(content).toBe("hello\npi\n");
     expect(result.details).toMatchObject({

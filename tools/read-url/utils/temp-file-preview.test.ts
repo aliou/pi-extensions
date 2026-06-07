@@ -1,19 +1,28 @@
-import { readFile, rm } from "node:fs/promises";
-import { dirname } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { vol } from "memfs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_PREVIEW_MAX_BYTES,
   DEFAULT_PREVIEW_MAX_LINES,
   writeTempFilePreview,
 } from "./temp-file-preview";
 
-const tempFilePaths: string[] = [];
+vi.mock("node:fs", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs;
+});
 
-afterEach(async () => {
-  for (const p of tempFilePaths) {
-    await rm(dirname(p), { recursive: true, force: true });
-  }
-  tempFilePaths.length = 0;
+vi.mock("node:fs/promises", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs.promises;
+});
+
+vi.mock("node:os", () => ({
+  tmpdir: () => "/tmp",
+}));
+
+beforeEach(() => {
+  vol.reset();
+  vol.fromJSON({ "/tmp/.keep": "" });
 });
 
 describe("writeTempFilePreview", () => {
@@ -22,10 +31,10 @@ describe("writeTempFilePreview", () => {
       "line1\nline2\nline3",
       { slug: "test" },
     );
-    tempFilePaths.push(tempFilePath);
 
     expect(preview).toBe("line1\nline2\nline3");
     expect(totalLines).toBe(3);
+    expect(vol.readFileSync(tempFilePath, "utf-8")).toBe("line1\nline2\nline3");
   });
 
   it("truncates by lines when maxLines is exceeded", async () => {
@@ -35,15 +44,13 @@ describe("writeTempFilePreview", () => {
       content,
       { slug: "test", maxLines: 5 },
     );
-    tempFilePaths.push(tempFilePath);
 
     expect(preview).toContain("Line 5");
     expect(preview).not.toContain("Line 6");
     expect(preview).toContain("truncated");
     expect(totalLines).toBe(20);
 
-    const full = await readFile(tempFilePath, "utf-8");
-    expect(full).toBe(content);
+    expect(vol.readFileSync(tempFilePath, "utf-8")).toBe(content);
   });
 
   it("truncates by bytes when maxBytes is exceeded before line limit", async () => {
@@ -57,7 +64,6 @@ describe("writeTempFilePreview", () => {
       content,
       { slug: "test", maxBytes: 2048 },
     );
-    tempFilePaths.push(tempFilePath);
 
     expect(preview).toContain("line 1");
     expect(preview).toContain("line 2");
@@ -65,17 +71,15 @@ describe("writeTempFilePreview", () => {
     expect(preview).toContain("truncated");
     expect(totalLines).toBe(5);
 
-    const full = await readFile(tempFilePath, "utf-8");
-    expect(full).toBe(content);
+    expect(vol.readFileSync(tempFilePath, "utf-8")).toBe(content);
   });
 
   it("handles single-line content that exceeds maxBytes", async () => {
     const content = "x".repeat(10000);
-    const { preview, tempFilePath } = await writeTempFilePreview(content, {
+    const { preview } = await writeTempFilePreview(content, {
       slug: "test",
       maxBytes: 2048,
     });
-    tempFilePaths.push(tempFilePath);
 
     // First line exceeds maxBytes, preview is empty (no partial lines)
     expect(preview).toContain("truncated");

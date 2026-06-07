@@ -1,9 +1,22 @@
-import { readFile, rm } from "node:fs/promises";
-import { dirname } from "node:path";
-import { afterEach, assert, describe, expect, it, vi } from "vitest";
+import { vol } from "memfs";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { executeReadUrlRequest, guessImageExtension } from "./fetch";
 import type { ReadUrlHandler } from "./handlers";
 import { DEFAULT_PREVIEW_MAX_BYTES } from "./utils/temp-file-preview";
+
+vi.mock("node:fs", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs;
+});
+
+vi.mock("node:fs/promises", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs.promises;
+});
+
+vi.mock("node:os", () => ({
+  tmpdir: () => "/tmp",
+}));
 
 function createHandler(markdown = "tweet markdown"): ReadUrlHandler {
   return {
@@ -22,17 +35,9 @@ function createHandler(markdown = "tweet markdown"): ReadUrlHandler {
   };
 }
 
-// Collect temp file paths for cleanup after each test.
-const tempFilePaths: string[] = [];
-
-afterEach(async () => {
-  for (const tempFilePath of tempFilePaths) {
-    await rm(dirname(tempFilePath), {
-      recursive: true,
-      force: true,
-    });
-  }
-  tempFilePaths.length = 0;
+beforeEach(() => {
+  vol.reset();
+  vol.fromJSON({ "/tmp/.keep": "" });
 });
 
 describe("read_url", () => {
@@ -58,28 +63,32 @@ describe("read_url", () => {
       nativeRead,
     );
 
-    assert(result.details, "details exist");
-    assert(result.details.tempFilePath, "tempFilePath exists");
-    tempFilePaths.push(result.details.tempFilePath);
+    expect(result.details).toBeDefined();
+    expect(result.details?.tempFilePath).toBeTruthy();
 
     // The content should be a truncated preview.
     const textBlock = result.content.find((c) => c.type === "text");
-    assert(textBlock?.type === "text", "textBlock is text type");
-    const text = textBlock.text;
-    // Should contain early lines.
-    expect(text).toContain("Line 1");
+    expect(textBlock?.type).toBe("text");
+    expect(textBlock && "text" in textBlock ? textBlock.text : "").toContain(
+      "Line 1",
+    );
     // Should NOT contain later lines that don't fit in 50KB.
-    expect(text).not.toContain("Line 55");
+    expect(
+      textBlock && "text" in textBlock ? textBlock.text : "",
+    ).not.toContain("Line 55");
     // Should contain the truncation hint.
-    expect(text).toContain("truncated");
-    expect(result.details.tempFilePath).toBeTruthy();
-    expect(result.details.totalLines).toBe(linesPerMB);
+    expect(textBlock && "text" in textBlock ? textBlock.text : "").toContain(
+      "truncated",
+    );
+    expect(result.details?.tempFilePath).toBeTruthy();
+    expect(result.details?.totalLines).toBe(linesPerMB);
 
-    // Verify the temp file actually contains the full content.
-    const tempFileContent = await readFile(
+    // Verify the temp file in memfs contains the full content.
+    assert(result.details?.tempFilePath, "tempFilePath should exist");
+    const tempFileContent = vol.readFileSync(
       result.details.tempFilePath,
       "utf-8",
-    );
+    ) as string;
     expect(tempFileContent).toBe(markdown);
   });
 
@@ -99,14 +108,15 @@ describe("read_url", () => {
       nativeRead,
     );
 
-    assert(result.details, "details exist");
-    assert(result.details.tempFilePath, "tempFilePath exists");
-    tempFilePaths.push(result.details.tempFilePath);
+    expect(result.details).toBeDefined();
+    expect(result.details?.tempFilePath).toBeTruthy();
 
     const textBlock = result.content.find((c) => c.type === "text");
-    assert(textBlock?.type === "text", "textBlock is text type");
-    expect(textBlock.text).toBe("short content");
-    expect(result.details.totalLines).toBe(1);
+    expect(textBlock?.type).toBe("text");
+    expect(textBlock && "text" in textBlock ? textBlock.text : "").toBe(
+      "short content",
+    );
+    expect(result.details?.totalLines).toBe(1);
   });
 
   it("appends native read image content after preview", async () => {
@@ -150,15 +160,15 @@ describe("read_url", () => {
       fetchImpl,
     );
 
-    assert(result.details, "details exist");
-    assert(result.details.tempFilePath, "tempFilePath exists");
-    tempFilePaths.push(result.details.tempFilePath);
+    expect(result.details).toBeDefined();
+    expect(result.details?.tempFilePath).toBeTruthy();
 
     // First content block is the preview text.
     const firstBlock = result.content[0];
     expect(firstBlock?.type).toBe("text");
-    assert(firstBlock?.type === "text", "firstBlock is text type");
-    expect(firstBlock.text).toContain("tweet markdown");
+    expect(firstBlock && "text" in firstBlock ? firstBlock.text : "").toContain(
+      "tweet markdown",
+    );
     // Image content blocks follow.
     expect(result.content).toContainEqual({
       type: "text",
@@ -211,14 +221,14 @@ describe("read_url", () => {
       fetchImpl,
     );
 
-    assert(result.details, "details exist");
-    assert(result.details.tempFilePath, "tempFilePath exists");
-    tempFilePaths.push(result.details.tempFilePath);
+    expect(result.details).toBeDefined();
+    expect(result.details?.tempFilePath).toBeTruthy();
 
     const firstBlock = result.content[0];
     expect(firstBlock?.type).toBe("text");
-    assert(firstBlock?.type === "text", "firstBlock is text type");
-    expect(firstBlock.text).toContain("markdown only");
+    expect(firstBlock && "text" in firstBlock ? firstBlock.text : "").toContain(
+      "markdown only",
+    );
     expect(result.content).toContainEqual({
       type: "text",
       text: "Read image file [second]",

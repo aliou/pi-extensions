@@ -1,61 +1,59 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { vol } from "memfs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { detectSupportedImageMimeType, referencesImageFiles } from "./utils";
 
+vi.mock("node:fs", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs;
+});
+
+vi.mock("node:os", () => ({
+  homedir: () => "/home/user",
+}));
+
+const PNG_SIG = [
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49,
+  0x48, 0x44, 0x52,
+];
+
+const JPG_SIG = [0xff, 0xd8, 0xff, 0xe0];
+
+beforeEach(() => {
+  vol.reset();
+  vol.fromJSON({ "/tmp/.keep": "" });
+});
+
 describe("referencesImageFiles", () => {
-  const tmpDirs: string[] = [];
-
-  afterEach(() => {
-    // temp dirs cleaned up by OS, just clear the ref list
-    tmpDirs.length = 0;
-  });
-
-  function makeTemp(filename: string, content: Buffer): string {
-    const dir = mkdtempSync(join(homedir(), ".pi-test-"));
-    tmpDirs.push(dir);
-    const filePath = join(dir, filename);
-    writeFileSync(filePath, content);
-    return filePath;
-  }
-
   it("detects an existing .png file path", () => {
-    const pngSig = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-      0x49, 0x48, 0x44, 0x52,
-    ]);
-    const path = makeTemp("test.png", pngSig);
+    const dir = "/home/user/pi-test";
+    vol.mkdirSync(dir, { recursive: true });
+    vol.writeFileSync(join(dir, "test.png"), Buffer.from(PNG_SIG));
+    const path = join(dir, "test.png");
     expect(referencesImageFiles(`check out ${path}`, "/tmp")).toBe(true);
   });
 
   it("detects an existing .jpg file path", () => {
-    const jpgSig = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
-    const path = makeTemp("photo.jpg", jpgSig);
+    const dir = "/home/user/pi-test";
+    vol.mkdirSync(dir, { recursive: true });
+    vol.writeFileSync(join(dir, "photo.jpg"), Buffer.from(JPG_SIG));
+    const path = join(dir, "photo.jpg");
     expect(referencesImageFiles(`look at ${path}`, "/tmp")).toBe(true);
   });
 
   it("detects an existing relative path", () => {
-    const pngSig = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-      0x49, 0x48, 0x44, 0x52,
-    ]);
-    const dir = mkdtempSync(join(homedir(), ".pi-test-"));
-    tmpDirs.push(dir);
-    writeFileSync(join(dir, "image.png"), pngSig);
+    const dir = "/tmp/pi-test-rel";
+    vol.mkdirSync(dir, { recursive: true });
+    vol.writeFileSync(join(dir, "image.png"), Buffer.from(PNG_SIG));
     const relPath = "image.png";
     expect(referencesImageFiles(`check ${relPath}`, dir)).toBe(true);
   });
 
   it("detects existing path with spaces (macOS screenshot style)", () => {
-    const pngSig = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-      0x49, 0x48, 0x44, 0x52,
-    ]);
-    const dir = mkdtempSync(join(homedir(), ".pi-test-"));
-    tmpDirs.push(dir);
+    const dir = "/home/user/pi-test";
+    vol.mkdirSync(dir, { recursive: true });
     const fileName = "Screenshot 2026-03-01 at 08.49.52 PM@2x.png";
-    writeFileSync(join(dir, fileName), pngSig);
+    vol.writeFileSync(join(dir, fileName), Buffer.from(PNG_SIG));
     const fullPath = join(dir, fileName);
     expect(
       referencesImageFiles(
@@ -110,20 +108,29 @@ describe("referencesImageFiles", () => {
   });
 
   it("handles .webp extension", () => {
-    const webpSig = Buffer.from("RIFFxxxxWEBP", "ascii");
-    const path = makeTemp("diagram.webp", webpSig);
+    const dir = "/home/user/pi-test";
+    vol.mkdirSync(dir, { recursive: true });
+    vol.writeFileSync(
+      join(dir, "diagram.webp"),
+      Buffer.from("RIFFxxxxWEBP", "ascii"),
+    );
+    const path = join(dir, "diagram.webp");
     expect(referencesImageFiles(`check ${path}`, "/tmp")).toBe(true);
   });
 
   it("handles .gif extension", () => {
-    const gifSig = Buffer.from("GIF89a", "ascii");
-    const path = makeTemp("demo.gif", gifSig);
+    const dir = "/home/user/pi-test";
+    vol.mkdirSync(dir, { recursive: true });
+    vol.writeFileSync(join(dir, "demo.gif"), Buffer.from("GIF89a", "ascii"));
+    const path = join(dir, "demo.gif");
     expect(referencesImageFiles(`look at ${path}`, "/tmp")).toBe(true);
   });
 
   it("handles .jpeg extension", () => {
-    const jpgSig = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
-    const path = makeTemp("photo.jpeg", jpgSig);
+    const dir = "/home/user/pi-test";
+    vol.mkdirSync(dir, { recursive: true });
+    vol.writeFileSync(join(dir, "photo.jpeg"), Buffer.from(JPG_SIG));
+    const path = join(dir, "photo.jpeg");
     expect(referencesImageFiles(`check ${path}`, "/tmp")).toBe(true);
   });
 

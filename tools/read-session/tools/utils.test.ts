@@ -1,9 +1,13 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { vol } from "memfs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getTargetSessionPath } from "./utils";
+
+vi.mock("node:fs", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs;
+});
 
 vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
   const actual = await importOriginal<object>();
@@ -38,31 +42,23 @@ function makeCtx(targetSessionId: string): ExtensionContext {
 }
 
 beforeEach(() => {
-  mockSessionsRoot = mkdtempSync(join(tmpdir(), "read-session-test-"));
+  mockSessionsRoot = "/tmp/read-session-test";
+  vol.reset();
+
   const dirA = join(mockSessionsRoot, "sessions", "--project-a--");
   const dirB = join(mockSessionsRoot, "sessions", "--project-b--");
-  mkdirSync(dirA, { recursive: true });
-  mkdirSync(dirB, { recursive: true });
 
   const mkHeader = (id: string, ts: string, cwd: string) =>
     JSON.stringify({ type: "session", version: 3, id, timestamp: ts, cwd });
 
-  writeFileSync(
-    join(dirA, FILE_A),
-    `${mkHeader(UUID_A, "2026-05-04T19:40:42.624Z", "/project-a")}\n`,
-  );
-  writeFileSync(
-    join(dirB, FILE_B),
-    `${mkHeader(UUID_B, "2026-05-04T19:45:20.754Z", "/project-b")}\n`,
-  );
-  writeFileSync(
-    join(dirA, FILE_C),
-    `${mkHeader(UUID_C, "2026-05-04T20:10:00.000Z", "/project-a")}\n`,
-  );
-});
-
-afterEach(() => {
-  rmSync(mockSessionsRoot, { recursive: true, force: true });
+  vol.fromJSON({
+    [join(dirA, FILE_A)]:
+      `${mkHeader(UUID_A, "2026-05-04T19:40:42.624Z", "/project-a")}\n`,
+    [join(dirB, FILE_B)]:
+      `${mkHeader(UUID_B, "2026-05-04T19:45:20.754Z", "/project-b")}\n`,
+    [join(dirA, FILE_C)]:
+      `${mkHeader(UUID_C, "2026-05-04T20:10:00.000Z", "/project-a")}\n`,
+  });
 });
 
 describe("getTargetSessionPath", () => {

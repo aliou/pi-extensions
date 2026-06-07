@@ -1,20 +1,25 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { vol } from "memfs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   resolveSearchPath,
   resolveSearchPaths,
   splitSearchPathList,
 } from "./path-utils";
 
-const tempDirs: string[] = [];
+vi.mock("node:fs", async () => {
+  const memfs = await vi.importActual<typeof import("memfs")>("memfs");
+  return memfs.fs;
+});
 
-afterEach(async () => {
-  await Promise.all(
-    tempDirs.map((dir) => rm(dir, { recursive: true, force: true })),
-  );
-  tempDirs.length = 0;
+vi.mock("node:os", () => ({
+  tmpdir: () => "/tmp",
+  homedir: () => "/home/user",
+}));
+
+beforeEach(() => {
+  vol.reset();
+  vol.fromJSON({ "/tmp/.keep": "" });
 });
 
 describe("grep path utils", () => {
@@ -39,23 +44,21 @@ describe("grep path utils", () => {
     expect(resolveSearchPath("/tmp/project", "~/notes")).toContain("/notes");
   });
 
-  it("keeps an existing path with spaces as a single target", async () => {
-    const cwd = await mkdtemp(join(tmpdir(), "pi-grep-paths-"));
-    tempDirs.push(cwd);
-    await mkdir(join(cwd, "docs with spaces"));
+  it("keeps an existing path with spaces as a single target", () => {
+    const cwd = "/tmp/pi-grep-paths";
+    vol.mkdirSync(join(cwd, "docs with spaces"), { recursive: true });
 
     expect(resolveSearchPaths(cwd, "docs with spaces")).toEqual([
       join(cwd, "docs with spaces"),
     ]);
   });
 
-  it("splits a missing whitespace path when every token exists", async () => {
-    const cwd = await mkdtemp(join(tmpdir(), "pi-grep-paths-"));
-    tempDirs.push(cwd);
-    await mkdir(join(cwd, "src"));
-    await mkdir(join(cwd, "extensions"));
-    await mkdir(join(cwd, "docs"));
-    await writeFile(join(cwd, "README.md"), "hello", "utf8");
+  it("splits a missing whitespace path when every token exists", () => {
+    const cwd = "/tmp/pi-grep-paths";
+    vol.mkdirSync(join(cwd, "src"), { recursive: true });
+    vol.mkdirSync(join(cwd, "extensions"), { recursive: true });
+    vol.mkdirSync(join(cwd, "docs"), { recursive: true });
+    vol.writeFileSync(join(cwd, "README.md"), "hello");
 
     expect(resolveSearchPaths(cwd, "src extensions docs README.md")).toEqual([
       join(cwd, "src"),
@@ -65,10 +68,9 @@ describe("grep path utils", () => {
     ]);
   });
 
-  it("keeps the original missing path when not every token exists", async () => {
-    const cwd = await mkdtemp(join(tmpdir(), "pi-grep-paths-"));
-    tempDirs.push(cwd);
-    await mkdir(join(cwd, "src"));
+  it("keeps the original missing path when not every token exists", () => {
+    const cwd = "/tmp/pi-grep-paths";
+    vol.mkdirSync(join(cwd, "src"), { recursive: true });
 
     expect(resolveSearchPaths(cwd, "src missing")).toEqual([
       join(cwd, "src missing"),
