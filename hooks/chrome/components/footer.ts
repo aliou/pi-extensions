@@ -13,7 +13,9 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
+  AD_EDITOR_STASH_CHANGED_EVENT,
   AD_MODEL_FAST_MODE_CHANGED_EVENT,
+  type AdEditorStashChangedEvent,
   type AdModelFastModeChangedEvent,
 } from "@harness/events";
 import { GitStatusWatcher } from "../lib/git-status";
@@ -37,6 +39,14 @@ export function createCustomFooter(pi: ExtensionAPI) {
   let ctx: ExtensionContext | undefined;
   let requestRender: (() => void) | undefined;
   let gitStatusWatcher: GitStatusWatcher | undefined;
+  let stashHasContent = false;
+
+  pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
+    const event = (data ?? {}) as Partial<AdEditorStashChangedEvent>;
+    stashHasContent = event.hasContent === true;
+    if (!ctx) return;
+    requestRender?.();
+  });
 
   pi.events.on(AD_MODEL_FAST_MODE_CHANGED_EVENT, (data: unknown) => {
     const event = (data ?? {}) as Partial<AdModelFastModeChangedEvent>;
@@ -61,7 +71,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
     const contextUsage = getContextUsage(ctx);
 
     const gitStatus = gitStatusWatcher?.getStatus();
-    const pathData = buildPathParts(theme, branch, gitStatus);
+    const pathData = buildPathParts(theme, branch, gitStatus, stashHasContent);
 
     const statsParts = buildStatsParts(theme, usage, contextUsage);
     const statsLine = statsParts.join(" ");

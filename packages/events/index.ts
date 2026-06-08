@@ -10,3 +10,9 @@ export type AdModelFastModeChangedEvent = {
   provider: string;
   enabled: boolean;
 };
+
+export const AD_EDITOR_STASH_CHANGED_EVENT = "ad:editor-stash:changed";
+
+export type AdEditorStashChangedEvent = {
+  hasContent: boolean;
+};

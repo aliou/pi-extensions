@@ -22,6 +22,11 @@ const COMMANDS: { name: string; description: string }[] = [
   { name: "providers:usage", description: "usage dashboard" },
 ];
 
+// Custom shortcuts defined in harness extensions.
+const SHORTCUTS: { key: string; description: string }[] = [
+  { key: "ctrl+shift+s", description: "stash/unstash editor" },
+];
+
 function createHeaderComponent(theme: Theme): Container {
   const container = new Container();
 
@@ -33,6 +38,15 @@ function createHeaderComponent(theme: Theme): Container {
   for (const command of COMMANDS) {
     container.addChild(
       new Text(rawKeyHint(`/${command.name}`, command.description), 0, 0),
+    );
+  }
+
+  container.addChild(new Spacer(1));
+
+  container.addChild(new Text(theme.fg("muted", "Shortcuts"), 0, 0));
+  for (const shortcut of SHORTCUTS) {
+    container.addChild(
+      new Text(rawKeyHint(shortcut.key, shortcut.description), 0, 0),
     );
   }
 

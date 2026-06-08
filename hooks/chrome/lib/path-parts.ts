@@ -24,6 +24,7 @@ export function buildPathParts(
   theme: Theme,
   branch: string | null | undefined,
   gitStatus?: Readonly<GitStatus>,
+  hasStash?: boolean,
 ): PathPartsResult {
   let cwd = process.cwd();
   const home = process.env.HOME || process.env.USERPROFILE;
@@ -35,8 +36,11 @@ export function buildPathParts(
   const segments = cwd.split("/").filter((s) => s.length > 0);
   const projectName = segments[segments.length - 1] ?? "";
 
-  const pathPart = projectName;
-  const pathWidth = visibleWidth(pathPart);
+  const stashStr = hasStash ? ` ${theme.fg("accent", "[stash]")}` : "";
+  const stashWidth = hasStash ? visibleWidth("[stash]") + 1 : 0; // +1 for leading space
+
+  const pathPart = projectName + stashStr;
+  const pathWidth = visibleWidth(projectName) + stashWidth;
 
   let branchPart: string | undefined;
   let branchWidth = 0;
