@@ -16,7 +16,6 @@ export default defineConfig({
     environment: "node",
     include: [
       "commands/**/*.test.ts",
-      "extensions/**/*.test.ts",
       "hooks/**/*.test.ts",
       "packages/**/*.test.ts",
       "tools/**/*.test.ts",

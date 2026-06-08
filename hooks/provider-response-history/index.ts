@@ -7,6 +7,12 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { isAnthropicOverageInUse, parseAnthropicHeaders } from "./anthropic";
 import { parseCodexHeaders } from "./codex";
+import {
+  NEURALWATT_QUOTAS_REQUEST_EVENT,
+  NEURALWATT_QUOTAS_UPDATED_EVENT,
+  updateNeuralwattCache,
+} from "./neuralwatt-cache";
+import { updateProviderCachesFromHistory } from "./provider-cache";
 import { parseSyntheticHeaders } from "./synthetic";
 import {
   type HistoryLine,
@@ -76,7 +82,10 @@ export default function providerResponseHistoryHook(pi: ExtensionAPI): void {
   pi.on("after_provider_response", async (event, ctx) => {
     const now = Date.now();
     const lines = historyLinesFromHeaders(event.headers, now);
-    await appendHistoryLines(lines, now);
+    await Promise.all([
+      appendHistoryLines(lines, now),
+      updateProviderCachesFromHistory(lines, now),
+    ]);
 
     const sessionId = ctx.sessionManager.getSessionId();
     if (
@@ -89,8 +98,17 @@ export default function providerResponseHistoryHook(pi: ExtensionAPI): void {
     }
   });
 
-  pi.on("session_start", () => {
+  pi.on("session_start", (_event, ctx) => {
     extraUsageSessions.clear();
+    if (ctx.model?.provider !== "neuralwatt") return;
+    pi.events.emit(NEURALWATT_QUOTAS_REQUEST_EVENT, {
+      authStorage: ctx.modelRegistry.authStorage,
+    });
+  });
+
+  // Emitted by @aliou/pi-neuralwatt after API or response-header quota updates.
+  pi.events.on(NEURALWATT_QUOTAS_UPDATED_EVENT, (data: unknown) => {
+    updateNeuralwattCache(data).catch(() => {});
   });
 
   pi.on("session_shutdown", () => {

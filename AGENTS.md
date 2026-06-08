@@ -16,12 +16,11 @@ When adding new content or changing existing behavior, update the closest releva
 - `hooks/` - Event hooks, lifecycle behavior, autocomplete providers, chrome, and background behavior.
 - `tools/` - Agent tools exposed to Pi sessions.
 - `packages/` - Shared internal workspace packages. Each package lives in `packages/<name>/` and is imported through its `@harness/*` workspace package name.
-- `extensions/` - Legacy monolithic extensions only. Do not create new extensions here.
 - `tests/` - Test setup and docs. Shared test utilities live in `packages/test-utils`.
 
 ## New feature placement
 
-Do not create new `extensions/` entries. New functionality should be added as one of:
+New functionality should be added as one of:
 
 - `commands/<name>/` for slash commands.
 - `hooks/<name>/` for event-driven behavior, UI chrome, autocomplete, lifecycle hooks, or background observers.
@@ -42,7 +41,7 @@ Pi discovers extensions from the root `package.json` `pi.extensions` array. Dire
 
 ## File layout convention
 
-Within a command, hook, tool, or legacy extension directory:
+Within a command, hook, or tool directory:
 
 - `index.ts` - Registration code. All `pi.*` and `ctx.*` calls live here.
 - `types.ts` - Type definitions and TypeBox schemas when needed.
@@ -74,6 +73,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `introspection/` | `/introspect` | Inspect extension internals |
 | `label/` | `/label <text>` | Label the current session entry |
 | `qq/` | `/qq <question>`, `/qq:list` | Quick question without interrupting main session |
+| `providers-usage/` | `/providers:usage` | Provider usage dashboard |
 | `review/` | `/review`, `/review-split` | Local review workflow |
 | `session-copy-id/` | `/session:copy-id` | Copy session ID to clipboard |
 | `session-copy-path/` | `/session:copy-path` | Copy session file path to clipboard |
@@ -92,7 +92,8 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `models-overrides/` | Override model props in models.json | `index.ts` |
 | `opus-fast-mode/` | Session-local Claude Opus fast-mode controls | `index.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
-| `provider-response-history/` | Provider response history tracking | `index.ts` |
+| `provider-response-history/` | Provider response history tracking and provider usage cache updates | `index.ts`, `provider-cache.ts`, `neuralwatt-cache.ts` |
+| `provider-usage-warnings/` | Provider usage risk notifications | `index.ts`, `alerts.ts`, `format.ts` |
 | `session-autocomplete/` | `@` autocomplete for session names | `db.ts`, `search.ts`, `provider.ts` |
 | `session-name/` | Auto-name sessions | `index.ts` |
 | `skill-autocomplete/` | Skill autocomplete | `index.ts` |
@@ -119,14 +120,6 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `read-url/` | `read_url` | URL fetch with handler chain and preview |
 | `reviewer/` | `reviewer`, `resume_reviewer` | Formal code-review subagent |
 | `scout/` | `scout`, `resume_scout` | Local codebase-understanding subagent |
-
-## Legacy monolithic extensions
-
-These extensions still use their own `package.json` with `pi.extensions` and are discovered separately:
-
-- `providers/` - Rate-limit alerts, usage widgets, dashboards, and provider controls.
-
-Do not add new monolithic extensions. Migrate legacy extension code into `commands/`, `hooks/`, `tools/`, and `packages/` over time when practical.
 
 ## Development
 

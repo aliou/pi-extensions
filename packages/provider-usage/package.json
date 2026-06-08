@@ -5,10 +5,12 @@
   "exports": {
     ".": "./index.ts",
     "./adapters": "./adapters/index.ts",
+    "./engine": "./engine/index.ts",
     "./history": "./history.ts",
-    "./types": "./types.ts"
+    "./types": "./types.ts",
+    "./view": "./view.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "0.74.1"
+    "@harness/utils": "workspace:*"
   }
 }

@@ -2,7 +2,7 @@ import type {
   FixedWindowLimit,
   RefillableLimit,
   RegenBudgetLimit,
-} from "@harness/provider-usage";
+} from "../types";
 
 const MIN_PACE_PERCENT = 5;
 

@@ -3,8 +3,14 @@
 // =============================================================================
 
 /** Base fields shared by all limit kinds. */
+export type ProviderId =
+  | "anthropic"
+  | "openai-codex"
+  | "synthetic"
+  | "neuralwatt";
+
 export interface BaseLimit {
-  provider: "anthropic" | "openai-codex" | "synthetic";
+  provider: ProviderId;
   /** Stable identifier, e.g. "anthropic:five-hour" or "codex:spark:secondary". */
   id: string;
   /** Human-readable name, e.g. "5-hour window". */
@@ -83,7 +89,7 @@ export type NormalizedLimit =
 export type ProviderStatus = "operational" | "degraded" | "outage" | "unknown";
 
 export interface ProviderSnapshot {
-  provider: "anthropic" | "openai-codex" | "synthetic";
+  provider: ProviderId;
   displayName: string;
   status: ProviderStatus;
   statusMessage?: string;

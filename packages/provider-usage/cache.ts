@@ -9,18 +9,9 @@ const CACHE_DIR = join(
   "providers",
 );
 
-const FRESH_TTL_MS = 5 * 60 * 1000;
-const STALE_IF_ERROR_MS = 24 * 60 * 60 * 1000;
-
 interface CacheEntry {
   fetchedAt: string;
   data: ProviderSnapshot;
-}
-
-function ageMs(fetchedAt: string): number | null {
-  const d = new Date(fetchedAt);
-  if (Number.isNaN(d.getTime())) return null;
-  return Date.now() - d.getTime();
 }
 
 function rehydrateDates(snapshot: ProviderSnapshot): ProviderSnapshot {
@@ -82,41 +73,16 @@ async function writeCache(
   }
 }
 
-/**
- * Wraps a provider fetch with filesystem caching.
- * Returns fresh cache if available, otherwise fetches. On fetch error, returns
- * stale cache if within the stale window.
- *
- * Pass `force: true` to skip the fresh cache check and always fetch.
- */
-export async function withCache(
+export async function getCachedProvider(
   provider: string,
-  fetchFn: () => Promise<ProviderSnapshot>,
-  force = false,
-): Promise<ProviderSnapshot> {
+): Promise<ProviderSnapshot | null> {
   const cached = await readCache(provider);
+  return cached?.data ?? null;
+}
 
-  if (!force && cached) {
-    const age = ageMs(cached.fetchedAt);
-    if (age !== null && age < FRESH_TTL_MS) {
-      return cached.data;
-    }
-  }
-
-  const result = await fetchFn();
-
-  if (!result.error) {
-    await writeCache(provider, result);
-    return result;
-  }
-
-  // On error, prefer stale cache over error result.
-  if (cached) {
-    const age = ageMs(cached.fetchedAt);
-    if (age !== null && age < STALE_IF_ERROR_MS) {
-      return cached.data;
-    }
-  }
-
-  return result;
+export async function writeProviderCache(
+  provider: string,
+  data: ProviderSnapshot,
+): Promise<void> {
+  await writeCache(provider, data);
 }
