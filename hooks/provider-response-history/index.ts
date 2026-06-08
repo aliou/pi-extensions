@@ -13,7 +13,11 @@ import {
   updateNeuralwattCache,
 } from "./neuralwatt-cache";
 import { updateProviderCachesFromHistory } from "./provider-cache";
-import { parseSyntheticHeaders } from "./synthetic";
+import {
+  SYNTHETIC_QUOTAS_REQUEST_EVENT,
+  SYNTHETIC_QUOTAS_UPDATED_EVENT,
+  updateSyntheticCache,
+} from "./synthetic-cache";
 import {
   type HistoryLine,
   PROVIDER_EXTRA_USAGE_USED_EVENT,
@@ -48,7 +52,6 @@ function historyLinesFromHeaders(
   return [
     ...parseAnthropicHeaders(headers, at),
     ...parseCodexHeaders(headers, at),
-    ...parseSyntheticHeaders(headers, at),
   ];
 }
 
@@ -100,15 +103,26 @@ export default function providerResponseHistoryHook(pi: ExtensionAPI): void {
 
   pi.on("session_start", (_event, ctx) => {
     extraUsageSessions.clear();
-    if (ctx.model?.provider !== "neuralwatt") return;
-    pi.events.emit(NEURALWATT_QUOTAS_REQUEST_EVENT, {
-      authStorage: ctx.modelRegistry.authStorage,
-    });
+    if (ctx.model?.provider === "neuralwatt") {
+      pi.events.emit(NEURALWATT_QUOTAS_REQUEST_EVENT, {
+        authStorage: ctx.modelRegistry.authStorage,
+      });
+    }
+    if (ctx.model?.provider === "synthetic") {
+      setTimeout(() => {
+        pi.events.emit(SYNTHETIC_QUOTAS_REQUEST_EVENT, undefined);
+      }, 0);
+    }
   });
 
   // Emitted by @aliou/pi-neuralwatt after API or response-header quota updates.
   pi.events.on(NEURALWATT_QUOTAS_UPDATED_EVENT, (data: unknown) => {
     updateNeuralwattCache(data).catch(() => {});
+  });
+
+  // Emitted by @aliou/pi-synthetic after API or response-header quota updates.
+  pi.events.on(SYNTHETIC_QUOTAS_UPDATED_EVENT, (data: unknown) => {
+    updateSyntheticCache(data).catch(() => {});
   });
 
   pi.on("session_shutdown", () => {
