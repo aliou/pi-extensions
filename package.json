@@ -26,7 +26,6 @@
     "postinstall": "./scripts/build-native-tools.sh"
   },
   "dependencies": {
-    "@aliou/pi-utils-settings": "^0.15.1",
     "@aliou/pi-utils-ui": "^0.4.1",
     "@aliou/sesame": "^0.8.0",
     "@aliou/sh": "^0.1.0",
@@ -41,10 +40,10 @@
   "devDependencies": {
     "@aliou/biome-plugins": "^0.8.1",
     "@biomejs/biome": "^2.4.14",
-    "@earendil-works/pi-agent-core": "0.74.1",
-    "@earendil-works/pi-ai": "0.74.1",
-    "@earendil-works/pi-coding-agent": "0.74.1",
-    "@earendil-works/pi-tui": "0.74.1",
+    "@earendil-works/pi-agent-core": "0.79.0",
+    "@earendil-works/pi-ai": "0.79.0",
+    "@earendil-works/pi-coding-agent": "0.79.0",
+    "@earendil-works/pi-tui": "0.79.0",
     "@harness/test-utils": "workspace:*",
     "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
@@ -55,7 +54,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@earendil-works/pi-coding-agent": "0.74.1",
+      "@earendil-works/pi-coding-agent": "0.79.0",
       "@earendil-works/pi-agent-core": "$@earendil-works/pi-coding-agent",
       "@earendil-works/pi-ai": "$@earendil-works/pi-coding-agent",
       "@earendil-works/pi-tui": "$@earendil-works/pi-coding-agent"

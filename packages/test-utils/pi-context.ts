@@ -63,6 +63,7 @@ function createUIContext(overrides: UIOverrides = {}): ExtensionUIContext {
 export interface CommandContextOverrides {
   cwd?: string;
   hasUI?: boolean;
+  mode?: ExtensionCommandContext["mode"];
   ui?: UIOverrides;
   sessionManager?: ReadonlySessionManager;
   modelRegistry?: ExtensionCommandContext["modelRegistry"];
@@ -74,6 +75,9 @@ export interface CommandContextOverrides {
   getContextUsage?: () => undefined;
   compact?: () => void;
   getSystemPrompt?: () => string;
+  getSystemPromptOptions?: () => ExtensionCommandContext["getSystemPromptOptions"] extends () => infer R
+    ? R
+    : never;
   waitForIdle?: () => Promise<void>;
   newSession?: ExtensionCommandContext["newSession"];
   fork?: ExtensionCommandContext["fork"];
@@ -94,6 +98,7 @@ export function createCommandContext(
   return {
     cwd: overrides.cwd ?? process.cwd(),
     hasUI: overrides.hasUI ?? true,
+    mode: overrides.mode ?? "tui",
     ui,
     signal: undefined,
     sessionManager: overrides.sessionManager ?? stubSessionManager(),
@@ -120,6 +125,13 @@ export function createCommandContext(
       overrides.switchSession ?? (async () => ({ cancelled: false })),
     ),
     reload: vi.fn(overrides.reload ?? (async () => {})),
+    getSystemPromptOptions: vi.fn(
+      overrides.getSystemPromptOptions ??
+        (() =>
+          ({}) as ExtensionCommandContext["getSystemPromptOptions"] extends () => infer R
+            ? R
+            : never),
+    ),
   } as ExtensionCommandContext;
 }
 

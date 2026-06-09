@@ -90,6 +90,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `git-branch-autocomplete/` | Git branch autocomplete | `index.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |
+| `project-trust/` | Auto-trust projects matching configured path prefixes | `index.ts`, `config.ts`, `types.ts` |
 | `opus-fast-mode/` | Session-local Claude Opus fast-mode controls | `index.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
 | `provider-response-history/` | Provider response history tracking and provider usage cache updates | `index.ts`, `provider-cache.ts`, `neuralwatt-cache.ts`, `synthetic-cache.ts` |
