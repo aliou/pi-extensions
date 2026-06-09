@@ -39,7 +39,7 @@ export class SubagentModelResolver {
   ): SubagentModelSelection | null {
     if (stored) {
       const model = modelRegistry.find(stored.provider, stored.model);
-      if (model) {
+      if (model && modelRegistry.hasConfiguredAuth(model)) {
         return {
           model,
           thinkingLevel: stored.thinkingLevel,
@@ -56,7 +56,9 @@ export class SubagentModelResolver {
   ): { model: Model<Api>; config: SubagentModel } | null {
     for (const candidate of this.candidates) {
       const model = modelRegistry.find(candidate.provider, candidate.model);
-      if (model) return { model, config: candidate };
+      if (model && modelRegistry.hasConfiguredAuth(model)) {
+        return { model, config: candidate };
+      }
     }
 
     return null;

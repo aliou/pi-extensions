@@ -1,21 +1,21 @@
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import registry from "@harness/model-registry";
+import { registry } from "@harness/model-registry";
 
 export default function compactModelSwap(pi: ExtensionAPI): void {
   let sessionModel: Model<Api> | undefined;
   let sessionThinkingLevel: ThinkingLevel | undefined;
 
   pi.on("session_before_compact", async (_event, ctx) => {
-    const compactionModelCandidates = registry.get("ad:small:text");
+    const compactionModelCandidates = registry.get(
+      "ad:small:text",
+      ctx.modelRegistry,
+    );
 
     for (const { provider, model, thinking } of compactionModelCandidates) {
       const compactionModel = ctx.modelRegistry.find(provider, model);
       if (!compactionModel) continue;
-
-      const auth = await ctx.modelRegistry.getApiKeyAndHeaders(compactionModel);
-      if (!auth.ok) continue;
 
       const currentModel = ctx.model;
       const currentThinkingLevel = ctx.model

@@ -1,7 +1,6 @@
 import type { SettingsJsonConfig } from "./src/settings-json";
 
 export const DEFAULT_ENABLED_MODELS: Array<readonly [string, string]> = [
-  ["openai-codex", "gpt-5.5"],
   ["synthetic", "hf:zai-org/GLM-5.1"],
   ["neuralwatt", "zai-org/GLM-5.1-FP8"],
   ["neuralwatt", "moonshotai/Kimi-K2.6"],
