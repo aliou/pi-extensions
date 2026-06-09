@@ -37,6 +37,7 @@ export default function projectTrust(pi: ExtensionAPI): void {
       const prefixes = resolveTrustedPaths(config);
 
       if (isTrustedPath(event.cwd, prefixes)) {
+        ctx.ui.notify(`Auto-trusting project: ${event.cwd}`, "info");
         return { trusted: "yes", remember: true };
       }
 
