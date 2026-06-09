@@ -3,7 +3,7 @@
  */
 
 import { isAbsolute, relative, resolve } from "node:path";
-import { isInSessionsDir as _isInSessionsDir } from "@harness/session-store";
+import { isInSessionsDir as _isInSessionsDir } from "@harness/session-store/paths";
 
 // Re-export for local consumers (e.g. gate.ts)
 export { _isInSessionsDir as isInSessionsDir };

@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./index.ts",
+    "./paths": "./paths.ts",
     "./types": "./types.ts"
   },
   "dependencies": {
