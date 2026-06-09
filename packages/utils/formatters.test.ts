@@ -47,10 +47,14 @@ describe("formatter utilities", () => {
       expect(formatTimeRemaining(null)).toBe("Unknown");
     });
 
-    it("formats elapsed dates", () => {
+    it("formats recently elapsed dates", () => {
       expect(formatTimeRemaining(new Date("2026-05-02T11:59:00Z"))).toBe(
-        "soon",
+        "1m ago",
       );
+    });
+
+    it("formats long elapsed dates", () => {
+      expect(formatTimeRemaining(new Date("2026-04-15T00:00:00Z"))).toBe("now");
     });
 
     it("formats minutes", () => {

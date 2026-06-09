@@ -102,6 +102,8 @@ export interface ProviderSnapshot {
     unlimited: boolean;
     balance?: number;
   };
+  /** True when the provider is currently in overage/extra-usage mode. */
+  extraUsageActive?: boolean;
   error?: string;
   fetchedAt: Date;
 }
@@ -182,12 +184,14 @@ export interface LimitViewModel {
   severity: Severity;
   /** Optional warning/info message. */
   message?: string;
-  /** Pace percent for progress bar marker. */
+  /** Pace percent for progress bar marker (period advancement). */
   pacePercent?: number | null;
   /** Projected percent for display. */
   projectedPercent?: number;
   /** True for refillable limits (suppresses projection display). */
   isRefillable?: boolean;
+  /** Tick time-marker position (0-100) for progress bar. Distinct from pacePercent. */
+  markerPercent?: number | null;
 }
 
 // =============================================================================

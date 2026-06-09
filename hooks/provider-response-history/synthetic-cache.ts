@@ -110,6 +110,15 @@ function syntheticSnapshotFromQuotas(
 
   const rolling = quotas.rollingFiveHourLimit;
   if (rolling?.max && rolling.max > 0) {
+    // tickPercent may be a fraction (0–1) or a percentage (0–100). Normalize.
+    const rawTickPercent = rolling.tickPercent ?? 0;
+    const tickFraction =
+      typeof rawTickPercent === "number" && Number.isFinite(rawTickPercent)
+        ? rawTickPercent > 1
+          ? rawTickPercent / 100
+          : rawTickPercent
+        : 0;
+    const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
     limits.push({
       kind: "refillable",
       provider: "synthetic",
@@ -117,22 +126,20 @@ function syntheticSnapshotFromQuotas(
       name: "Requests / 5h",
       capacity: rolling.max,
       remaining: Math.max(0, rolling.remaining ?? rolling.max),
-      refillAmount: Math.max(0, (rolling.tickPercent ?? 0) * rolling.max),
-      refillIntervalMs: 5 * 60 * 60 * 1000,
+      refillAmount: Math.max(0, tickFraction * rolling.max),
+      refillIntervalMs:
+        tickFraction > 0
+          ? Math.min(FIVE_HOURS_MS, FIVE_HOURS_MS * tickFraction)
+          : FIVE_HOURS_MS,
       nextRefillAt: parseDate(rolling.nextTickAt) ?? updatedAt,
       limited: rolling.limited ?? false,
       updatedAt,
     });
   }
 
+  // Note: quotas.subscription is intentionally excluded. It duplicates the
+  // rolling 5h limit and pi-synthetic's own UI does not display it.
   for (const limit of [
-    fixedWindowLimit(
-      "synthetic:subscription",
-      "Subscription",
-      quotas.subscription,
-      30 * 24 * 60 * 60,
-      updatedAt,
-    ),
     fixedWindowLimit(
       "synthetic:search-hourly",
       "Search / hour",

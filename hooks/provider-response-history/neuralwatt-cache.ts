@@ -9,15 +9,14 @@ export const NEURALWATT_QUOTAS_UPDATED_EVENT = "neuralwatt:quotas:updated";
 
 interface NeuralwattQuotas {
   snapshot_at?: string;
-  balance?: {
-    credits_remaining_usd?: number;
-    total_credits_usd?: number;
-  };
   subscription?: {
     plan?: string;
+    current_period_start?: string;
     current_period_end?: string;
     kwh_included?: number;
+    kwh_used?: number;
     kwh_remaining?: number;
+    in_overage?: boolean;
   } | null;
   key?: {
     allowance?: {
@@ -50,26 +49,45 @@ function neuralwattSnapshotFromQuotas(
   const updatedAt = parseDate(quotas.snapshot_at) ?? new Date();
   const limits: NormalizedLimit[] = [];
 
-  const totalCredits = dollarsToMinor(quotas.balance?.total_credits_usd);
-  const remainingCredits = dollarsToMinor(
-    quotas.balance?.credits_remaining_usd,
-  );
-  if (totalCredits !== null && totalCredits > 0 && remainingCredits !== null) {
+  // 1. Energy (subscription) — primary metric when present.
+  const kwhIncluded = quotas.subscription?.kwh_included;
+  const kwhUsed = quotas.subscription?.kwh_used;
+  const kwhRemaining = quotas.subscription?.kwh_remaining;
+  const inOverage = quotas.subscription?.in_overage;
+  const periodEnd = parseDate(quotas.subscription?.current_period_end);
+  const periodStart = parseDate(quotas.subscription?.current_period_start);
+  // Compute billing window duration for pace-based projection.
+  const windowSeconds =
+    periodStart && periodEnd && periodEnd.getTime() > periodStart.getTime()
+      ? Math.round((periodEnd.getTime() - periodStart.getTime()) / 1000)
+      : undefined;
+  if (
+    typeof kwhIncluded === "number" &&
+    kwhIncluded > 0 &&
+    (typeof kwhUsed === "number" || typeof kwhRemaining === "number")
+  ) {
+    // Prefer kwh_used (charged basis) from the API; fall back to computed.
+    const used =
+      typeof kwhUsed === "number"
+        ? kwhUsed
+        : Math.max(0, kwhIncluded - (kwhRemaining ?? 0));
     limits.push({
-      kind: "regen-budget",
+      kind: "fixed-window",
       provider: "neuralwatt",
-      id: "neuralwatt:credits",
-      name: "Credits",
-      currency: "USD",
-      maxAmountMinor: totalCredits,
-      remainingAmountMinor: Math.max(0, remainingCredits),
-      period: "Balance",
-      nextRegenAt: null,
-      nextRegenAmountMinor: null,
+      id: "neuralwatt:energy",
+      name: "Energy",
+      scope: quotas.subscription?.plan,
+      capacity: kwhIncluded,
+      used,
+      usedPercent: Math.max(0, Math.min(100, (used / kwhIncluded) * 100)),
+      resetsAt: periodEnd,
+      windowSeconds,
+      unit: "kWh",
       updatedAt,
     });
   }
 
+  // 2. Key Allowance — API-key-scoped budget.
   const allowanceLimit = dollarsToMinor(quotas.key?.allowance?.limit_usd);
   const allowanceRemaining = dollarsToMinor(
     quotas.key?.allowance?.remaining_usd,
@@ -94,31 +112,6 @@ function neuralwattSnapshotFromQuotas(
     });
   }
 
-  const kwhIncluded = quotas.subscription?.kwh_included;
-  const kwhRemaining = quotas.subscription?.kwh_remaining;
-  if (
-    typeof kwhIncluded === "number" &&
-    kwhIncluded > 0 &&
-    typeof kwhRemaining === "number"
-  ) {
-    limits.push({
-      kind: "fixed-window",
-      provider: "neuralwatt",
-      id: "neuralwatt:energy",
-      name: "Energy",
-      scope: quotas.subscription?.plan,
-      capacity: kwhIncluded,
-      used: Math.max(0, kwhIncluded - kwhRemaining),
-      usedPercent: Math.max(
-        0,
-        Math.min(100, ((kwhIncluded - kwhRemaining) / kwhIncluded) * 100),
-      ),
-      resetsAt: parseDate(quotas.subscription?.current_period_end),
-      unit: "kWh",
-      updatedAt,
-    });
-  }
-
   return {
     provider: "neuralwatt",
     displayName: "Neuralwatt",
@@ -126,6 +119,7 @@ function neuralwattSnapshotFromQuotas(
     status: "unknown",
     limits,
     plan: quotas.subscription?.plan,
+    extraUsageActive: inOverage === true,
     fetchedAt: updatedAt,
   };
 }

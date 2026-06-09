@@ -7,6 +7,7 @@ export {
   isRegenSoon,
   postRegenRemaining,
   projectRefillableRemaining,
+  projectRegenBudgetRemaining,
   refillableMinutesToExhaustion,
 } from "./projection";
 export {

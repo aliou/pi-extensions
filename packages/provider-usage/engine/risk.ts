@@ -10,11 +10,11 @@ import type {
 } from "../types";
 import { getProfile } from "./profiles";
 import {
-  getCurrentMonthProjectedPercent,
   getPacePercent,
   getProjectedPercent,
   isRegenSoon,
   postRegenRemaining,
+  projectRegenBudgetRemaining,
   refillableMinutesToExhaustion,
 } from "./projection";
 
@@ -138,21 +138,33 @@ async function assessRefillable(
 // Regen-budget risk
 // =============================================================================
 
-function assessBudget(
+async function assessBudget(
   limit: RegenBudgetLimit,
   profile: ThresholdProfile,
-): RiskAssessment {
+): Promise<RiskAssessment> {
   const t = profile.budget;
-  const usedPercent =
+  const currentUsedPercent =
     ((limit.maxAmountMinor - limit.remainingAmountMinor) /
       limit.maxAmountMinor) *
     100;
   const remaining = limit.remainingAmountMinor;
 
-  const projectedPercent =
-    limit.id === "anthropic:extra-usage"
-      ? getCurrentMonthProjectedPercent(usedPercent)
-      : usedPercent;
+  // Project remaining at next regen using estimated burn rate.
+  let projectedRemaining = remaining;
+  let projectedPercent = currentUsedPercent;
+
+  const burnRate = await estimateBurnRate(limit.id);
+  if (burnRate !== null && burnRate > 0) {
+    projectedRemaining = projectRegenBudgetRemaining(
+      remaining,
+      burnRate,
+      Date.now(),
+      limit.nextRegenAt,
+    );
+    projectedPercent =
+      ((limit.maxAmountMinor - projectedRemaining) / limit.maxAmountMinor) *
+      100;
+  }
 
   const base: RiskAssessment = {
     limitId: limit.id,
@@ -160,14 +172,21 @@ function assessBudget(
     projectedPercent,
   };
 
-  // Determine severity from both percent and absolute thresholds.
+  if (burnRate !== null && burnRate > 0) {
+    base.minutesToExhaustion = remaining / burnRate;
+  }
+
+  // Determine severity from projected percent and absolute remaining.
   let severityFromPercent: Severity = "none";
-  if (usedPercent >= t.criticalPercent) severityFromPercent = "critical";
-  else if (usedPercent >= t.warningPercent) severityFromPercent = "warning";
+  if (projectedPercent >= t.criticalPercent) severityFromPercent = "critical";
+  else if (projectedPercent >= t.warningPercent)
+    severityFromPercent = "warning";
 
   let severityFromAbsolute: Severity = "none";
-  if (remaining <= t.criticalAmountMinor) severityFromAbsolute = "critical";
-  else if (remaining <= t.warningAmountMinor) severityFromAbsolute = "warning";
+  if (projectedRemaining <= t.criticalAmountMinor)
+    severityFromAbsolute = "critical";
+  else if (projectedRemaining <= t.warningAmountMinor)
+    severityFromAbsolute = "warning";
 
   // Take the higher severity.
   const order: Severity[] = ["none", "warning", "high", "critical"];

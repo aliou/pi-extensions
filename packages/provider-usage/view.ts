@@ -1,11 +1,5 @@
 import { formatCurrency, formatTimeRemaining } from "@harness/utils/formatters";
-import {
-  assessRisk,
-  getCurrentMonthPacePercent,
-  getCurrentMonthProjectedPercent,
-  getPacePercent,
-  getProjectedPercent,
-} from "./engine";
+import { assessRisk, getPacePercent, getProjectedPercent } from "./engine";
 import type {
   FixedWindowLimit,
   LimitViewModel,
@@ -19,10 +13,11 @@ function fixedWindowViewModel(limit: FixedWindowLimit): LimitViewModel {
   const projectedPercent = getProjectedPercent(limit.usedPercent, pacePercent);
   const percent = Math.round(limit.usedPercent);
 
-  const usageLabel =
-    limit.capacity != null
-      ? `${percent}%/${limit.capacity.toLocaleString()}`
-      : `${percent}%`;
+  const capStr = limit.capacity?.toLocaleString();
+  const unitSuffix = limit.unit ? ` ${limit.unit}` : "";
+  const usageLabel = capStr
+    ? `${percent}%/${capStr}${unitSuffix}`
+    : `${percent}%`;
 
   return {
     id: limit.id,
@@ -30,7 +25,7 @@ function fixedWindowViewModel(limit: FixedWindowLimit): LimitViewModel {
     usageLabel,
     usedPercent: limit.usedPercent,
     renewsLabel: limit.resetsAt
-      ? `${formatTimeRemaining(limit.resetsAt)} remaining`
+      ? formatTimeRemaining(limit.resetsAt)
       : undefined,
     severity: "none",
     pacePercent,
@@ -42,15 +37,41 @@ function refillableViewModel(limit: RefillableLimit): LimitViewModel {
   const usedPercent =
     ((limit.capacity - limit.remaining) / limit.capacity) * 100;
   const percent = Math.round(usedPercent);
+
+  // Compute tick-interval marker: where we are in the current tick cycle.
+  let markerPercent: number | null = null;
+  const now = Date.now();
+  const nextRefillMs = limit.nextRefillAt.getTime();
+  if (limit.refillIntervalMs > 0 && nextRefillMs > now) {
+    // Work backwards from nextRefillAt: previous tick was at nextRefillAt - interval.
+    const tickStartMs = nextRefillMs - limit.refillIntervalMs;
+    const elapsedMs = now - tickStartMs;
+    if (elapsedMs >= 0) {
+      markerPercent = Math.max(
+        0,
+        Math.min(100, (elapsedMs / limit.refillIntervalMs) * 100),
+      );
+    }
+  }
+
+  // Build renewsLabel with +N next tick amount.
+  const tickAmount = limit.refillAmount;
+  const tickAmountStr = tickAmount > 0 ? `+${tickAmount.toLocaleString()}` : "";
+  const timeStr = formatTimeRemaining(limit.nextRefillAt);
+  const renewsLabel = tickAmountStr
+    ? `${tickAmountStr} in ${timeStr}`
+    : `in ${timeStr}`;
+
   return {
     id: limit.id,
     title: limit.name,
     subtitle: limit.limited ? "Limited" : undefined,
     usageLabel: `${percent}%/${limit.capacity.toLocaleString()}`,
     usedPercent,
-    renewsLabel: `Next tick ${formatTimeRemaining(limit.nextRefillAt)}`,
+    renewsLabel,
     severity: "none",
     isRefillable: true,
+    markerPercent,
   };
 }
 
@@ -62,7 +83,6 @@ function budgetViewModel(limit: RegenBudgetLimit): LimitViewModel {
   const percent = Math.round(usedPercent);
   const amountLabel = formatCurrency(limit.maxAmountMinor, limit.currency);
   const usageLabel = `${percent}%`;
-  const isClaudeExtraUsage = limit.id === "anthropic:extra-usage";
 
   let renewsLabel: string | undefined;
   if (limit.nextRegenAt) {
@@ -81,10 +101,6 @@ function budgetViewModel(limit: RegenBudgetLimit): LimitViewModel {
     usedPercent,
     renewsLabel,
     severity: "none",
-    pacePercent: isClaudeExtraUsage ? getCurrentMonthPacePercent() : undefined,
-    projectedPercent: isClaudeExtraUsage
-      ? getCurrentMonthProjectedPercent(usedPercent)
-      : usedPercent,
   };
 }
 

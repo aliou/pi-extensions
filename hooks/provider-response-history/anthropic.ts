@@ -11,7 +11,6 @@ const CLAIM_IDS: Record<string, string> = {
   "7d-sonnet": "anthropic:seven-day-sonnet",
   "7d_opus": "anthropic:seven-day-opus",
   "7d_sonnet": "anthropic:seven-day-sonnet",
-  overage: "anthropic:extra-usage",
 };
 
 function sanitizeClaim(value: string): string {

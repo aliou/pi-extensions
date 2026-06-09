@@ -9,6 +9,14 @@ const CACHE_DIR = join(
   "providers",
 );
 
+/** Limit IDs that have been removed. Filtered on cache read to prevent stale entries from surfacing. */
+const DEPRECATED_LIMIT_IDS = new Set([
+  "anthropic:extra-usage",
+  "synthetic:subscription",
+  "neuralwatt:credits",
+  "neuralwatt:monthly-spend",
+]);
+
 interface CacheEntry {
   fetchedAt: string;
   data: ProviderSnapshot;
@@ -41,6 +49,13 @@ function rehydrateDates(snapshot: ProviderSnapshot): ProviderSnapshot {
       };
     }),
   };
+}
+
+function sanitizeSnapshot(snapshot: ProviderSnapshot): ProviderSnapshot {
+  const limits = snapshot.limits.filter((l) => !DEPRECATED_LIMIT_IDS.has(l.id));
+  return limits.length === snapshot.limits.length
+    ? snapshot
+    : { ...snapshot, limits };
 }
 
 async function readCache(provider: string): Promise<CacheEntry | null> {
@@ -77,7 +92,8 @@ export async function getCachedProvider(
   provider: string,
 ): Promise<ProviderSnapshot | null> {
   const cached = await readCache(provider);
-  return cached?.data ?? null;
+  if (!cached?.data) return null;
+  return sanitizeSnapshot(cached.data);
 }
 
 export async function writeProviderCache(

@@ -50,7 +50,12 @@ export function formatTimeRemaining(date: Date | null): string {
   if (!date) return "Unknown";
 
   const remainingMs = date.getTime() - Date.now();
-  if (remainingMs <= 0) return "soon";
+  if (remainingMs <= 0) {
+    // Reset time is in the past — likely stale cache. Show elapsed time.
+    const elapsedMin = Math.ceil(Math.abs(remainingMs) / (1000 * 60));
+    if (elapsedMin > 60) return "now";
+    return `${elapsedMin}m ago`;
+  }
 
   const totalMinutes = Math.ceil(remainingMs / (1000 * 60));
   const days = Math.floor(totalMinutes / (60 * 24));

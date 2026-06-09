@@ -32,20 +32,39 @@ export function renderProgressBar(
   theme: Theme,
   fillColor: "success" | "warning" | "error",
   pacePercent?: number | null,
+  markerPercent?: number | null,
 ): string {
   const clamped = Math.max(0, Math.min(100, Math.round(percent)));
   const filled = Math.round((clamped / 100) * width);
   const paceIndex =
-    pacePercent == null || pacePercent <= percent
+    pacePercent == null ||
+    pacePercent <= percent ||
+    pacePercent < 5 ||
+    pacePercent > 95
       ? null
-      : Math.round((Math.max(0, Math.min(100, pacePercent)) / 100) * width);
+      : Math.min(
+          width - 1,
+          Math.round((Math.max(0, Math.min(100, pacePercent)) / 100) * width),
+        );
+  const markerIndex =
+    markerPercent == null || markerPercent < 5 || markerPercent > 95
+      ? null
+      : Math.min(
+          width - 1,
+          Math.round((Math.max(0, Math.min(100, markerPercent)) / 100) * width),
+        );
 
   const parts: string[] = [];
   for (let i = 0; i < width; i++) {
-    if (i < filled) parts.push(theme.fg(fillColor, "\u2588"));
-    else if (paceIndex !== null && i < paceIndex) {
-      parts.push(theme.fg(fillColor, "\u2593"));
-    } else parts.push(theme.fg("dim", "\u2591"));
+    if (i === markerIndex) {
+      parts.push(theme.fg("dim", "\u2502"));
+    } else if (i === paceIndex) {
+      parts.push(theme.fg("dim", "\u2502"));
+    } else if (i < filled) {
+      parts.push(theme.fg(fillColor, "\u2588"));
+    } else {
+      parts.push(theme.fg("dim", "\u2591"));
+    }
   }
   return parts.join("");
 }

@@ -37,11 +37,26 @@ const STRICT_PROFILE: ThresholdProfile = {
   budget: DEFAULT_PROFILE.budget,
 };
 
+/** Profile for NeuralWatt monthly energy — exhausting is costly so warn earlier. */
+const NEURALWATT_PROFILE: ThresholdProfile = {
+  fixedWindow: {
+    usedFloor: { start: 15, end: 5 },
+    warnProjected: { start: 150, end: 100 },
+    highProjected: { start: 190, end: 115 },
+    criticalProjected: { start: 240, end: 130 },
+  },
+  refillable: DEFAULT_PROFILE.refillable,
+  budget: DEFAULT_PROFILE.budget,
+};
+
 /**
  * Returns the threshold profile for a given limit.
- * Uses scope to identify per-model limits that need stricter thresholds.
+ * Uses limit ID and scope to select appropriate thresholds.
  */
 export function getProfile(_limitId: string, scope?: string): ThresholdProfile {
+  // NeuralWatt energy — monthly billing, exhausting is costly.
+  if (_limitId === "neuralwatt:energy") return NEURALWATT_PROFILE;
+
   // Codex Spark and similar per-model limits get stricter thresholds.
   if (scope) {
     const lower = scope.toLowerCase();

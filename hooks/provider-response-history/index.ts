@@ -5,6 +5,11 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import {
+  getCachedProvider,
+  type ProviderSnapshot,
+  writeProviderCache,
+} from "@harness/provider-usage";
 import { isAnthropicOverageInUse, parseAnthropicHeaders } from "./anthropic";
 import { parseCodexHeaders } from "./codex";
 import {
@@ -79,6 +84,24 @@ function emitExtraUsageUsed(
   } satisfies ProviderExtraUsageUsedPayload);
 }
 
+async function setAnthropicExtraUsageActive(active: boolean): Promise<void> {
+  const cached = await getCachedProvider("anthropic");
+  // No point creating an empty cache just to store active=false.
+  if (!cached && !active) return;
+  const snapshot: ProviderSnapshot = cached ?? {
+    provider: "anthropic",
+    displayName: "Claude",
+    status: "unknown",
+    limits: [],
+    fetchedAt: new Date(),
+  };
+  await writeProviderCache("anthropic", {
+    ...snapshot,
+    limits: snapshot.limits.filter((l) => l.id !== "anthropic:extra-usage"),
+    extraUsageActive: active,
+  });
+}
+
 export default function providerResponseHistoryHook(pi: ExtensionAPI): void {
   const extraUsageSessions = new Set<string>();
 
@@ -98,11 +121,17 @@ export default function providerResponseHistoryHook(pi: ExtensionAPI): void {
     ) {
       extraUsageSessions.add(sessionId);
       emitExtraUsageUsed(pi, ctx, "anthropic", now);
+      setAnthropicExtraUsageActive(true).catch(() => {}); // non-critical cache write
     }
   });
 
   pi.on("session_start", (_event, ctx) => {
     extraUsageSessions.clear();
+    if (ctx.model?.provider === "anthropic") {
+      // Reset overage flag on new session — it will be re-activated if overage
+      // headers are still present.
+      setAnthropicExtraUsageActive(false).catch(() => {}); // non-critical cache write
+    }
     if (ctx.model?.provider === "neuralwatt") {
       pi.events.emit(NEURALWATT_QUOTAS_REQUEST_EVENT, {
         authStorage: ctx.modelRegistry.authStorage,
@@ -116,13 +145,19 @@ export default function providerResponseHistoryHook(pi: ExtensionAPI): void {
   });
 
   // Emitted by @aliou/pi-neuralwatt after API or response-header quota updates.
+  // Writes cache, then emits usage-cache:updated so consumers know data is ready.
   pi.events.on(NEURALWATT_QUOTAS_UPDATED_EVENT, (data: unknown) => {
-    updateNeuralwattCache(data).catch(() => {});
+    updateNeuralwattCache(data)
+      .then(() => pi.events.emit("neuralwatt:usage-cache:updated", undefined))
+      .catch(() => {});
   });
 
   // Emitted by @aliou/pi-synthetic after API or response-header quota updates.
+  // Writes cache, then emits usage-cache:updated so consumers know data is ready.
   pi.events.on(SYNTHETIC_QUOTAS_UPDATED_EVENT, (data: unknown) => {
-    updateSyntheticCache(data).catch(() => {});
+    updateSyntheticCache(data)
+      .then(() => pi.events.emit("synthetic:usage-cache:updated", undefined))
+      .catch(() => {});
   });
 
   pi.on("session_shutdown", () => {

@@ -5,6 +5,8 @@ import {
 import { fetchAllProviders } from "@harness/provider-usage";
 import { UsagePanel } from "./panel";
 
+const REFRESH_TIMEOUT_MS = 10_000;
+
 export default function providersUsageCommand(pi: ExtensionAPI): void {
   pi.registerCommand("providers:usage", {
     description: "Show provider usage dashboard",
@@ -15,18 +17,16 @@ export default function providersUsageCommand(pi: ExtensionAPI): void {
       }
 
       const activeProvider = cmdCtx.model?.provider;
+      const authStorage = cmdCtx.modelRegistry?.authStorage;
 
       await cmdCtx.ui.custom((tui, theme, _kb, done) => {
         const loader = new BorderedLoader(tui, theme, "Loading usage...");
         loader.onAbort = () => done(undefined);
 
         let panel: UsagePanel | null = null;
-
-        function refreshPanel(): void {
-          panel = null;
-          tui.requestRender();
-          loadData();
-        }
+        let refreshGen = 0;
+        let pendingProviders = new Set<string>();
+        let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
         function loadData(): void {
           fetchAllProviders(loader.signal)
@@ -54,6 +54,51 @@ export default function providersUsageCommand(pi: ExtensionAPI): void {
             });
         }
 
+        function finishProvider(gen: number, provider: string): void {
+          if (gen !== refreshGen) return;
+          if (!pendingProviders.delete(provider)) return;
+          if (pendingProviders.size === 0) {
+            if (refreshTimer) {
+              clearTimeout(refreshTimer);
+              refreshTimer = null;
+            }
+            loadData();
+          }
+        }
+
+        function onRefreshTimeout(gen: number): void {
+          if (gen !== refreshGen) return;
+          pendingProviders.clear();
+          refreshTimer = null;
+          loadData();
+        }
+
+        // Listen for cache-updated events (fired after disk write completes).
+        const offNeuralwatt = pi.events.on(
+          "neuralwatt:usage-cache:updated",
+          () => finishProvider(refreshGen, "neuralwatt"),
+        );
+        const offSynthetic = pi.events.on("synthetic:usage-cache:updated", () =>
+          finishProvider(refreshGen, "synthetic"),
+        );
+
+        function refreshPanel(): void {
+          panel = null;
+          tui.requestRender();
+
+          const gen = ++refreshGen;
+          pendingProviders = new Set(["neuralwatt", "synthetic"]);
+
+          if (refreshTimer) clearTimeout(refreshTimer);
+          refreshTimer = setTimeout(
+            () => onRefreshTimeout(gen),
+            REFRESH_TIMEOUT_MS,
+          );
+
+          pi.events.emit("neuralwatt:quotas:request", { authStorage });
+          pi.events.emit("synthetic:quotas:request", undefined);
+        }
+
         loadData();
 
         return {
@@ -65,7 +110,12 @@ export default function providersUsageCommand(pi: ExtensionAPI): void {
             panel?.invalidate();
             loader.invalidate();
           },
-          dispose: () => loader.dispose(),
+          dispose: () => {
+            if (refreshTimer) clearTimeout(refreshTimer);
+            offNeuralwatt();
+            offSynthetic();
+            loader.dispose();
+          },
         };
       });
     },

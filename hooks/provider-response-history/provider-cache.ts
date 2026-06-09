@@ -79,6 +79,10 @@ function updateLimit(
   return { ...limit, remainingAmountMinor: line.remaining, updatedAt };
 }
 
+function isStaleExtraUsageLimit(id: string): boolean {
+  return id === "anthropic:extra-usage";
+}
+
 export async function updateProviderCachesFromHistory(
   lines: HistoryLine[],
   now: number,
@@ -87,6 +91,8 @@ export async function updateProviderCachesFromHistory(
   for (const line of lines) {
     const provider = providerFromHistoryId(line.id);
     if (!provider) continue;
+    // Skip stale extra-usage lines — overage is now a boolean flag, not a limit.
+    if (isStaleExtraUsageLimit(line.id)) continue;
     const arr = grouped.get(provider) ?? [];
     arr.push(line);
     grouped.set(provider, arr);
@@ -95,7 +101,10 @@ export async function updateProviderCachesFromHistory(
   await Promise.all(
     [...grouped.entries()].map(async ([provider, providerLines]) => {
       const cached = await getCachedProvider(provider);
-      const limits = cached?.limits ?? [];
+      // Filter out stale extra-usage limit from existing cache.
+      const limits = (cached?.limits ?? []).filter(
+        (l) => !isStaleExtraUsageLimit(l.id),
+      );
       const byId = new Map(limits.map((limit) => [limit.id, limit]));
       const nextLimits = [...limits];
 
@@ -117,6 +126,7 @@ export async function updateProviderCachesFromHistory(
         limits: nextLimits,
         plan: cached?.plan,
         credits: cached?.credits,
+        extraUsageActive: cached?.extraUsageActive,
         fetchedAt: new Date(now),
       };
       await writeProviderCache(provider, snapshot);

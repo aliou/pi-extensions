@@ -153,6 +153,24 @@ export function postRegenRemaining(limit: RegenBudgetLimit): number {
 }
 
 /**
+ * Projects remaining budget at a future date, accounting for consumption but
+ * NOT including the regen at that date. Used to assess "will I run out before
+ * the next regen" risk.
+ */
+export function projectRegenBudgetRemaining(
+  remaining: number,
+  burnRatePerMin: number,
+  now: number,
+  horizonAt: Date | null,
+): number {
+  if (!horizonAt || burnRatePerMin <= 0) return remaining;
+  const horizonMs = horizonAt.getTime() - now;
+  if (horizonMs <= 0) return remaining;
+  const horizonMin = horizonMs / 60_000;
+  return Math.max(0, remaining - burnRatePerMin * horizonMin);
+}
+
+/**
  * Returns true if the next regen event is within the given number of minutes.
  */
 export function isRegenSoon(

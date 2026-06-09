@@ -34,6 +34,7 @@ function renderLimitBlock(
       theme,
       color,
       vm.pacePercent,
+      vm.markerPercent,
     );
     lines.push(`  ${bar} ${theme.fg(color, vm.usageLabel)}`);
   }
@@ -110,9 +111,16 @@ export async function buildProviderTab(
   }
 
   const isStale = Date.now() - snapshot.fetchedAt.getTime() > 60 * 60_000;
-  lines.push(
-    `  Status: ${theme.fg(statusColor, `\u25cf ${statusText}`)}   Last update: ${theme.fg(isStale ? "error" : "dim", formatLastUpdated(snapshot.fetchedAt))}`,
+  const statusParts = [
+    `Status: ${theme.fg(statusColor, `\u25cf ${statusText}`)}`,
+  ];
+  if (snapshot.extraUsageActive) {
+    statusParts.push(theme.fg("warning", "Extra usage \u25cf Active"));
+  }
+  statusParts.push(
+    `Last update: ${theme.fg(isStale ? "error" : "dim", formatLastUpdated(snapshot.fetchedAt))}`,
   );
+  lines.push(`  ${statusParts.join("   ")}`);
   lines.push("");
 
   if (snapshot.error) {
