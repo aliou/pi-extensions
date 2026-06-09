@@ -33,16 +33,20 @@ export default function projectTrust(pi: ExtensionAPI): void {
   pi.on(
     "project_trust",
     async (event, ctx): Promise<ProjectTrustEventResult> => {
+      const notify = (message: string, level: "info" | "warning" | "error") => {
+        ctx.ui.notify(`[harness] auto-trust: ${message}`, level);
+      };
+
       const config = readTrustPathsConfig();
       const prefixes = resolveTrustedPaths(config);
 
       if (isTrustedPath(event.cwd, prefixes)) {
-        ctx.ui.notify(`Auto-trusting project: ${event.cwd}`, "info");
+        notify(`Auto-trusting project: ${event.cwd}`, "info");
         return { trusted: "yes", remember: true };
       }
 
-      ctx.ui.notify(
-        "Project not in trusted paths. Use /trust to save a trust decision, then /reload.",
+      notify(
+        `Project not in trusted paths: ${event.cwd}. Use /trust to save a trust decision, then /reload.`,
         "warning",
       );
 
