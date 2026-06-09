@@ -5,8 +5,10 @@
  * (with `remember: true`) when the cwd falls under one of the trusted
  * prefixes configured in `~/.pi/agent/settings/trust-paths.json`.
  *
- * If no prefix matches, declines trust (without persisting) and notifies
- * the user to use `/trust` then `/reload` if they want to trust the project.
+ * If no prefix matches and the cwd is not already in trust.json,
+ * declines trust (without persisting) and notifies the user to use
+ * `/trust` then `/reload`. If the cwd is already trusted via trust.json,
+ * returns "undecided" so the core's saved decision is respected.
  *
  * Config format:
  * ```json
@@ -22,6 +24,10 @@
 import type {
   ExtensionAPI,
   ProjectTrustEventResult,
+} from "@earendil-works/pi-coding-agent";
+import {
+  getAgentDir,
+  ProjectTrustStore,
 } from "@earendil-works/pi-coding-agent";
 import {
   isTrustedPath,
@@ -43,6 +49,15 @@ export default function projectTrust(pi: ExtensionAPI): void {
       if (isTrustedPath(event.cwd, prefixes)) {
         notify(`Auto-trusting project: ${event.cwd}`, "info");
         return { trusted: "yes", remember: true };
+      }
+
+      // If the core trust store already has a saved decision, defer to it.
+      // Without this check, returning "no" would override a saved trust
+      // decision from /trust, because the project_trust event fires before
+      // the core reads trust.json.
+      const trustStore = new ProjectTrustStore(getAgentDir());
+      if (trustStore.get(event.cwd) !== null) {
+        return { trusted: "undecided" };
       }
 
       notify(
