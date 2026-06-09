@@ -10,7 +10,7 @@ export interface CompletionConfig {
 
 /** Path to the shared completion config file. */
 export function getCompletionConfigPath(): string {
-  return join(getAgentDir(), "extensions", "completion.json");
+  return join(getAgentDir(), "settings", "completion.json");
 }
 
 /** Read the completion config. Returns an empty object if the file doesn't exist. */

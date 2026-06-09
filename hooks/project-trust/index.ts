@@ -3,7 +3,7 @@
  *
  * Listens to the `project_trust` event and returns a "yes" decision
  * (with `remember: true`) when the cwd falls under one of the trusted
- * prefixes configured in `~/.pi/agent/extensions/trust-paths.json`.
+ * prefixes configured in `~/.pi/agent/settings/trust-paths.json`.
  *
  * If no prefix matches, declines trust (without persisting) and notifies
  * the user to use `/trust` then `/reload` if they want to trust the project.

@@ -5,7 +5,7 @@
  * configurable root paths. Accepting a completion replaces the full
  * `@skill:<token>` prefix with the absolute path to SKILL.md.
  *
- * The root paths are configured in `~/.pi/agent/extensions/completion.json`:
+ * The root paths are configured in `~/.pi/agent/settings/completion.json`:
  * ```json
  * { "skillsRoots": ["~/skills"] }
  * ```
@@ -25,7 +25,7 @@ export default async function (pi: ExtensionAPI) {
 
     if (valid.length === 0 && missing.length === 0) {
       ctx.ui.notify(
-        "Skill autocomplete not configured. Set skillsRoots in ~/.pi/agent/extensions/completion.json",
+        "Skill autocomplete not configured. Set skillsRoots in ~/.pi/agent/settings/completion.json",
         "warning",
       );
       return;

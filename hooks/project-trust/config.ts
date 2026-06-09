@@ -6,7 +6,7 @@ import type { TrustPathsConfig } from "./types";
 
 /** Path to the trust-paths config file. */
 export function getTrustPathsConfigPath(): string {
-  return join(getAgentDir(), "extensions", "trust-paths.json");
+  return join(getAgentDir(), "settings", "trust-paths.json");
 }
 
 /** Read the trust-paths config. Returns an empty config if the file doesn't exist. */
