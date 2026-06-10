@@ -37,6 +37,8 @@ export type AdEditorStashChangedEvent = {
 export const AD_HEADER_COLLECT_EVENT = "ad:header:collect";
 export const AD_HEADER_REGISTER_COMMAND_EVENT = "ad:header:register-command";
 export const AD_HEADER_REGISTER_SHORTCUT_EVENT = "ad:header:register-shortcut";
+export const AD_HEADER_REGISTER_COMPLETION_EVENT =
+  "ad:header:register-completion";
 export const AD_HEADER_REGISTER_LOGO_EVENT = "ad:header:register-logo";
 
 export type AdHeaderRegisterCommandEvent = {
@@ -46,5 +48,10 @@ export type AdHeaderRegisterCommandEvent = {
 
 export type AdHeaderRegisterShortcutEvent = {
   key: string;
+  description: string;
+};
+
+export type AdHeaderRegisterCompletionEvent = {
+  trigger: string;
   description: string;
 };

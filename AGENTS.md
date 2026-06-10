@@ -93,10 +93,10 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
 | `provider-response-history/` | Provider response history tracking and provider usage cache updates | `index.ts`, `provider-cache.ts`, `neuralwatt-cache.ts`, `synthetic-cache.ts` |
 | `provider-usage-warnings/` | Provider usage risk notifications | `index.ts`, `alerts.ts`, `format.ts` |
-| `session-autocomplete/` | `@` autocomplete for session names | `db.ts`, `search.ts`, `provider.ts` |
+| `session-autocomplete/` | `@@` autocomplete for session references | `index.ts`, `provider.ts` |
 | `session-name/` | Auto-name sessions | `index.ts` |
 | `skill-autocomplete/` | `?` skill directory autocomplete | `index.ts` |
-| `zoxide-autocomplete/` | zoxide path autocomplete | `index.ts` |
+| `zoxide-autocomplete/` | `@z:` project path autocomplete | `index.ts` |
 
 ## Tools
 
@@ -147,7 +147,7 @@ Workspace packages:
 
 ## Custom header
 
-The startup header (`hooks/chrome/components/header.ts`) shows a curated list of harness shortcuts and commands. When adding a new `registerShortcut` or `registerCommand`, ask whether it should be added to the header.
+The startup header (`hooks/chrome/components/header.ts`) shows a curated list of harness commands, shortcuts, and completion providers. Extensions register these entries by listening to `AD_HEADER_COLLECT_EVENT` and emitting the matching `AD_HEADER_REGISTER_*` event from `@harness/events`. When adding a new `registerShortcut`, `registerCommand`, or autocomplete provider, ask whether it should be added to the header.
 
 ## Notes
 

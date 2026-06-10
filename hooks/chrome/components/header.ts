@@ -16,11 +16,12 @@ export interface HeaderData {
   logo: string;
   commands: Array<{ name: string; description: string }>;
   shortcuts: Array<{ key: string; description: string }>;
+  completions: Array<{ trigger: string; description: string }>;
 }
 
 export function createHeaderComponent(
   theme: Theme,
-  { logo, commands, shortcuts }: HeaderData,
+  { logo, commands, shortcuts, completions }: HeaderData,
 ): Container {
   const container = new Container();
 
@@ -43,6 +44,16 @@ export function createHeaderComponent(
     for (const shortcut of shortcuts) {
       container.addChild(
         new Text(rawKeyHint(shortcut.key, shortcut.description), 1, 0),
+      );
+    }
+    container.addChild(new Spacer(1));
+  }
+
+  if (completions.length > 0) {
+    container.addChild(new Text(theme.fg("muted", "Completions"), 1, 0));
+    for (const completion of completions) {
+      container.addChild(
+        new Text(rawKeyHint(completion.trigger, completion.description), 1, 0),
       );
     }
     container.addChild(new Spacer(1));

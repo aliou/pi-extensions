@@ -17,10 +17,22 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMPLETION_EVENT,
+  once,
+} from "@harness/events";
 import { resolveSkillsRoots } from "./config";
 import { createSkillAutocompleteProvider } from "./provider";
 
 export default async function (pi: ExtensionAPI) {
+  once(pi, AD_HEADER_COLLECT_EVENT, () => {
+    pi.events.emit(AD_HEADER_REGISTER_COMPLETION_EVENT, {
+      trigger: "?",
+      description: "insert skill path",
+    });
+  });
+
   pi.on("session_start", async (_event, ctx) => {
     const { valid, missing } = resolveSkillsRoots();
 

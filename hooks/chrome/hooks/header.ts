@@ -2,9 +2,11 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
+  AD_HEADER_REGISTER_COMPLETION_EVENT,
   AD_HEADER_REGISTER_LOGO_EVENT,
   AD_HEADER_REGISTER_SHORTCUT_EVENT,
   type AdHeaderRegisterCommandEvent,
+  type AdHeaderRegisterCompletionEvent,
   type AdHeaderRegisterShortcutEvent,
 } from "@harness/events";
 import { createCustomHeader, type HeaderData } from "../components/header";
@@ -17,6 +19,7 @@ export function setupHeaderHook(pi: ExtensionAPI) {
 
     const commands: AdHeaderRegisterCommandEvent[] = [];
     const shortcuts: AdHeaderRegisterShortcutEvent[] = [];
+    const completions: AdHeaderRegisterCompletionEvent[] = [];
     let logo = "pi";
 
     const seenCmds = new Set<string>();
@@ -41,6 +44,20 @@ export function setupHeaderHook(pi: ExtensionAPI) {
       }
     });
 
+    const seenCompletions = new Set<string>();
+    const offCompletion = pi.events.on(
+      AD_HEADER_REGISTER_COMPLETION_EVENT,
+      (data) => {
+        if (data && typeof data === "object") {
+          const d = data as AdHeaderRegisterCompletionEvent;
+          if (!seenCompletions.has(d.trigger)) {
+            seenCompletions.add(d.trigger);
+            completions.push(d);
+          }
+        }
+      },
+    );
+
     const offLogo = pi.events.on(AD_HEADER_REGISTER_LOGO_EVENT, (data) => {
       if (typeof data === "string") logo = data;
     });
@@ -52,9 +69,10 @@ export function setupHeaderHook(pi: ExtensionAPI) {
 
     offCmd();
     offShc();
+    offCompletion();
     offLogo();
 
-    const data: HeaderData = { logo, commands, shortcuts };
+    const data: HeaderData = { logo, commands, shortcuts, completions };
     header.setup(ctx, data);
   });
 
