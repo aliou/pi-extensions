@@ -8,7 +8,7 @@ export const MODEL_CANDIDATES = [
   } as ModelCandidate,
   {
     provider: "neuralwatt",
-    model: "moonshotai/Kimi-K2.6",
+    model: "kimi-k2.6",
     thinking: "medium",
   } as ModelCandidate,
   {
@@ -18,7 +18,7 @@ export const MODEL_CANDIDATES = [
   } as ModelCandidate,
   {
     provider: "neuralwatt",
-    model: "Qwen/Qwen3.5-397B-A17B-FP8",
+    model: "qwen3.5-397b",
     thinking: "medium",
   } as ModelCandidate,
   {

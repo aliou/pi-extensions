@@ -2,8 +2,8 @@ import type { SettingsJsonConfig } from "./src/settings-json";
 
 export const DEFAULT_ENABLED_MODELS: Array<readonly [string, string]> = [
   ["synthetic", "hf:zai-org/GLM-5.1"],
-  ["neuralwatt", "zai-org/GLM-5.1-FP8"],
-  ["neuralwatt", "moonshotai/Kimi-K2.6"],
+  ["neuralwatt", "glm-5.1"],
+  ["neuralwatt", "kimi-k2.6"],
   ["neuralwatt", "kimi-k2.6-fast"],
   ["neuralwatt", "glm-5.1-fast"],
   ["synthetic", "hf:moonshotai/Kimi-K2.6"],

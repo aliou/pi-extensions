@@ -17,7 +17,7 @@ export const jobs = {
     { provider: "openai-codex", model: "gpt-5.3-codex-spark", thinking: "off" },
   ],
   "ad:large:text": [
-    { provider: "neuralwatt", model: "moonshotai/Kimi-K2.6", thinking: "low" },
+    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "low" },
     {
       provider: "synthetic",
       model: "hf:moonshotai/Kimi-K2.6",
@@ -25,7 +25,7 @@ export const jobs = {
     },
     {
       provider: "neuralwatt",
-      model: "Qwen/Qwen3.5-397B-A17B-FP8",
+      model: "qwen3.5-397b",
       thinking: "low",
     },
     {
@@ -45,7 +45,7 @@ export const jobs = {
     },
     {
       provider: "neuralwatt",
-      model: "Qwen/Qwen3.6-35B-A3B",
+      model: "qwen3.6-35b",
       thinking: "off",
     },
     {
@@ -60,7 +60,7 @@ export const jobs = {
     { provider: "anthropic", model: "claude-opus-4-8", thinking: "medium" },
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.6",
+      model: "kimi-k2.6",
       thinking: "medium",
     },
     {
@@ -72,7 +72,7 @@ export const jobs = {
   "ad:small:sota": [
     { provider: "openai-codex", model: "gpt-5.5", thinking: "low" },
     { provider: "anthropic", model: "claude-haiku-4-5", thinking: "low" },
-    { provider: "neuralwatt", model: "moonshotai/Kimi-K2.6", thinking: "low" },
+    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "low" },
     {
       provider: "synthetic",
       model: "hf:moonshotai/Kimi-K2.6",
@@ -82,7 +82,7 @@ export const jobs = {
   "ad:medium:sota": [
     { provider: "anthropic", model: "claude-sonnet-4-6", thinking: "medium" },
     { provider: "openai-codex", model: "gpt-5.5", thinking: "low" },
-    { provider: "neuralwatt", model: "zai-org/GLM-5.1-FP8", thinking: "low" },
+    { provider: "neuralwatt", model: "glm-5.1", thinking: "low" },
     {
       provider: "synthetic",
       model: "hf:zai-org/GLM-5.1",
@@ -94,7 +94,7 @@ export const jobs = {
     { provider: "anthropic", model: "claude-opus-4-8", thinking: "medium" },
     {
       provider: "neuralwatt",
-      model: "zai-org/GLM-5.1-FP8",
+      model: "glm-5.1",
       thinking: "medium",
     },
     {
@@ -104,7 +104,7 @@ export const jobs = {
     },
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.6",
+      model: "kimi-k2.6",
       thinking: "medium",
     },
     {
