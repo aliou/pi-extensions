@@ -2,8 +2,9 @@
  * Skill autocomplete provider for `?<token>` completion.
  *
  * Uses `?` as a dedicated trigger character. Typing `?` at a token
- * boundary (after space or at line start) fires autocomplete directly
- * — no hint items or prefix piggybacking needed.
+ * boundary (after space or at line start) with no filter text returns
+ * nothing. Once the user types `?<token>`, skill suggestions appear.
+ * If `?` is followed by a space, completion bails out entirely.
  */
 
 import type {
@@ -13,7 +14,7 @@ import type {
 } from "@earendil-works/pi-tui";
 import { replaceAutocompletePrefix } from "@harness/completion";
 import { listSkills } from "./skills";
-import { SKILL_TOKEN_RE } from "./types";
+import { SKILL_TOKEN_RE, SKILL_TRIGGER_CONSUMED_RE } from "./types";
 
 function extractSkillToken(textBeforeCursor: string): string | undefined {
   const match = textBeforeCursor.match(SKILL_TOKEN_RE);
@@ -36,6 +37,15 @@ export function createSkillAutocompleteProvider(
       const currentLine = lines[cursorLine] ?? "";
       const textBeforeCursor = currentLine.slice(0, cursorCol);
       const token = extractSkillToken(textBeforeCursor);
+
+      // `?` was at a token boundary but followed by a space — the trigger
+      // is consumed. Bail out instead of falling back to default completion.
+      if (
+        token === undefined &&
+        SKILL_TRIGGER_CONSUMED_RE.test(textBeforeCursor)
+      ) {
+        return null;
+      }
 
       if (token === undefined) {
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
