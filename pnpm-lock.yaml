@@ -35,9 +35,6 @@ importers:
       '@harness/model-registry':
         specifier: workspace:*
         version: link:packages/model-registry
-      '@harness/provider-usage':
-        specifier: workspace:*
-        version: link:packages/provider-usage
       '@harness/session-store':
         specifier: workspace:*
         version: link:packages/session-store
@@ -120,12 +117,6 @@ importers:
       '@earendil-works/pi-ai':
         specifier: 0.79.1
         version: 0.79.1(ws@8.20.0)(zod@3.25.76)
-
-  packages/provider-usage:
-    dependencies:
-      '@harness/utils':
-        specifier: workspace:*
-        version: link:../utils
 
   packages/session-store:
     dependencies:

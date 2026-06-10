@@ -24,7 +24,7 @@ import {
 } from "../session-records";
 import type { SubagentConfig } from "../types";
 
-const DEFAULT_SUBAGENT_EXTENSION_PATHS = ["./hooks/provider-response-history/"];
+const DEFAULT_SUBAGENT_EXTENSION_PATHS: string[] = [];
 
 export class SubagentSessionManager<Params extends TSchema = TSchema> {
   private settingsManager = SettingsManager.inMemory({
