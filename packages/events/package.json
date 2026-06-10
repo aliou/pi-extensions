@@ -4,5 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./index.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.74.1"
   }
 }

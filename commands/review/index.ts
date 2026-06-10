@@ -5,6 +5,7 @@ import type {
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
+  once,
 } from "@harness/events";
 import { ExternalEditorComponent } from "@harness/ui";
 import { err, isErr, ok, type Result, toError } from "@harness/utils";
@@ -62,8 +63,7 @@ export default async function (pi: ExtensionAPI) {
     },
   });
 
-  const offReview = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
-    offReview();
+  once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
       name: "review[:split]",
       description: "review diff in nvim or split",

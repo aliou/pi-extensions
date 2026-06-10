@@ -2,6 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
+  once,
 } from "@harness/events";
 import { QqList } from "./components/list";
 import {
@@ -130,8 +131,7 @@ export default async function (pi: ExtensionAPI): Promise<void> {
     clearQqWidget(ctx);
   });
 
-  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
-    off();
+  once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
       name: "qq[:list]",
       description: "quick question / side chat context",

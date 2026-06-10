@@ -109,7 +109,11 @@ importers:
         specifier: 0.79.0
         version: 0.79.0
 
-  packages/events: {}
+  packages/events:
+    dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: 0.79.0
+        version: 0.79.0(ws@8.20.0)(zod@3.25.76)
 
   packages/model-registry:
     dependencies:

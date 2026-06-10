@@ -7,6 +7,7 @@ import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
   AD_MODEL_FAST_MODE_CHANGED_EVENT,
+  once,
 } from "@harness/events";
 
 // --- Codex fast mode ---
@@ -182,8 +183,7 @@ export default function fastModeHook(pi: ExtensionAPI): void {
   });
 
   // Header registration
-  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
-    off();
+  once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
       name: "fast:[opus/codex]",
       description: "toggle fast mode",

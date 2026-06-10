@@ -1,3 +1,20 @@
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+/**
+ * Subscribe to an event once. The handler fires at most one time,
+ * and the listener is automatically removed before the handler runs.
+ */
+export function once<T = unknown>(
+  pi: ExtensionAPI,
+  event: string,
+  handler: (data: T) => void,
+): void {
+  const off = pi.events.on(event, (data: unknown) => {
+    off();
+    handler(data as T);
+  });
+}
+
 export const AD_NOTIFY_DANGEROUS_EVENT = "ad:notify:dangerous";
 export const AD_NOTIFY_ATTENTION_EVENT = "ad:notify:attention";
 export const AD_NOTIFY_DONE_EVENT = "ad:notify:done";

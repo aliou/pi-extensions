@@ -4,6 +4,7 @@ import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_SHORTCUT_EVENT,
   type AdEditorStashChangedEvent,
+  once,
 } from "@harness/events";
 import {
   determineAction,
@@ -69,8 +70,7 @@ export default function editorStashHook(pi: ExtensionAPI): void {
     emitStashState(pi, isLastEntryStashWithContent(entries));
   });
 
-  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
-    off();
+  once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_SHORTCUT_EVENT, {
       key: "ctrl+shift+s",
       description: "stash/unstash editor",

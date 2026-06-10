@@ -10,6 +10,7 @@ import { SessionManager } from "@earendil-works/pi-coding-agent";
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
+  once,
 } from "@harness/events";
 
 export default async function (pi: ExtensionAPI) {
@@ -48,8 +49,7 @@ export default async function (pi: ExtensionAPI) {
     },
   });
 
-  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
-    off();
+  once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
       name: "continue",
       description: "resume recent session",
