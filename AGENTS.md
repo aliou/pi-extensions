@@ -67,31 +67,30 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 
 | Directory | Commands | Notes |
 |---|---|---|
+| Directory | Commands | Notes |
+|---|---|---|
 | `compact-prefill/` | `/compact:prefill` | Trigger compaction and prefill the editor |
 | `continue/` | `/continue` | Continue from a linked parent session |
-| `export-md/` | `/export:md` | Export the active branch to Markdown |
-| `introspection/` | `/introspect` | Inspect extension internals |
+| `copy-session-id/` | `/copy:session-id` | Copy session ID to clipboard |
+| `copy-session-path/` | `/copy:session-path` | Copy session file path to clipboard |
 | `label/` | `/label <text>` | Label the current session entry |
 | `qq/` | `/qq <question>`, `/qq:list` | Quick question without interrupting main session |
-| `providers-usage/` | `/providers:usage` | Provider usage dashboard |
-| `review/` | `/review`, `/review-split` | Local review workflow |
-| `session-copy-id/` | `/session:copy-id` | Copy session ID to clipboard |
-| `session-copy-path/` | `/session:copy-path` | Copy session file path to clipboard |
+| `review/` | `/review`, `/review:split` | Local review workflow |
 | `spawn/` | `/spawn [note]` | Create a linked child session |
 | `theme/` | `/theme` | Cycle color theme |
+| `usage/` | `/usage` | Provider usage dashboard |
 
 ## Hooks
 
 | Directory | Purpose | Key files |
 |---|---|---|
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming | `hooks/`, `components/`, `lib/`, `native/` |
-| `codex-fast-mode/` | Session-local Codex fast-mode controls | `index.ts` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
+| `fast-mode/` | Session-local fast-mode controls for Opus and Codex | `index.ts` |
 | `git-branch-autocomplete/` | Git branch autocomplete | `index.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |
 | `project-trust/` | Auto-trust projects matching configured path prefixes; falls through to core for everything else | `index.ts`, `config.ts`, `types.ts` |
-| `opus-fast-mode/` | Session-local Claude Opus fast-mode controls | `index.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
 | `provider-response-history/` | Provider response history tracking and provider usage cache updates | `index.ts`, `provider-cache.ts`, `neuralwatt-cache.ts`, `synthetic-cache.ts` |
 | `provider-usage-warnings/` | Provider usage risk notifications | `index.ts`, `alerts.ts`, `format.ts` |

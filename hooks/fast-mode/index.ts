@@ -9,6 +9,35 @@ import {
   AD_MODEL_FAST_MODE_CHANGED_EVENT,
 } from "@harness/events";
 
+// --- Codex fast mode ---
+
+let codexEnabled = true;
+
+const CODEX_PRIORITY_MODELS = new Set([
+  "gpt-5.5",
+  "gpt-5.4",
+  "gpt-5.3",
+  "gpt-5.4-codex",
+  "gpt-5.3-codex",
+]);
+
+function isCodexSupportedModel(model: string): boolean {
+  return CODEX_PRIORITY_MODELS.has(model);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function emitCodex(pi: ExtensionAPI, ctx: ExtensionContext): void {
+  pi.events.emit(AD_MODEL_FAST_MODE_CHANGED_EVENT, {
+    provider: "openai-codex",
+    enabled: ctx.model?.provider === "openai-codex" ? codexEnabled : false,
+  });
+}
+
+// --- Opus fast mode ---
+
 type AnthropicModel = Parameters<typeof streamSimpleAnthropic>[0];
 
 const FAST_MODE_BETA = "fast-mode-2026-02-01";
@@ -20,11 +49,7 @@ const OPUS_FAST_MODELS = new Set([
   "claude-opus-4-6",
 ]);
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isSupportedModel(model: string): boolean {
+function isOpusSupportedModel(model: string): boolean {
   return OPUS_FAST_MODELS.has(model);
 }
 
@@ -65,22 +90,43 @@ function appendBetas(...values: Array<string | undefined>): string {
   return [...betas].join(",");
 }
 
-export default function opusFastModeHook(pi: ExtensionAPI): void {
-  let enabled = true;
+let opusEnabled = true;
 
-  function emit(ctx: ExtensionContext): void {
-    pi.events.emit(AD_MODEL_FAST_MODE_CHANGED_EVENT, {
-      provider: "anthropic",
-      enabled: ctx.model?.provider === "anthropic" ? enabled : false,
-    });
-  }
+function emitOpus(pi: ExtensionAPI, ctx: ExtensionContext): void {
+  pi.events.emit(AD_MODEL_FAST_MODE_CHANGED_EVENT, {
+    provider: "anthropic",
+    enabled: ctx.model?.provider === "anthropic" ? opusEnabled : false,
+  });
+}
 
+// --- Extension entry point ---
+
+export default function fastModeHook(pi: ExtensionAPI): void {
+  // Codex fast mode command
+  pi.registerCommand("fast:codex", {
+    description: "Toggle Codex fast mode (priority service tier)",
+    handler: async (_args, ctx) => {
+      codexEnabled = !codexEnabled;
+      emitCodex(pi, ctx);
+    },
+  });
+
+  // Opus fast mode command
+  pi.registerCommand("fast:opus", {
+    description: "Toggle Opus fast mode (speed=fast)",
+    handler: async (_args, ctx) => {
+      opusEnabled = !opusEnabled;
+      emitOpus(pi, ctx);
+    },
+  });
+
+  // Opus provider override (stream wrapper)
   pi.registerProvider("anthropic", {
     api: "anthropic-messages",
     streamSimple(model, context, options) {
       const anthropicModel = model as AnthropicModel;
 
-      if (!enabled || !isSupportedModel(model.id)) {
+      if (!opusEnabled || !isOpusSupportedModel(model.id)) {
         return streamSimpleAnthropic(anthropicModel, context, options);
       }
 
@@ -100,37 +146,46 @@ export default function opusFastModeHook(pi: ExtensionAPI): void {
     },
   });
 
-  pi.registerCommand("opus:fast", {
-    description: "Toggle Opus fast mode (speed=fast)",
-    handler: async (_args, ctx) => {
-      enabled = !enabled;
-      emit(ctx);
-    },
-  });
-
+  // Lifecycle events
   pi.on("session_start", async (_event, ctx) => {
-    emit(ctx);
+    emitCodex(pi, ctx);
+    emitOpus(pi, ctx);
   });
 
   pi.on("model_select", async (_event, ctx) => {
-    emit(ctx);
+    emitCodex(pi, ctx);
+    emitOpus(pi, ctx);
   });
 
+  // Codex: inject service_tier into provider request
   pi.on("before_provider_request", (event, ctx) => {
-    if (!enabled || !isRecord(event.payload)) return;
+    if (!codexEnabled || !isRecord(event.payload)) return;
+    if (ctx.model?.provider !== "openai-codex") return;
+
+    const model = event.payload.model;
+    if (typeof model !== "string" || !isCodexSupportedModel(model)) return;
+    if (Object.hasOwn(event.payload, "service_tier")) return;
+
+    return { ...event.payload, service_tier: "priority" };
+  });
+
+  // Opus: inject speed into provider request
+  pi.on("before_provider_request", (event, ctx) => {
+    if (!opusEnabled || !isRecord(event.payload)) return;
     if (ctx.model?.provider !== "anthropic") return;
 
     const model = event.payload.model;
-    if (typeof model !== "string" || !isSupportedModel(model)) return;
+    if (typeof model !== "string" || !isOpusSupportedModel(model)) return;
     if (Object.hasOwn(event.payload, "speed")) return;
 
     return { ...event.payload, speed: "fast" };
   });
 
+  // Header registration
   const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
     off();
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
-      name: "[opus/codex]:fast",
+      name: "fast:[opus/codex]",
       description: "toggle fast mode",
     });
   });

@@ -6,7 +6,7 @@ import {
 } from "@harness/events";
 
 export default async function (pi: ExtensionAPI) {
-  pi.registerCommand("session:copy-path", {
+  pi.registerCommand("copy:session-path", {
     description: "Copy the current session file path to clipboard",
     handler: async (_args, ctx) => {
       const sessionPath = ctx.sessionManager.getSessionFile();
@@ -24,7 +24,7 @@ export default async function (pi: ExtensionAPI) {
   const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
     off();
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
-      name: "session:copy-[id/path]",
+      name: "copy:session-[id/path]",
       description: "copy session ID or path",
     });
   });

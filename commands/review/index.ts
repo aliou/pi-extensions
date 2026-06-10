@@ -37,7 +37,7 @@ export default async function (pi: ExtensionAPI) {
     },
   });
 
-  pi.registerCommand("review-split", {
+  pi.registerCommand("review:split", {
     description:
       "Review a diff in a tmux or Ghostty split. Default: diff against the default branch.",
     getArgumentCompletions,
@@ -65,15 +65,7 @@ export default async function (pi: ExtensionAPI) {
   const offReview = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
     offReview();
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
-      name: "review[-split]",
-      description: "review diff in nvim or split",
-    });
-  });
-
-  const offReviewSplit = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
-    offReviewSplit();
-    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
-      name: "review[-split]",
+      name: "review[:split]",
       description: "review diff in nvim or split",
     });
   });

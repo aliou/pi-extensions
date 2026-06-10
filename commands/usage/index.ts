@@ -12,11 +12,11 @@ import { UsagePanel } from "./panel";
 const REFRESH_TIMEOUT_MS = 10_000;
 
 export default function providersUsageCommand(pi: ExtensionAPI): void {
-  pi.registerCommand("providers:usage", {
+  pi.registerCommand("usage", {
     description: "Show provider usage dashboard",
     handler: async (_args, cmdCtx) => {
       if (!cmdCtx.hasUI) {
-        cmdCtx.ui.notify("/providers:usage requires interactive mode", "error");
+        cmdCtx.ui.notify("/usage requires interactive mode", "error");
         return;
       }
 
@@ -128,7 +128,7 @@ export default function providersUsageCommand(pi: ExtensionAPI): void {
   const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
     off();
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
-      name: "providers:usage",
+      name: "usage",
       description: "usage dashboard",
     });
   });
