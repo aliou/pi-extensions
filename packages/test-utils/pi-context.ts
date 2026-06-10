@@ -84,6 +84,7 @@ export interface CommandContextOverrides {
   navigateTree?: ExtensionCommandContext["navigateTree"];
   switchSession?: ExtensionCommandContext["switchSession"];
   reload?: () => Promise<void>;
+  isProjectTrusted?: () => boolean;
 }
 
 /**
@@ -132,6 +133,7 @@ export function createCommandContext(
             ? R
             : never),
     ),
+    isProjectTrusted: vi.fn(overrides.isProjectTrusted ?? (() => true)),
   } as ExtensionCommandContext;
 }
 
