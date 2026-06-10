@@ -14,6 +14,10 @@ import type {
   ExtensionCommandContext,
 } from "@earendil-works/pi-coding-agent";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
+import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMMAND_EVENT,
+} from "@harness/events";
 import { ExternalEditorComponent } from "@harness/ui";
 import {
   buildSpawnSourceContent,
@@ -120,6 +124,14 @@ export default async function (pi: ExtensionAPI) {
         ctx.ui.notify("Session creation cancelled", "info");
       }
     },
+  });
+
+  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    off();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "spawn",
+      description: "new linked session",
+    });
   });
 }
 

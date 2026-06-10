@@ -3,7 +3,11 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { AD_MODEL_FAST_MODE_CHANGED_EVENT } from "@harness/events";
+import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMMAND_EVENT,
+  AD_MODEL_FAST_MODE_CHANGED_EVENT,
+} from "@harness/events";
 
 type AnthropicModel = Parameters<typeof streamSimpleAnthropic>[0];
 
@@ -121,5 +125,13 @@ export default function opusFastModeHook(pi: ExtensionAPI): void {
     if (Object.hasOwn(event.payload, "speed")) return;
 
     return { ...event.payload, speed: "fast" };
+  });
+
+  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    off();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "[opus/codex]:fast",
+      description: "toggle fast mode",
+    });
   });
 }

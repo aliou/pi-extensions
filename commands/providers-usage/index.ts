@@ -2,6 +2,10 @@ import {
   BorderedLoader,
   type ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
+import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMMAND_EVENT,
+} from "@harness/events";
 import { fetchAllProviders } from "@harness/provider-usage";
 import { UsagePanel } from "./panel";
 
@@ -119,5 +123,13 @@ export default function providersUsageCommand(pi: ExtensionAPI): void {
         };
       });
     },
+  });
+
+  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    off();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "providers:usage",
+      description: "usage dashboard",
+    });
   });
 }

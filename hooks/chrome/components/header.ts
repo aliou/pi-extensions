@@ -3,67 +3,61 @@
  *
  * Instead of the built-in keybinding hints, displays only
  * the custom shortcuts and commands defined in harness extensions.
+ *
+ * Data is collected dynamically at session_start via the event bus so
+ * extensions can register themselves regardless of load order.
  */
 
-import type {
-  ExtensionAPI,
-  ExtensionContext,
-  Theme,
-} from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 import { rawKeyHint } from "@earendil-works/pi-coding-agent";
 import { Container, Spacer, Text } from "@earendil-works/pi-tui";
 
-// Custom commands defined in harness extensions.
-const COMMANDS: { name: string; description: string }[] = [
-  { name: "qq[:list]", description: "quick question/side chat context" },
-  { name: "spawn", description: "new linked session" },
-  { name: "continue", description: "resume recent session" },
-  { name: "label", description: "bookmark current point" },
-  { name: "providers:usage", description: "usage dashboard" },
-];
+export interface HeaderData {
+  logo: string;
+  commands: Array<{ name: string; description: string }>;
+  shortcuts: Array<{ key: string; description: string }>;
+}
 
-// Custom shortcuts defined in harness extensions.
-const SHORTCUTS: { key: string; description: string }[] = [
-  { key: "ctrl+shift+s", description: "stash/unstash editor" },
-];
-
-function createHeaderComponent(theme: Theme): Container {
+export function createHeaderComponent(
+  theme: Theme,
+  { logo, commands, shortcuts }: HeaderData,
+): Container {
   const container = new Container();
 
   container.addChild(new Spacer(1));
-
-  container.addChild(new Text(theme.fg("accent", "pi"), 1, 0));
-
+  container.addChild(new Text(theme.fg("accent", logo), 1, 0));
   container.addChild(new Spacer(1));
 
-  container.addChild(new Text(theme.fg("muted", "Commands"), 1, 0));
-  for (const command of COMMANDS) {
-    container.addChild(
-      new Text(rawKeyHint(`/${command.name}`, command.description), 1, 0),
-    );
+  if (commands.length > 0) {
+    container.addChild(new Text(theme.fg("muted", "Commands"), 1, 0));
+    for (const command of commands) {
+      container.addChild(
+        new Text(rawKeyHint(`/${command.name}`, command.description), 1, 0),
+      );
+    }
+    container.addChild(new Spacer(1));
   }
 
-  container.addChild(new Spacer(1));
-
-  container.addChild(new Text(theme.fg("muted", "Shortcuts"), 1, 0));
-  for (const shortcut of SHORTCUTS) {
-    container.addChild(
-      new Text(rawKeyHint(shortcut.key, shortcut.description), 1, 0),
-    );
+  if (shortcuts.length > 0) {
+    container.addChild(new Text(theme.fg("muted", "Shortcuts"), 1, 0));
+    for (const shortcut of shortcuts) {
+      container.addChild(
+        new Text(rawKeyHint(shortcut.key, shortcut.description), 1, 0),
+      );
+    }
+    container.addChild(new Spacer(1));
   }
-
-  container.addChild(new Spacer(1));
 
   return container;
 }
 
-export function createCustomHeader(_pi: ExtensionAPI) {
+export function createCustomHeader() {
   return {
-    setup: (ctx: ExtensionContext) => {
+    setup: (ctx: ExtensionContext, data: HeaderData) => {
       if (!ctx.hasUI) return;
 
       ctx.ui.setHeader((_tui: unknown, theme: Theme) =>
-        createHeaderComponent(theme),
+        createHeaderComponent(theme, data),
       );
     },
     cleanup: (ctx?: ExtensionContext) => {

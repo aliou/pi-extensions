@@ -3,6 +3,10 @@ import type {
   ExtensionCommandContext,
 } from "@earendil-works/pi-coding-agent";
 import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMMAND_EVENT,
+} from "@harness/events";
+import {
   IntrospectPanel,
   type IntrospectSnapshot,
 } from "./components/introspect-panel";
@@ -32,6 +36,14 @@ export default function (pi: ExtensionAPI) {
         };
       });
     },
+  });
+
+  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    off();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "introspect",
+      description: "show system prompt, tools, skills",
+    });
   });
 }
 

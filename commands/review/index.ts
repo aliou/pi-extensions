@@ -2,6 +2,10 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMMAND_EVENT,
+} from "@harness/events";
 import { ExternalEditorComponent } from "@harness/ui";
 import { err, isErr, ok, type Result, toError } from "@harness/utils";
 import { openInSplit } from "./editor";
@@ -56,6 +60,22 @@ export default async function (pi: ExtensionAPI) {
         }),
       );
     },
+  });
+
+  const offReview = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    offReview();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "review[-split]",
+      description: "review diff in nvim or split",
+    });
+  });
+
+  const offReviewSplit = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    offReviewSplit();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "review[-split]",
+      description: "review diff in nvim or split",
+    });
   });
 }
 

@@ -1,4 +1,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMMAND_EVENT,
+} from "@harness/events";
 
 export default async function (pi: ExtensionAPI) {
   pi.registerCommand("label", {
@@ -19,5 +23,13 @@ export default async function (pi: ExtensionAPI) {
       pi.setLabel(targetId, label);
       ctx.ui.notify(`Label added: ${label}`, "info");
     },
+  });
+
+  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    off();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "label",
+      description: "bookmark current point",
+    });
   });
 }

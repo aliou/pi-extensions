@@ -7,6 +7,10 @@ import {
   type SessionHeader,
   SessionManager,
 } from "@earendil-works/pi-coding-agent";
+import {
+  AD_HEADER_COLLECT_EVENT,
+  AD_HEADER_REGISTER_COMMAND_EVENT,
+} from "@harness/events";
 import { buildSessionMarkdown } from "./markdown";
 
 interface ExportableSessionManager {
@@ -53,6 +57,14 @@ export default function (pi: ExtensionAPI) {
     } finally {
       ctx.shutdown();
     }
+  });
+
+  const off = pi.events.on(AD_HEADER_COLLECT_EVENT, () => {
+    off();
+    pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
+      name: "export:md",
+      description: "export session to markdown",
+    });
   });
 }
 

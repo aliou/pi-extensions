@@ -16,3 +16,18 @@ export const AD_EDITOR_STASH_CHANGED_EVENT = "ad:editor-stash:changed";
 export type AdEditorStashChangedEvent = {
   hasContent: boolean;
 };
+
+export const AD_HEADER_COLLECT_EVENT = "ad:header:collect";
+export const AD_HEADER_REGISTER_COMMAND_EVENT = "ad:header:register-command";
+export const AD_HEADER_REGISTER_SHORTCUT_EVENT = "ad:header:register-shortcut";
+export const AD_HEADER_REGISTER_LOGO_EVENT = "ad:header:register-logo";
+
+export type AdHeaderRegisterCommandEvent = {
+  name: string;
+  description: string;
+};
+
+export type AdHeaderRegisterShortcutEvent = {
+  key: string;
+  description: string;
+};
