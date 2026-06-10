@@ -1,5 +1,5 @@
-/** Prefix for skill autocomplete. */
-export const SKILL_PREFIX = "@skill:";
+/** Trigger character for skill autocomplete. */
+export const SKILL_TRIGGER = "?";
 
-/** Match `@skill:` plus an optional token at end of text before cursor. */
-export const SKILL_TOKEN_RE = /@skill:([^\s@]*)$/;
+/** Match `?<token>` at a token boundary (after space or at line start). */
+export const SKILL_TOKEN_RE = /(?:^|\s)\?([^\s?]*)$/;

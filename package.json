@@ -40,10 +40,10 @@
   "devDependencies": {
     "@aliou/biome-plugins": "^0.8.1",
     "@biomejs/biome": "^2.4.14",
-    "@earendil-works/pi-agent-core": "0.79.0",
-    "@earendil-works/pi-ai": "0.79.0",
-    "@earendil-works/pi-coding-agent": "0.79.0",
-    "@earendil-works/pi-tui": "0.79.0",
+    "@earendil-works/pi-agent-core": "0.79.1",
+    "@earendil-works/pi-ai": "0.79.1",
+    "@earendil-works/pi-coding-agent": "0.79.1",
+    "@earendil-works/pi-tui": "0.79.1",
     "@harness/test-utils": "workspace:*",
     "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
@@ -54,7 +54,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@earendil-works/pi-coding-agent": "0.79.0",
+      "@earendil-works/pi-coding-agent": "0.79.1",
       "@earendil-works/pi-agent-core": "$@earendil-works/pi-coding-agent",
       "@earendil-works/pi-ai": "$@earendil-works/pi-coding-agent",
       "@earendil-works/pi-tui": "$@earendil-works/pi-coding-agent"

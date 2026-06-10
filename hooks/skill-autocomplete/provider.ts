@@ -1,16 +1,19 @@
+/**
+ * Skill autocomplete provider for `?<token>` completion.
+ *
+ * Uses `?` as a dedicated trigger character. Typing `?` at a token
+ * boundary (after space or at line start) fires autocomplete directly
+ * — no hint items or prefix piggybacking needed.
+ */
+
 import type {
   AutocompleteItem,
   AutocompleteProvider,
   AutocompleteSuggestions,
 } from "@earendil-works/pi-tui";
-import {
-  createPrefixCompletionItem,
-  extractPrefixCandidate,
-  prependCompletionItem,
-  replaceAutocompletePrefix,
-} from "@harness/completion";
+import { replaceAutocompletePrefix } from "@harness/completion";
 import { listSkills } from "./skills";
-import { SKILL_PREFIX, SKILL_TOKEN_RE } from "./types";
+import { SKILL_TOKEN_RE } from "./types";
 
 function extractSkillToken(textBeforeCursor: string): string | undefined {
   const match = textBeforeCursor.match(SKILL_TOKEN_RE);
@@ -22,6 +25,8 @@ export function createSkillAutocompleteProvider(
   skillsRoots: string[],
 ): AutocompleteProvider {
   return {
+    triggerCharacters: ["?"],
+
     async getSuggestions(
       lines: string[],
       cursorLine: number,
@@ -33,30 +38,7 @@ export function createSkillAutocompleteProvider(
       const token = extractSkillToken(textBeforeCursor);
 
       if (token === undefined) {
-        const currentSuggestions = await current.getSuggestions(
-          lines,
-          cursorLine,
-          cursorCol,
-          options,
-        );
-
-        const prefixCandidate = extractPrefixCandidate(
-          textBeforeCursor,
-          SKILL_PREFIX,
-        );
-        if (prefixCandidate !== undefined) {
-          const prefixItem = createPrefixCompletionItem({
-            value: SKILL_PREFIX,
-            description: "skill directories",
-          });
-
-          return {
-            items: prependCompletionItem(currentSuggestions?.items, prefixItem),
-            prefix: prefixCandidate,
-          };
-        }
-
-        return currentSuggestions;
+        return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
       try {
@@ -81,7 +63,7 @@ export function createSkillAutocompleteProvider(
 
         return {
           items,
-          prefix: `${SKILL_PREFIX}${token}`,
+          prefix: `?${token}`,
         };
       } catch (_error) {
         void _error;
@@ -96,34 +78,22 @@ export function createSkillAutocompleteProvider(
       item: AutocompleteItem,
       prefix: string,
     ) {
-      if (SKILL_PREFIX.startsWith(prefix) && item.value === SKILL_PREFIX) {
+      if (prefix.startsWith("?")) {
         return replaceAutocompletePrefix(
           lines,
           cursorLine,
           cursorCol,
           prefix,
-          SKILL_PREFIX,
+          `${item.value} `,
         );
       }
 
-      // Only apply custom insertion for skill items (prefix is @skill:...)
-      if (!prefix.startsWith(SKILL_PREFIX)) {
-        return current.applyCompletion(
-          lines,
-          cursorLine,
-          cursorCol,
-          item,
-          prefix,
-        );
-      }
-
-      // Insert the path to SKILL.md
-      return replaceAutocompletePrefix(
+      return current.applyCompletion(
         lines,
         cursorLine,
         cursorCol,
+        item,
         prefix,
-        `${item.value} `,
       );
     },
 

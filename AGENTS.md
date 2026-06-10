@@ -88,7 +88,6 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `fast-mode/` | Session-local fast-mode controls for Opus and Codex | `index.ts` |
-| `git-branch-autocomplete/` | Git branch autocomplete | `index.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |
 | `project-trust/` | Auto-trust projects matching configured path prefixes; falls through to core for everything else | `index.ts`, `config.ts`, `types.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
@@ -96,7 +95,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `provider-usage-warnings/` | Provider usage risk notifications | `index.ts`, `alerts.ts`, `format.ts` |
 | `session-autocomplete/` | `@` autocomplete for session names | `db.ts`, `search.ts`, `provider.ts` |
 | `session-name/` | Auto-name sessions | `index.ts` |
-| `skill-autocomplete/` | Skill autocomplete | `index.ts` |
+| `skill-autocomplete/` | `?` skill directory autocomplete | `index.ts` |
 | `zoxide-autocomplete/` | zoxide path autocomplete | `index.ts` |
 
 ## Tools

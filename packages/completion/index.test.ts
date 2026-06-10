@@ -8,25 +8,19 @@ import {
 
 describe("replaceAutocompletePrefix", () => {
   it("replaces the prefix before the cursor", () => {
-    const result = replaceAutocompletePrefix(
-      ["checkout @g"],
-      0,
-      11,
-      "@g",
-      "@g:",
-    );
+    const result = replaceAutocompletePrefix(["cd @z"], 0, 5, "@z", "@z:");
 
     expect(result).toEqual({
-      lines: ["checkout @g:"],
+      lines: ["cd @z:"],
       cursorLine: 0,
-      cursorCol: 12,
+      cursorCol: 6,
     });
   });
 
   it("preserves text after the cursor", () => {
-    const result = replaceAutocompletePrefix(["use @ now"], 0, 5, "@", "@g:");
+    const result = replaceAutocompletePrefix(["use @ now"], 0, 5, "@", "@z:");
 
-    expect(result.lines).toEqual(["use @g: now"]);
+    expect(result.lines).toEqual(["use @z: now"]);
     expect(result.cursorCol).toBe(7);
   });
 });
@@ -35,27 +29,27 @@ describe("createPrefixCompletionItem", () => {
   it("creates an autocomplete item", () => {
     expect(
       createPrefixCompletionItem({
-        value: "@g:",
-        description: "local git branches",
+        value: "@z:",
+        description: "zoxide entries",
       }),
     ).toEqual({
-      value: "@g:",
-      label: "@g:",
-      description: "local git branches",
+      value: "@z:",
+      label: "@z:",
+      description: "zoxide entries",
     });
   });
 });
 
 describe("extractPrefixCandidate", () => {
   it("returns the typed candidate while it is inside the target prefix", () => {
-    expect(extractPrefixCandidate("@", "@g:")).toBe("@");
-    expect(extractPrefixCandidate("@g", "@g:")).toBe("@g");
-    expect(extractPrefixCandidate("switch @g", "@g:")).toBe("@g");
+    expect(extractPrefixCandidate("@", "@z:")).toBe("@");
+    expect(extractPrefixCandidate("@z", "@z:")).toBe("@z");
+    expect(extractPrefixCandidate("switch @z", "@z:")).toBe("@z");
   });
 
   it("returns undefined for unrelated candidates", () => {
-    expect(extractPrefixCandidate("@x", "@g:")).toBeUndefined();
-    expect(extractPrefixCandidate("email@", "@g:")).toBeUndefined();
+    expect(extractPrefixCandidate("@x", "@z:")).toBeUndefined();
+    expect(extractPrefixCandidate("email@", "@z:")).toBeUndefined();
   });
 });
 
@@ -65,12 +59,12 @@ describe("prependCompletionItem", () => {
       prependCompletionItem(
         [
           { value: "a", label: "a" },
-          { value: "@g:", label: "old" },
+          { value: "@z:", label: "old" },
         ],
-        { value: "@g:", label: "@g:" },
+        { value: "@z:", label: "@z:" },
       ),
     ).toEqual([
-      { value: "@g:", label: "@g:" },
+      { value: "@z:", label: "@z:" },
       { value: "a", label: "a" },
     ]);
   });

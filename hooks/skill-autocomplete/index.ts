@@ -1,9 +1,10 @@
 /**
- * `@skill:` skill directory autocomplete provider.
+ * `?` skill directory autocomplete provider.
  *
- * On `@skill:<token>` in the input editor, suggests skill directories from
- * configurable root paths. Accepting a completion replaces the full
- * `@skill:<token>` prefix with the absolute path to SKILL.md.
+ * On `?<token>` in the input editor (at a token boundary), suggests
+ * skill directories from configurable root paths. Accepting a
+ * completion replaces the `?<token>` prefix with the absolute path
+ * to SKILL.md.
  *
  * The root paths are configured in `~/.pi/agent/settings/completion.json`:
  * ```json
