@@ -78,6 +78,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `review/` | `/review`, `/review:split` | Local review workflow |
 | `spawn/` | `/spawn [note]` | Create a linked child session |
 | `theme/` | `/theme` | Cycle color theme |
+| `usage/` | `/usage` | Interactive provider usage dashboard |
 
 ## Hooks
 
@@ -136,6 +137,7 @@ Workspace packages:
 | `packages/completion/` | `@harness/completion` | Completion logic |
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
 | `packages/model-registry/` | `@harness/model-registry` | Model/provider metadata helpers |
+| `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients, normalized usage abstractions, and registry |
 | `packages/session-store/` | `@harness/session-store` | Session directory access, Sesame search, and listing |
 | `packages/test-utils/` | `@harness/test-utils` | Shared Vitest/Pi extension test harness utilities |
 | `packages/ui/` | `@harness/ui` | Shared TUI components/helpers |

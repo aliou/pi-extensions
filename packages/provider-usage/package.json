@@ -1,0 +1,16 @@
+{
+  "name": "@harness/provider-usage",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./anthropic": "./anthropic/index.ts",
+    "./core": "./core/index.ts",
+    "./neuralwatt": "./neuralwatt/index.ts",
+    "./openai-codex": "./openai-codex/index.ts",
+    "./synthetic": "./synthetic/index.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.79.1"
+  }
+}
