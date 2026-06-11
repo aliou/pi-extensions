@@ -35,6 +35,7 @@
     "@harness/model-registry": "workspace:*",
     "@harness/provider-usage": "workspace:*",
     "@harness/session-store": "workspace:*",
+    "@harness/session-tools": "workspace:*",
     "@harness/utils": "workspace:*"
   },
   "devDependencies": {

@@ -1,6 +1,10 @@
 import { defineTool, SessionManager } from "@earendil-works/pi-coding-agent";
+import {
+  compactEntry,
+  createSessionViewFromSession,
+  flattenTree,
+} from "@harness/session-tools";
 import { Type } from "typebox";
-import { compactEntry, flattenTree } from "./entry-utils";
 import { getTargetSessionPath } from "./utils";
 
 const SESSION_LINK_MARKER_TYPE = "session-link-marker";
@@ -44,16 +48,22 @@ export const sessionOverview = defineTool({
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
     const targetSessionPath = await getTargetSessionPath(ctx);
     const sm = SessionManager.open(targetSessionPath);
-    const entries = sm.getEntries();
-    const tree = sm.getTree();
-    const leaf = sm.getLeafEntry();
-    const currentBranchIds = new Set(sm.getBranch().map((e) => e.id));
+    const view = createSessionViewFromSession(sm);
+    const { entries } = view;
+    const tree = view.getTree();
+    const mainLeaf = view.mainLeafId
+      ? view.getEntry(view.mainLeafId)
+      : undefined;
+    const mainBranchIds = view.getMainBranchIds();
     const labels = entries
       .filter((e) => e.type === "label")
       .map((e) => e.targetId)
-      .filter((id, index, ids) => ids.indexOf(id) === index && sm.getLabel(id));
+      .filter(
+        (id, entryIndex, ids) =>
+          ids.indexOf(id) === entryIndex && !!view.getLabel(id),
+      );
     const leaves = flattenTree(tree).filter(
-      (e) => sm.getChildren(e.id).length === 0,
+      (entry) => view.getChildren(entry.id).length === 0,
     );
     const parentSessionPath =
       sm.getHeader()?.parentSession ??
@@ -74,12 +84,13 @@ export const sessionOverview = defineTool({
       name: sm.getSessionName(),
       created: sm.getHeader()?.timestamp,
       currentLeafId: sm.getLeafId(),
-      currentLeafPreview: leaf
+      mainLeafId: view.mainLeafId,
+      mainLeafPreview: mainLeaf
         ? compactEntry(
-            leaf,
-            sm.getLabel(leaf.id),
-            sm.getChildren(leaf.id).length,
-            currentBranchIds.has(leaf.id),
+            mainLeaf,
+            view.getLabel(mainLeaf.id),
+            view.getChildren(mainLeaf.id).length,
+            mainBranchIds.has(mainLeaf.id),
           )
         : undefined,
       entryCount: entries.length,

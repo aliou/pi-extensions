@@ -1,6 +1,9 @@
 import { defineTool, SessionManager } from "@earendil-works/pi-coding-agent";
+import {
+  compactEntry,
+  createSessionViewFromSession,
+} from "@harness/session-tools";
 import { Type } from "typebox";
-import { compactEntry } from "./entry-utils";
 import { getTargetSessionPath } from "./utils";
 
 export const labels = defineTool({
@@ -12,29 +15,30 @@ export const labels = defineTool({
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
     const targetSessionPath = await getTargetSessionPath(ctx);
     const sm = SessionManager.open(targetSessionPath);
-    const currentBranchIds = new Set(sm.getBranch().map((e) => e.id));
+    const view = createSessionViewFromSession(sm);
+    const { entries } = view;
+    const mainBranchIds = view.getMainBranchIds();
     const seen = new Set<string>();
 
-    const result = sm
-      .getEntries()
+    const result = entries
       .filter((e) => e.type === "label")
       .map((e) => e.targetId)
       .filter((id) => {
         if (seen.has(id)) return false;
         seen.add(id);
-        return Boolean(sm.getLabel(id));
+        return Boolean(view.getLabel(id));
       })
       .map((id) => {
-        const entry = sm.getEntry(id);
+        const entry = view.getEntry(id);
         return {
           targetId: id,
-          label: sm.getLabel(id),
+          label: view.getLabel(id),
           target: entry
             ? compactEntry(
                 entry,
-                sm.getLabel(id),
-                sm.getChildren(id).length,
-                currentBranchIds.has(id),
+                view.getLabel(id),
+                view.getChildren(id).length,
+                mainBranchIds.has(id),
               )
             : undefined,
         };

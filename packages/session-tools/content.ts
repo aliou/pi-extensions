@@ -1,10 +1,8 @@
-import type { SessionEntry } from "@earendil-works/pi-coding-agent";
-
-type TreeNode = { entry: SessionEntry; children: TreeNode[] };
+import type { CompactEntry, SessionEntry } from "./types";
 
 const PREVIEW_LIMIT = 160;
 
-const truncate = (text: string, limit = PREVIEW_LIMIT): string => {
+export const truncate = (text: string, limit = PREVIEW_LIMIT): string => {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (normalized.length <= limit) return normalized;
   return `${normalized.slice(0, limit - 1)}…`;
@@ -73,8 +71,8 @@ export const compactEntry = (
   entry: SessionEntry,
   label?: string,
   childCount?: number,
-  isCurrentBranch?: boolean,
-) => ({
+  isMainBranch?: boolean,
+): CompactEntry => ({
   id: entry.id,
   parentId: entry.parentId,
   timestamp: entry.timestamp,
@@ -82,21 +80,11 @@ export const compactEntry = (
   role: entryRole(entry),
   label,
   childCount,
-  isCurrentBranch,
+  isMainBranch,
   preview: entryPreview(entry),
 });
 
-export const flattenTree = (nodes: TreeNode[]): SessionEntry[] => {
-  const entries: SessionEntry[] = [];
-  const visit = (node: TreeNode) => {
-    entries.push(node.entry);
-    node.children.forEach(visit);
-  };
-  nodes.forEach(visit);
-  return entries;
-};
-
-export const fullEntryContent = (entry: SessionEntry) => {
+export const fullEntryContent = (entry: SessionEntry): unknown => {
   switch (entry.type) {
     case "message":
       return entry.message;

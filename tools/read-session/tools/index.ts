@@ -11,6 +11,8 @@ import type {
 import { isNotNil } from "@harness/utils";
 import type { ReadSessionParamsType } from "../types";
 import { branchEntries } from "./branch-entries";
+import { checkpoints, readCheckpoint } from "./checkpoints";
+import { entriesBetween } from "./entries-between";
 import { findEntries } from "./find-entries";
 import { labels } from "./labels";
 import { readEntry } from "./read-entry";
@@ -53,10 +55,41 @@ export const tools: SubagentToolSpec[] = [
   },
   {
     type: "custom",
+    name: entriesBetween.name,
+    spec: () => entriesBetween,
+    render: (toolCall, _options, theme) =>
+      renderSubagentToolLine(
+        toolCall,
+        theme,
+        "Read range",
+        `${arg(toolCall, "startId")}..${arg(toolCall, "endId")}`,
+      ),
+  },
+  {
+    type: "custom",
     name: readEntry.name,
     spec: () => readEntry,
     render: (toolCall, _options, theme) =>
       renderSubagentToolLine(toolCall, theme, "Read", arg(toolCall, "id")),
+  },
+  {
+    type: "custom",
+    name: checkpoints.name,
+    spec: () => checkpoints,
+    render: (toolCall, _options, theme) =>
+      renderSubagentToolLine(toolCall, theme, "List checkpoints"),
+  },
+  {
+    type: "custom",
+    name: readCheckpoint.name,
+    spec: () => readCheckpoint,
+    render: (toolCall, _options, theme) =>
+      renderSubagentToolLine(
+        toolCall,
+        theme,
+        "Read checkpoint",
+        arg(toolCall, "id"),
+      ),
   },
   {
     type: "custom",
