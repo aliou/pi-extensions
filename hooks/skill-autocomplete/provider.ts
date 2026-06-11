@@ -1,10 +1,13 @@
 /**
  * Skill autocomplete provider for `?<token>` completion.
  *
- * Uses `?` as a dedicated trigger character. Typing `?` at a token
- * boundary (after space or at line start) with no filter text returns
- * nothing. Once the user types `?<token>`, skill suggestions appear.
- * If `?` is followed by a space, completion bails out entirely.
+ * Uses `?` as a dedicated trigger character.
+ *
+ * - Bare `?` (no filter text): does not show suggestions, so Enter
+ *   submits the editor naturally.
+ * - `?<token>` (at least one filter character): shows filtered skills;
+ *   pressing Enter replaces `?<token>` with the skill path.
+ * - `? ` (space after `?`): bails out entirely.
  */
 
 import type {
@@ -44,6 +47,12 @@ export function createSkillAutocompleteProvider(
         token === undefined &&
         SKILL_TRIGGER_CONSUMED_RE.test(textBeforeCursor)
       ) {
+        return null;
+      }
+
+      // Bare `?` with no filter text — don't show suggestions so
+      // Enter submits the editor naturally.
+      if (token === "") {
         return null;
       }
 
