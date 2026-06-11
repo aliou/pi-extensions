@@ -62,9 +62,16 @@ export function createSkillAutocompleteProvider(
 
       try {
         const tokenLower = token.toLowerCase();
-        const skills = listSkills(skillsRoots).filter((s) =>
+        const allSkills = listSkills(skillsRoots);
+        const byName = allSkills.filter((s) =>
           s.name.toLowerCase().includes(tokenLower),
         );
+        const byDesc = allSkills.filter(
+          (s) =>
+            !s.name.toLowerCase().includes(tokenLower) &&
+            s.directory.toLowerCase().includes(tokenLower),
+        );
+        const skills = [...byName, ...byDesc];
 
         if (options.signal.aborted) {
           return current.getSuggestions(lines, cursorLine, cursorCol, options);
