@@ -94,6 +94,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `session-autocomplete/` | `@@` autocomplete for session references | `index.ts`, `provider.ts` |
 | `session-name/` | Auto-name sessions | `index.ts` |
 | `skill-autocomplete/` | `?` skill directory autocomplete | `index.ts` |
+| `tmux-autocomplete/` | `@tmux:` tmux session/window autocomplete | `index.ts`, `provider.ts`, `tmux.ts`, `types.ts` |
 | `zoxide-autocomplete/` | `@z:` project path autocomplete | `index.ts` |
 
 ## Tools
