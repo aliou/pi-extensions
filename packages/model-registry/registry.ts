@@ -24,6 +24,11 @@ export const jobs = {
       thinking: "low",
     },
     {
+      provider: "synthetic",
+      model: "hf:MiniMaxAI/MiniMax-M3",
+      thinking: "low",
+    },
+    {
       provider: "neuralwatt",
       model: "qwen3.5-397b",
       thinking: "low",
@@ -59,6 +64,11 @@ export const jobs = {
     { provider: "openai-codex", model: "gpt-5.5", thinking: "medium" },
     { provider: "anthropic", model: "claude-opus-4-8", thinking: "medium" },
     {
+      provider: "synthetic",
+      model: "hf:MiniMaxAI/MiniMax-M3",
+      thinking: "medium",
+    },
+    {
       provider: "neuralwatt",
       model: "kimi-k2.6",
       thinking: "medium",
@@ -82,6 +92,11 @@ export const jobs = {
   "ad:medium:sota": [
     { provider: "anthropic", model: "claude-sonnet-4-6", thinking: "medium" },
     { provider: "openai-codex", model: "gpt-5.5", thinking: "low" },
+    {
+      provider: "synthetic",
+      model: "hf:MiniMaxAI/MiniMax-M3",
+      thinking: "low",
+    },
     { provider: "neuralwatt", model: "glm-5.1", thinking: "low" },
     {
       provider: "synthetic",
@@ -92,6 +107,11 @@ export const jobs = {
   "ad:large:sota": [
     { provider: "openai-codex", model: "gpt-5.5", thinking: "medium" },
     { provider: "anthropic", model: "claude-opus-4-8", thinking: "medium" },
+    {
+      provider: "synthetic",
+      model: "hf:MiniMaxAI/MiniMax-M3",
+      thinking: "medium",
+    },
     {
       provider: "neuralwatt",
       model: "glm-5.1",
