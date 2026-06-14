@@ -74,7 +74,7 @@ export function createProjectAutocompleteProvider(
         );
 
         if (options.signal.aborted) {
-          return current.getSuggestions(lines, cursorLine, cursorCol, options);
+          return null;
         }
 
         if (projects.length === 0) {

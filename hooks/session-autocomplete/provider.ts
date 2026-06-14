@@ -25,6 +25,24 @@ interface SessionToken {
   prefix: string;
 }
 
+function delay(ms: number, signal: AbortSignal): Promise<boolean> {
+  if (signal.aborted) return Promise.resolve(false);
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve(true);
+    }, ms);
+
+    function onAbort() {
+      clearTimeout(timeout);
+      resolve(false);
+    }
+
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
 /**
  * Extract the `@@<token>` or `@@@<token>` at the end of `textBeforeCursor`.
  * `@@@` searches all indexed sessions instead of filtering to the current cwd.
@@ -75,16 +93,15 @@ export function createSessionAutocompleteProvider(
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
-      // Debounce: wait, then check if we're still the latest call
+      // Debounce: wait, then check if we're still the latest call.
       const thisGen = ++generation;
-      await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS));
+      const debounceCompleted = await delay(DEBOUNCE_MS, options.signal);
+      if (!debounceCompleted) {
+        return null;
+      }
 
       if (thisGen !== generation) {
         return null; // superseded by a newer keystroke
-      }
-
-      if (options.signal.aborted) {
-        return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
       try {
@@ -100,7 +117,7 @@ export function createSessionAutocompleteProvider(
           : searchSessionsByName(token, searchCwd);
 
         if (options.signal.aborted) {
-          return current.getSuggestions(lines, cursorLine, cursorCol, options);
+          return null;
         }
 
         if (results.length === 0) {

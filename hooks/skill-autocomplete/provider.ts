@@ -74,7 +74,7 @@ export function createSkillAutocompleteProvider(
         const skills = [...byName, ...byDesc];
 
         if (options.signal.aborted) {
-          return current.getSuggestions(lines, cursorLine, cursorCol, options);
+          return null;
         }
 
         if (skills.length === 0) {
