@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
+import { convertBmpToPng } from "@harness/image-formats";
 import { MODEL_CANDIDATES } from "./models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
 import { renderLookAtDetails, renderLookAtHeader } from "./render";
@@ -28,7 +29,7 @@ export default function lookAt(pi: ExtensionAPI): void {
     label: "Look At",
     description: `Analyze an image file using a vision-capable model. Returns a text description of the image content.
 
-Use this tool when you need to understand or extract information from an image file (PNG, JPG, GIF, WebP, etc.). The current model cannot see images directly -- this tool delegates to a vision model that can.
+Use this tool when you need to understand or extract information from an image file (PNG, JPG, GIF, WebP, BMP, etc.). The current model cannot see images directly -- this tool delegates to a vision model that can.
 
 Always provide a clear objective describing what you want to learn from the image.
 
@@ -54,7 +55,7 @@ Always provide a clear objective describing what you want to learn from the imag
     parameters: LookAtParams,
     renderHeader: renderLookAtHeader,
     renderDetails: renderLookAtDetails,
-    buildPrompt(params, ctx) {
+    async buildPrompt(params, ctx) {
       const absolutePath = resolve(ctx.cwd, params.path);
       const buffer = readFileSync(absolutePath);
       const mimeType = detectSupportedImageMimeType(buffer);
@@ -65,13 +66,21 @@ Always provide a clear objective describing what you want to learn from the imag
         ? `Context: ${params.context}\n\nObjective: ${params.objective}`
         : params.objective;
 
+      let imageData = buffer.toString("base64");
+      let imageMimeType = mimeType;
+      if (mimeType === "image/bmp") {
+        const png = await convertBmpToPng(buffer);
+        imageData = png.toString("base64");
+        imageMimeType = "image/png";
+      }
+
       return {
         text: userText,
         images: [
           {
             type: "image" as const,
-            data: buffer.toString("base64"),
-            mimeType,
+            data: imageData,
+            mimeType: imageMimeType,
           },
         ],
       };

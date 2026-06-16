@@ -94,13 +94,29 @@ describe("referencesImageFiles", () => {
     expect(referencesImageFiles("read README.md", "/tmp")).toBe(false);
   });
 
-  it("does NOT match svg or bmp extensions", () => {
+  it("does NOT match svg extension", () => {
     expect(referencesImageFiles("the logo is at assets/logo.svg", "/tmp")).toBe(
       false,
     );
-    expect(
-      referencesImageFiles("the bitmap is at assets/image.bmp", "/tmp"),
-    ).toBe(false);
+  });
+
+  it("handles .bmp extension", () => {
+    const dir = "/home/user/pi-test";
+    vol.mkdirSync(dir, { recursive: true });
+    const bmp = Buffer.alloc(58);
+    bmp.write("BM", 0, "ascii");
+    bmp.writeUInt32LE(58, 2);
+    bmp.writeUInt32LE(54, 10);
+    bmp.writeUInt32LE(40, 14);
+    bmp.writeInt32LE(1, 18);
+    bmp.writeInt32LE(1, 22);
+    bmp.writeUInt16LE(1, 26);
+    bmp.writeUInt16LE(24, 28);
+    bmp.writeUInt32LE(0, 30);
+    bmp.writeUInt32LE(4, 34);
+    vol.writeFileSync(join(dir, "diagram.bmp"), bmp);
+    const path = join(dir, "diagram.bmp");
+    expect(referencesImageFiles(`check ${path}`, "/tmp")).toBe(true);
   });
 
   it("does NOT match text without file refs", () => {
@@ -168,6 +184,24 @@ describe("detectSupportedImageMimeType", () => {
       desc: "webp",
       input: Buffer.from("RIFFxxxxWEBP", "ascii"),
       expected: "image/webp",
+    },
+    {
+      desc: "bmp",
+      input: (() => {
+        const buffer = Buffer.alloc(58);
+        buffer.write("BM", 0, "ascii");
+        buffer.writeUInt32LE(58, 2);
+        buffer.writeUInt32LE(54, 10);
+        buffer.writeUInt32LE(40, 14);
+        buffer.writeInt32LE(1, 18);
+        buffer.writeInt32LE(1, 22);
+        buffer.writeUInt16LE(1, 26);
+        buffer.writeUInt16LE(24, 28);
+        buffer.writeUInt32LE(0, 30);
+        buffer.writeUInt32LE(4, 34);
+        return buffer;
+      })(),
+      expected: "image/bmp",
     },
   ])("detects $desc", ({ input, expected }) => {
     expect(detectSupportedImageMimeType(input)).toBe(expected);

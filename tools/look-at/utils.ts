@@ -4,12 +4,11 @@ import { resolve } from "node:path";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { TextContent, UserMessage } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+import { detectImageMimeTypeFromBuffer } from "@harness/image-formats";
 
 // Matches image file extensions, lookahead ensures the extension is at
 // a word/sentence boundary (space, punctuation, or end of string).
-const IMAGE_EXT_RE = /\.(?:png|jpe?g|gif|webp)(?=[\s"'`,;)\]\\!?\]]|$)/gi;
+const IMAGE_EXT_RE = /\.(?:png|jpe?g|gif|webp|bmp)(?=[\s"'`,;)\]\\!?\]]|$)/gi;
 
 /**
  * Check if user message text references any local image files that exist on disk.
@@ -94,22 +93,7 @@ function resolveExistingPath(filePath: string, cwd: string): string | null {
 export function detectSupportedImageMimeType(
   buffer: Uint8Array,
 ): string | null {
-  if (startsWith(buffer, [0xff, 0xd8, 0xff])) {
-    return buffer[3] === 0xf7 ? null : "image/jpeg";
-  }
-  if (startsWith(buffer, PNG_SIGNATURE)) {
-    return isPng(buffer) && !isAnimatedPng(buffer) ? "image/png" : null;
-  }
-  if (startsWithAscii(buffer, 0, "GIF")) {
-    return "image/gif";
-  }
-  if (
-    startsWithAscii(buffer, 0, "RIFF") &&
-    startsWithAscii(buffer, 8, "WEBP")
-  ) {
-    return "image/webp";
-  }
-  return null;
+  return detectImageMimeTypeFromBuffer(buffer);
 }
 
 export function isVisionCapable(model: { input: string[] }): boolean {
@@ -157,53 +141,4 @@ export function injectLookAtGuidance(
 
 export function disableTool(pi: ExtensionAPI, toolName: string): void {
   pi.setActiveTools(pi.getActiveTools().filter((t) => t !== toolName));
-}
-
-function isPng(buffer: Uint8Array): boolean {
-  return (
-    buffer.length >= 16 &&
-    readUint32BE(buffer, PNG_SIGNATURE.length) === 13 &&
-    startsWithAscii(buffer, 12, "IHDR")
-  );
-}
-
-function isAnimatedPng(buffer: Uint8Array): boolean {
-  let offset = PNG_SIGNATURE.length;
-  while (offset + 8 <= buffer.length) {
-    const chunkLength = readUint32BE(buffer, offset);
-    const chunkTypeOffset = offset + 4;
-    if (startsWithAscii(buffer, chunkTypeOffset, "acTL")) return true;
-    if (startsWithAscii(buffer, chunkTypeOffset, "IDAT")) return false;
-
-    const nextOffset = offset + 8 + chunkLength + 4;
-    if (nextOffset <= offset || nextOffset > buffer.length) return false;
-    offset = nextOffset;
-  }
-  return false;
-}
-
-function readUint32BE(buffer: Uint8Array, offset: number): number {
-  return (
-    (buffer[offset] ?? 0) * 0x1000000 +
-    ((buffer[offset + 1] ?? 0) << 16) +
-    ((buffer[offset + 2] ?? 0) << 8) +
-    (buffer[offset + 3] ?? 0)
-  );
-}
-
-function startsWith(buffer: Uint8Array, bytes: number[]): boolean {
-  if (buffer.length < bytes.length) return false;
-  return bytes.every((byte, index) => buffer[index] === byte);
-}
-
-function startsWithAscii(
-  buffer: Uint8Array,
-  offset: number,
-  text: string,
-): boolean {
-  if (buffer.length < offset + text.length) return false;
-  for (let index = 0; index < text.length; index++) {
-    if (buffer[offset + index] !== text.charCodeAt(index)) return false;
-  }
-  return true;
 }

@@ -111,9 +111,9 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `grep/` | `grep` | Adds `literal`, `context`, blocked paths, custom render |
 | `librarian/` | `librarian`, `resume_librarian` | Codebase-understanding subagent |
 | `list-sessions/` | `list_sessions` | Session directory listing via `@harness/session-store` |
-| `look-at/` | `look_at` | Image analysis |
+| `look-at/` | `look_at` | Image analysis; BMP files are converted to PNG before vision analysis |
 | `oracle/` | `oracle`, `resume_oracle` | Senior advisor subagent |
-| `read/` | `read` | Passthrough |
+| `read/` | `read` | Passthrough; BMP images are converted to PNG before upstream handling |
 | `read-session/` | `read_session` | Subagent session reader |
 | `read-url/` | `read_url` | URL fetch with handler chain and preview |
 | `reviewer/` | `reviewer`, `resume_reviewer` | Formal code-review subagent |
@@ -137,6 +137,7 @@ Workspace packages:
 | `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks |
 | `packages/completion/` | `@harness/completion` | Completion logic |
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
+| `packages/image-formats/` | `@harness/image-formats` | Image MIME detection and format conversion |
 | `packages/model-registry/` | `@harness/model-registry` | Model/provider metadata helpers |
 | `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients, normalized usage abstractions, and registry |
 | `packages/session-store/` | `@harness/session-store` | Session directory access, Sesame search, and listing |

@@ -87,7 +87,7 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   buildPrompt: (
     params: Static<Params>,
     ctx: ExtensionContext,
-  ) => SubagentPromptResult;
+  ) => SubagentPromptResult | Promise<SubagentPromptResult>;
   resolveSkills?: (params: Static<Params>, ctx: ExtensionContext) => Skill[];
   beforeExecute?: (
     params: Static<Params>,
