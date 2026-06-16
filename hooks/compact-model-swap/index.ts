@@ -6,8 +6,16 @@ import { registry } from "@harness/model-registry";
 export default function compactModelSwap(pi: ExtensionAPI): void {
   let sessionModel: Model<Api> | undefined;
   let sessionThinkingLevel: ThinkingLevel | undefined;
+  let wasDefaultCompaction = false;
 
-  pi.on("session_before_compact", async (_event, ctx) => {
+  pi.on("session_before_compact", async (event, ctx) => {
+    wasDefaultCompaction = false;
+
+    if (event.customInstructions?.trim() === "default") {
+      wasDefaultCompaction = true;
+      return undefined;
+    }
+
     const compactionModelCandidates = registry.get(
       "ad:small:text",
       ctx.modelRegistry,
@@ -42,6 +50,9 @@ export default function compactModelSwap(pi: ExtensionAPI): void {
   });
 
   pi.on("session_compact", async (_event, _ctx) => {
+    if (wasDefaultCompaction) {
+      return;
+    }
     if (sessionModel) {
       await pi.setModel(sessionModel);
     }
