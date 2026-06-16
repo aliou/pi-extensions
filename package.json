@@ -32,6 +32,7 @@
     "@harness/agent-kit": "workspace:*",
     "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",
+    "@harness/image-formats": "workspace:*",
     "@harness/model-registry": "workspace:*",
     "@harness/provider-usage": "workspace:*",
     "@harness/session-store": "workspace:*",

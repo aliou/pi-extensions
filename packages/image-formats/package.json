@@ -1,0 +1,11 @@
+{
+  "name": "@harness/image-formats",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.79.1"
+  }
+}

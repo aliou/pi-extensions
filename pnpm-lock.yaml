@@ -32,6 +32,9 @@ importers:
       '@harness/events':
         specifier: workspace:*
         version: link:packages/events
+      '@harness/image-formats':
+        specifier: workspace:*
+        version: link:packages/image-formats
       '@harness/model-registry':
         specifier: workspace:*
         version: link:packages/model-registry
@@ -113,6 +116,12 @@ importers:
         version: 0.79.1
 
   packages/events:
+    dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: 0.79.1
+        version: 0.79.1(ws@8.20.0)(zod@3.25.76)
+
+  packages/image-formats:
     dependencies:
       '@earendil-works/pi-coding-agent':
         specifier: 0.79.1
