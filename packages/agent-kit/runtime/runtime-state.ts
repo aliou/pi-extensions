@@ -20,11 +20,17 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
       sessionId: session.sessionId,
       sessionFile: session.sessionFile ?? "",
       prompt: "",
-      model: config.models.find(
-        (model) =>
-          model.model === session.model?.id &&
-          model.provider === session.model?.provider,
-      ),
+      model: session.model
+        ? {
+            provider: session.model.provider,
+            model: session.model.id,
+            thinking: "off",
+          }
+        : config.modelPreferences?.find(
+            (model) =>
+              model.model === session.model?.id &&
+              model.provider === session.model?.provider,
+          ),
 
       status: "pending",
       thinking: false,

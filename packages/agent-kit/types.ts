@@ -8,12 +8,12 @@ import type {
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import type { Component } from "@earendil-works/pi-tui";
+import type { ModelGroupId, ModelPreference } from "@harness/models";
 import type { Static, TSchema } from "typebox";
-import type { SubagentModel } from "./models";
 import type { ToolRenderContext } from "./runtime/render/types";
 import type { SubagentToolCall } from "./runtime/types";
 
-export type { SubagentModel } from "./models";
+export type { ModelPreference as SubagentModel } from "@harness/models";
 export type { SubagentDetails, SubagentToolCall } from "./runtime";
 export type { SubagentSessionRecord } from "./session-records";
 
@@ -77,7 +77,8 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   tools: SubagentToolSpec[];
   skills?: Skill[];
   extensionPaths?: string[];
-  models: SubagentModel[];
+  modelGroup?: ModelGroupId;
+  modelPreferences?: ModelPreference[];
   session?: SubagentSessionConfig;
   resumable?: boolean;
 

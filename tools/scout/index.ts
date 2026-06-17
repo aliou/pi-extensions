@@ -1,6 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
-import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, SCOUT_SYSTEM_PROMPT } from "./prompt";
 import { renderScoutDetails, renderScoutHeader } from "./render";
 import { createScoutTools } from "./tools";
@@ -30,7 +29,7 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
-    models: MODEL_CANDIDATES,
+    modelGroup: "ad:codebase:local",
   });
 
   subagent.register();

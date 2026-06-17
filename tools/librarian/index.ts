@@ -1,6 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
-import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, LIBRAIAN_SYSTEM_PROMPT } from "./prompt";
 import { renderLibrarianDetails, renderLibrarianHeader } from "./render";
 import { createLibrarianTools } from "./tools";
@@ -25,7 +24,7 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     renderDetails: renderLibrarianDetails,
     buildPrompt,
     tools,
-    models: MODEL_CANDIDATES,
+    modelGroup: "ad:codebase:remote",
   });
 
   subagent.register();

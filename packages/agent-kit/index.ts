@@ -1,6 +1,5 @@
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
-import { SubagentModelResolver } from "./models";
 import {
   renderSubagentCall,
   renderSubagentResult,
@@ -29,9 +28,8 @@ export function createSubagent<Params extends TSchema>(
   pi: ExtensionAPI,
   config: SubagentConfig<Params>,
 ) {
-  const models = new SubagentModelResolver(config.models);
   const records = new SubagentSessionRecordStore(pi);
-  const sessions = new SubagentSessionManager(config, models, records);
+  const sessions = new SubagentSessionManager(config, records);
 
   const runWithParams = async (
     params: Static<Params>,

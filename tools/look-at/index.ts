@@ -3,7 +3,6 @@ import { resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
 import { convertBmpToPng } from "@harness/image-formats";
-import { MODEL_CANDIDATES } from "./models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
 import { renderLookAtDetails, renderLookAtHeader } from "./render";
 import { LookAtParams, type LookAtParamsInput } from "./types";
@@ -51,7 +50,7 @@ Always provide a clear objective describing what you want to learn from the imag
     ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],
-    models: MODEL_CANDIDATES,
+    modelGroup: "ad:vision:inspect",
     parameters: LookAtParams,
     renderHeader: renderLookAtHeader,
     renderDetails: renderLookAtDetails,

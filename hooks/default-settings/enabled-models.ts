@@ -6,7 +6,6 @@ export const DEFAULT_ENABLED_MODELS: Array<readonly [string, string]> = [
   ["neuralwatt", "glm-5.2"],
   ["neuralwatt", "moonshotai/Kimi-K2.7-Code"],
   ["neuralwatt", "glm-5.1-fast"],
-  ["neuralwatt", "kimi-k2.6-fast"],
 ];
 
 export function collectMissingEnabledModels(

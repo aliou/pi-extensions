@@ -1,6 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
-import { MODEL_CANDIDATES } from "./models";
 import { SYSTEM_PROMPT } from "./prompt";
 import { renderReadSessionHeader, tools } from "./tools";
 import { ReadSessionParams } from "./types";
@@ -17,7 +16,7 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: SYSTEM_PROMPT,
     tools,
-    models: MODEL_CANDIDATES,
+    modelGroup: "ad:session:read",
     parameters: ReadSessionParams,
     renderHeader: renderReadSessionHeader,
     buildPrompt({ targetSessionId: sessionId, goal }) {

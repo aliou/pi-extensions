@@ -3,7 +3,6 @@ import { createSubagent } from "@harness/agent-kit";
 import { isBlank } from "@harness/utils/string";
 import { Type } from "typebox";
 import { SESSION_NAME_REFINE_EVERY } from "./constants";
-import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, SESSION_NAME_SYSTEM_PROMPT } from "./prompt";
 import { createSessionNameTools } from "./tools";
 import { countCompletedAssistantTurns, getRecentTurns } from "./turns";
@@ -15,7 +14,7 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     description: "Generate or refine a concise session name.",
     systemPrompt: SESSION_NAME_SYSTEM_PROMPT,
     tools: createSessionNameTools(pi),
-    models: MODEL_CANDIDATES,
+    modelGroup: "ad:utility:text",
     session: { inheritSessionId: false },
     parameters: Type.Object({
       turns: Type.Array(

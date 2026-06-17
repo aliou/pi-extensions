@@ -20,7 +20,7 @@ export async function runQqSubagent(
     description: "Answer a quick side question",
     systemPrompt,
     tools: [],
-    models: [
+    modelPreferences: [
       {
         provider: ctx.model.provider,
         model: ctx.model.id,

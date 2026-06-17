@@ -1,7 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
-import { MODEL_CANDIDATES } from "./models";
 import { ARTISAN_SYSTEM_PROMPT, buildPrompt } from "./prompt";
 import {
   artisanToolRenderers,
@@ -53,7 +52,7 @@ export default async function artisan(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
-    models: MODEL_CANDIDATES,
+    modelGroup: "ad:advisor:design",
   });
 
   subagent.register();

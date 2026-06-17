@@ -1,7 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
-import { MODEL_CANDIDATES } from "./models";
 import { buildPrompt, ORACLE_SYSTEM_PROMPT } from "./prompt";
 import {
   oracleToolRenderers,
@@ -53,7 +52,7 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
-    models: MODEL_CANDIDATES,
+    modelGroup: "ad:advisor:technical",
   });
 
   subagent.register();

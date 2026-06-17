@@ -1,11 +1,15 @@
 import {
+  appendUsageHistory,
+  buildProjectionHints,
+  readUsageCache,
+  writeUsageCache,
+} from "@harness/models/usage";
+import {
   type ProviderUsageClient,
   type ProviderUsageFetchContext,
   type ProviderUsageSnapshot,
   providerUsageClients,
 } from "@harness/provider-usage";
-import { readUsageCache, writeUsageCache } from "./cache";
-import { appendUsageHistory, buildProjectionHints } from "./history";
 import { setProjectionHints } from "./projections";
 import type { UsageDashboard } from "./types";
 

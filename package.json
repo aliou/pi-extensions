@@ -33,7 +33,7 @@
     "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",
     "@harness/image-formats": "workspace:*",
-    "@harness/model-registry": "workspace:*",
+    "@harness/models": "workspace:*",
     "@harness/provider-usage": "workspace:*",
     "@harness/session-store": "workspace:*",
     "@harness/session-tools": "workspace:*",

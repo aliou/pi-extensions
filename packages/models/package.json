@@ -1,0 +1,14 @@
+{
+  "name": "@harness/models",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./usage": "./usage/index.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "0.79.1",
+    "@earendil-works/pi-coding-agent": "0.79.1",
+    "@harness/provider-usage": "workspace:*"
+  }
+}

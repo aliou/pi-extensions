@@ -138,8 +138,8 @@ Workspace packages:
 | `packages/completion/` | `@harness/completion` | Completion logic |
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
 | `packages/image-formats/` | `@harness/image-formats` | Image MIME detection and format conversion |
-| `packages/model-registry/` | `@harness/model-registry` | Model/provider metadata helpers |
-| `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients, normalized usage abstractions, and registry |
+| `packages/models/` | `@harness/models` | Model groups, model usability, quota-aware broker, usage cache, history, and projections |
+| `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients and normalized usage abstractions |
 | `packages/session-store/` | `@harness/session-store` | Session directory access, Sesame search, and listing |
 | `packages/session-tools/` | `@harness/session-tools` | Pi-agnostic session entry indexing, branch/tree traversal, and bounded read-session helpers |
 | `packages/test-utils/` | `@harness/test-utils` | Shared Vitest/Pi extension test harness utilities |

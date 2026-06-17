@@ -4,7 +4,6 @@ import type {
   ExtensionContext,
   SessionEntry,
 } from "@earendil-works/pi-coding-agent";
-import { isSubagentResolvedModel } from "../models";
 import {
   SUBAGENT_SESSION_CUSTOM_TYPE,
   type SubagentSessionRecord,
@@ -31,13 +30,26 @@ function isSubagentSessionRecordData(
     typeof data.sessionId === "string" &&
     typeof data.sessionFile === "string" &&
     typeof data.parentSessionId === "string" &&
-    (!("model" in data) || isSubagentResolvedModel(data.model)) &&
+    (!("model" in data) || isModelPreferenceRecord(data.model)) &&
     (!("skills" in data) ||
       (Array.isArray(data.skills) &&
         data.skills.every(
           (s: unknown) =>
             typeof s === "object" && s !== null && "name" in s && "path" in s,
         )))
+  );
+}
+
+function isModelPreferenceRecord(data: unknown): boolean {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "provider" in data &&
+    "model" in data &&
+    "thinking" in data &&
+    typeof data.provider === "string" &&
+    typeof data.model === "string" &&
+    typeof data.thinking === "string"
   );
 }
 

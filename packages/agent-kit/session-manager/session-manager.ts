@@ -9,9 +9,15 @@ import {
   SettingsManager,
   type Skill,
 } from "@earendil-works/pi-coding-agent";
+import {
+  buildProjectionHints,
+  CachedModelUsage,
+  ModelBroker,
+  type ModelChoice,
+  readUsageCache,
+} from "@harness/models";
 import { isNil } from "@harness/utils/nil";
 import type { TSchema } from "typebox";
-import type { SubagentModelResolver, SubagentModelSelection } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
   collectSubagentToolGuidelines,
@@ -35,7 +41,6 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
 
   constructor(
     private config: SubagentConfig<Params>,
-    private models: SubagentModelResolver,
     private records: SubagentSessionRecordStore,
   ) {}
 
@@ -44,7 +49,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     invocationSkills: Skill[],
     fn: (session: AgentSession) => Promise<T>,
   ): Promise<T> {
-    const selection = this.pickModelOrThrow(ctx);
+    const selection = await this.pickModelOrThrow(ctx);
     const parentSessionId = ctx.sessionManager.getSessionId();
     const sessionManager = this.createSessionManager(ctx.cwd);
     const session = await this.createAgentSession(
@@ -63,7 +68,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
         sessionId: session.sessionId,
         sessionFile: session.sessionFile ?? "",
         parentSessionId,
-        model: selection.record,
+        model: selection.preference,
         skills: invocationSkills,
       });
     }
@@ -75,7 +80,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       this.config.name,
       sessionId,
     );
-    const selection = this.resolveModelOrThrow(ctx, record);
+    const selection = await this.resolveModelOrThrow(ctx, record);
     const sessionManager = this.openSessionManager(sessionId, record);
 
     return this.createAgentSession(
@@ -158,7 +163,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
 
   private async createAgentSession(
     ctx: ExtensionContext,
-    selection: SubagentModelSelection,
+    selection: ModelChoice,
     sessionManager: SessionManager,
     invocationSkills: Skill[] = [],
   ) {
@@ -193,7 +198,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     const { session } = await createAgentSession({
       cwd,
       model: selection.model,
-      thinkingLevel: selection.thinkingLevel,
+      thinkingLevel: selection.thinking,
       sessionManager,
       tools,
       customTools,
@@ -237,25 +242,63 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     return SessionManager.open(sessionFile);
   }
 
-  private pickModelOrThrow(ctx: ExtensionContext) {
-    const selection = this.models.pick(ctx.modelRegistry);
+  private async pickModelOrThrow(ctx: ExtensionContext) {
+    const selection = await this.createModelBroker(ctx).then((models) => {
+      if (this.config.modelGroup) return models.choose(this.config.modelGroup);
+      if (this.config.modelPreferences) {
+        return models.chooseFrom(this.config.modelPreferences)[0] ?? null;
+      }
+      return null;
+    });
     if (!selection) {
       throw new Error(`No model available for ${this.config.label} subagent`);
     }
 
+    this.notifySkippedModels(ctx, selection);
     return selection;
   }
 
-  private resolveModelOrThrow(
+  private async resolveModelOrThrow(
     ctx: ExtensionContext,
     record?: SubagentSessionRecord,
   ) {
-    const selection = this.models.resolve(record?.model, ctx.modelRegistry);
+    const models = await this.createModelBroker(ctx);
+    const selection = this.config.modelGroup
+      ? models.resolve(this.config.modelGroup, record?.model)
+      : (models.chooseFrom(this.config.modelPreferences ?? [])[0] ?? null);
     if (!selection) {
       throw new Error(`No model available for ${this.config.label} subagent`);
     }
 
+    this.notifySkippedModels(ctx, selection);
     return selection;
+  }
+
+  private async createModelBroker(ctx: ExtensionContext): Promise<ModelBroker> {
+    const cache = await readUsageCache().catch(() => null);
+    const projections = cache
+      ? await buildProjectionHints(cache.snapshots).catch(() => new Map())
+      : new Map();
+
+    return new ModelBroker({
+      registry: ctx.modelRegistry,
+      usage: cache
+        ? new CachedModelUsage({
+            snapshots: cache.snapshots,
+            projections,
+            fresh: cache.fresh,
+          })
+        : undefined,
+    });
+  }
+
+  private notifySkippedModels(ctx: ExtensionContext, selection: ModelChoice) {
+    for (const skipped of selection.skipped) {
+      ctx.ui.notify(
+        `[model] skipped ${skipped.preference.provider}/${skipped.preference.model}: ${skipped.detail ?? skipped.reason}`,
+        "warning",
+      );
+    }
   }
 
   private getParentSessionId(ctx: ExtensionContext): string | undefined {

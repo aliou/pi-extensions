@@ -1,6 +1,5 @@
+import { type ProjectionHint, quotaHistoryKey } from "@harness/models/usage";
 import type { UsageQuota } from "@harness/provider-usage";
-import type { ProjectionHint } from "./history";
-import { quotaHistoryKey } from "./history";
 
 let projectionHints = new Map<string, ProjectionHint>();
 

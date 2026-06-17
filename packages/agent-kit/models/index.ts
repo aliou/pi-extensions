@@ -1,6 +1,4 @@
-export {
-  isSubagentResolvedModel,
-  SubagentModelResolver,
-  type SubagentModelSelection,
-} from "./model-resolver";
-export type { SubagentModel, SubagentResolvedModel } from "./types";
+export type {
+  ModelPreference as SubagentModel,
+  ModelPreferenceRecord as SubagentResolvedModel,
+} from "@harness/models";

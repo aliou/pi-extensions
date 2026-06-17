@@ -1,7 +1,12 @@
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { registry } from "@harness/model-registry";
+import {
+  buildProjectionHints,
+  CachedModelUsage,
+  ModelBroker,
+  readUsageCache,
+} from "@harness/models";
 
 export default function compactModelSwap(pi: ExtensionAPI): void {
   let sessionModel: Model<Api> | undefined;
@@ -16,14 +21,24 @@ export default function compactModelSwap(pi: ExtensionAPI): void {
       return undefined;
     }
 
-    const compactionModelCandidates = registry.get(
-      "ad:small:text",
-      ctx.modelRegistry,
-    );
+    const cache = await readUsageCache().catch(() => null);
+    const projections = cache
+      ? await buildProjectionHints(cache.snapshots).catch(() => new Map())
+      : new Map();
+    const models = new ModelBroker({
+      registry: ctx.modelRegistry,
+      usage: cache
+        ? new CachedModelUsage({
+            snapshots: cache.snapshots,
+            projections,
+            fresh: cache.fresh,
+          })
+        : undefined,
+    });
 
-    for (const { provider, model, thinking } of compactionModelCandidates) {
-      const compactionModel = ctx.modelRegistry.find(provider, model);
-      if (!compactionModel) continue;
+    for (const choice of models.roster("ad:utility:text")) {
+      const compactionModel = choice.model;
+      const { provider, model, thinking } = choice.preference;
 
       const currentModel = ctx.model;
       const currentThinkingLevel = ctx.model
@@ -39,10 +54,14 @@ export default function compactModelSwap(pi: ExtensionAPI): void {
       sessionModel = currentModel;
       sessionThinkingLevel = currentThinkingLevel;
 
-      ctx.ui.notify(
-        `[compact] Swapped to model ${provider}/${model}:${thinking}`,
-        "info",
-      );
+      for (const skipped of choice.skipped) {
+        ctx.ui.notify(
+          `[model] skipped ${skipped.preference.provider}/${skipped.preference.model}: ${skipped.detail ?? skipped.reason}`,
+          "warning",
+        );
+      }
+
+      ctx.ui.notify(`Compacting with ${provider}/${model}:${thinking}`, "info");
 
       // Explicitly return undefined to fallback to default compaction setup.
       return undefined;
