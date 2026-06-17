@@ -109,7 +109,7 @@ export function normalizeNeuralwattUsage(
       provider: PROVIDER,
       id: "limits.overage_limit_usd",
       name: "Overage limit",
-      role: "budget",
+      role: "secondary",
       updatedAt,
       metric: { kind: "currency", code: "USD", minorUnit: false },
       amount: {
