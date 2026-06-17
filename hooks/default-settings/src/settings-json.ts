@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { SOURCE_OF_TRUTH_COMMENT } from "./comment";
 
 export interface SettingsJsonConfig {
   enabledModels?: string[];
+  _comment?: string;
   [key: string]: unknown;
 }
 
@@ -20,5 +22,6 @@ export function writeSettingsJson(
   path: string,
   config: SettingsJsonConfig,
 ): void {
+  config._comment = SOURCE_OF_TRUTH_COMMENT;
   writeFileSync(path, JSON.stringify(config, null, 2), "utf-8");
 }
