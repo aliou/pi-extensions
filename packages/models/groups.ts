@@ -60,26 +60,26 @@ export const defaultModelRosters = {
     },
     { provider: "neuralwatt", model: "glm-5.1-fast", thinking: "off" },
     { provider: "neuralwatt", model: "kimi-k2.6-fast", thinking: "off" },
-    { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "low" },
+    { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
   ],
   "ad:codebase:local": [
     {
       provider: "neuralwatt",
       model: "kimi-k2.7-code",
-      thinking: "low",
+      thinking: "medium",
     },
     {
       provider: "synthetic",
       model: "hf:moonshotai/Kimi-K2.6",
-      thinking: "low",
+      thinking: "medium",
     },
     {
       provider: "synthetic",
       model: "hf:Qwen/Qwen3.5-397B-A17B",
-      thinking: "low",
+      thinking: "medium",
     },
-    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "low" },
-    { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "low" },
+    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "medium" },
+    { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
     {
       provider: "openai-codex",
       model: "gpt-5.4-mini",
@@ -188,7 +188,7 @@ export const defaultModelRosters = {
     {
       provider: "neuralwatt",
       model: "kimi-k2.7-code",
-      thinking: "low",
+      thinking: "medium",
     },
     {
       provider: "openai-codex",

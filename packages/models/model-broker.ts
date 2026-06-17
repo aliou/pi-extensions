@@ -31,6 +31,7 @@ export class ModelBroker {
   private readonly rosters: ModelRosters;
 
   constructor(private readonly deps: ModelBrokerDeps) {
+    deps.registry.refresh?.();
     this.usage = deps.usage;
     this.rosters = deps.rosters ?? defaultModelRosters;
   }
