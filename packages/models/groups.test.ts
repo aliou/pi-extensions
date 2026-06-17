@@ -53,7 +53,7 @@ describe("defaultModelRosters", () => {
         "glm-5.1-fast",
         "kimi-k2.6",
         "kimi-k2.6-fast",
-        "moonshotai/Kimi-K2.7-Code",
+        "kimi-k2.7-code",
         "qwen3.5-397b",
         "qwen3.6-35b-fast",
       ]),

@@ -65,7 +65,7 @@ export const defaultModelRosters = {
   "ad:codebase:local": [
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.7-Code",
+      model: "kimi-k2.7-code",
       thinking: "low",
     },
     {
@@ -90,7 +90,7 @@ export const defaultModelRosters = {
   "ad:codebase:remote": [
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.7-Code",
+      model: "kimi-k2.7-code",
       thinking: "medium",
     },
     {
@@ -109,7 +109,7 @@ export const defaultModelRosters = {
   "ad:review:diff": [
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.7-Code",
+      model: "kimi-k2.7-code",
       thinking: "medium",
     },
     {
@@ -151,7 +151,7 @@ export const defaultModelRosters = {
     },
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.7-Code",
+      model: "kimi-k2.7-code",
       thinking: "medium",
     },
     { provider: "neuralwatt", model: "glm-5.1", thinking: "medium" },
@@ -173,7 +173,7 @@ export const defaultModelRosters = {
     { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.7-Code",
+      model: "kimi-k2.7-code",
       thinking: "medium",
     },
   ],
@@ -187,7 +187,7 @@ export const defaultModelRosters = {
     { provider: "neuralwatt", model: "qwen3.6-35b-fast", thinking: "off" },
     {
       provider: "neuralwatt",
-      model: "moonshotai/Kimi-K2.7-Code",
+      model: "kimi-k2.7-code",
       thinking: "low",
     },
     {

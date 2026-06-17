@@ -4,7 +4,7 @@ export const DEFAULT_ENABLED_MODELS: Array<readonly [string, string]> = [
   ["synthetic", "hf:moonshotai/Kimi-K2.6"],
   ["synthetic", "hf:zai-org/GLM-5.1"],
   ["neuralwatt", "glm-5.2"],
-  ["neuralwatt", "moonshotai/Kimi-K2.7-Code"],
+  ["neuralwatt", "kimi-k2.7-code"],
   ["neuralwatt", "glm-5.1-fast"],
 ];
 
