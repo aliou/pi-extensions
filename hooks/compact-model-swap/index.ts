@@ -15,6 +15,9 @@ export default function compactModelSwap(pi: ExtensionAPI): void {
 
   pi.on("session_before_compact", async (event, ctx) => {
     wasDefaultCompaction = false;
+    sessionModel = undefined;
+    sessionThinkingLevel = undefined;
+    ctx.modelRegistry.refresh();
 
     if (event.customInstructions?.trim() === "default") {
       wasDefaultCompaction = true;
@@ -68,12 +71,21 @@ export default function compactModelSwap(pi: ExtensionAPI): void {
     }
   });
 
-  pi.on("session_compact", async (_event, _ctx) => {
+  pi.on("session_compact", async (_event, ctx) => {
     if (wasDefaultCompaction) {
       return;
     }
+
+    ctx.modelRegistry.refresh();
+
     if (sessionModel) {
-      await pi.setModel(sessionModel);
+      const restored = await pi.setModel(sessionModel);
+      if (!restored) {
+        ctx.ui.notify(
+          `Could not restore model ${sessionModel.provider}/${sessionModel.id}`,
+          "warning",
+        );
+      }
     }
 
     if (sessionThinkingLevel) {
