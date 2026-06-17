@@ -13,17 +13,18 @@ import { searchSessions, searchSessionsByName } from "@harness/session-store";
 import { formatRelativeTime } from "@harness/utils/formatters";
 import { collapseHomePath } from "@harness/utils/path";
 import {
-  AT_TOKEN_RE,
   DEBOUNCE_MS,
   FTS_MIN_TOKEN_LEN,
   SESSION_AUTOCOMPLETE_PREFIX,
 } from "./types";
 
-interface SessionToken {
-  token: string;
-  global: boolean;
-  prefix: string;
-}
+export {
+  extractSessionToken,
+  isInsideCodeSpan,
+  type SessionToken,
+} from "./tokens";
+
+import { extractSessionToken } from "./tokens";
 
 function delay(ms: number, signal: AbortSignal): Promise<boolean> {
   if (signal.aborted) return Promise.resolve(false);
@@ -41,32 +42,6 @@ function delay(ms: number, signal: AbortSignal): Promise<boolean> {
 
     signal.addEventListener("abort", onAbort, { once: true });
   });
-}
-
-/**
- * Extract the `@@<token>` or `@@@<token>` at the end of `textBeforeCursor`.
- * `@@@` searches all indexed sessions instead of filtering to the current cwd.
- */
-function extractSessionToken(
-  textBeforeCursor: string,
-): SessionToken | undefined {
-  const globalMatch = textBeforeCursor.match(/@@@([^@]*)$/);
-  if (globalMatch) {
-    return {
-      token: globalMatch[1] ?? "",
-      global: true,
-      prefix: "@@@",
-    };
-  }
-
-  const match = textBeforeCursor.match(AT_TOKEN_RE);
-  return match
-    ? {
-        token: match[1] ?? "",
-        global: false,
-        prefix: SESSION_AUTOCOMPLETE_PREFIX,
-      }
-    : undefined;
 }
 
 export function createSessionAutocompleteProvider(
