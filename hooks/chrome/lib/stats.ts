@@ -56,13 +56,16 @@ export function getContextUsage(
   const contextPercent =
     contextUsage?.percent !== null ? contextPercentValue.toFixed(1) : "?";
 
+  const tokensDisplay =
+    contextUsage.tokens !== null ? formatTokens(contextUsage.tokens) : "?";
+
   return {
     window: contextWindow,
     percent: contextPercentValue,
     display:
       contextPercent === "?"
-        ? `?/${formatTokens(contextWindow)}`
-        : `${contextPercent}%/${formatTokens(contextWindow)}`,
+        ? `? ?/${formatTokens(contextWindow)}`
+        : `${contextPercent}% ${tokensDisplay}/${formatTokens(contextWindow)}`,
   };
 }
 
