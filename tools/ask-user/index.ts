@@ -1,7 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { defineTool } from "@earendil-works/pi-coding-agent";
 import { renderCall, renderResult } from "./render";
-import type { AskUserQuestionDetails } from "./types";
 import { AskUserQuestionParams } from "./types";
 import { runAskUserUI } from "./ui";
 
@@ -33,10 +32,7 @@ const PROMPT_GUIDELINES = [
   "ask_user: Prefer making a decision and letting the user correct you over asking.",
 ];
 
-export const askUserTool = defineTool<
-  typeof AskUserQuestionParams,
-  AskUserQuestionDetails
->({
+export const askUserTool = defineTool({
   name: "ask_user",
   label: "Ask User",
   description: DESCRIPTION,

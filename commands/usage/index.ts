@@ -22,66 +22,72 @@ export default function usageCommand(pi: ExtensionAPI): void {
       const activeProvider = cmdCtx.model?.provider;
       const authStorage = cmdCtx.modelRegistry?.authStorage;
 
-      await cmdCtx.ui.custom((tui, theme, _keybindings, done) => {
-        const loader = new BorderedLoader(tui, theme, "Loading usage...");
-        loader.onAbort = () => done(undefined);
+      const result = await cmdCtx.ui.custom<"closed">(
+        (tui, theme, _keybindings, done) => {
+          const loader = new BorderedLoader(tui, theme, "Loading usage...");
+          loader.onAbort = () => done("closed");
 
-        let panel: UsagePanel | null = null;
-        let forceRefresh = false;
+          let panel: UsagePanel | null = null;
+          let forceRefresh = false;
 
-        function loadData(): void {
-          panel = null;
-          tui.requestRender();
-          loadUsageDashboard({
-            authStorage,
-            signal: loader.signal,
-            forceRefresh,
-          })
-            .then((dashboard) => {
-              if (loader.signal.aborted) return;
-              forceRefresh = false;
-              panel = new UsagePanel(
-                theme,
-                dashboard.snapshots,
-                activeProvider,
-                () => done(undefined),
-                refreshPanel,
-              );
-              tui.requestRender();
+          function loadData(): void {
+            panel = null;
+            tui.requestRender();
+            loadUsageDashboard({
+              authStorage,
+              signal: loader.signal,
+              forceRefresh,
             })
-            .catch(() => {
-              if (loader.signal.aborted) return;
-              forceRefresh = false;
-              panel = new UsagePanel(
-                theme,
-                [],
-                activeProvider,
-                () => done(undefined),
-                refreshPanel,
-              );
-              tui.requestRender();
-            });
-        }
+              .then((dashboard) => {
+                if (loader.signal.aborted) return;
+                forceRefresh = false;
+                panel = new UsagePanel(
+                  theme,
+                  dashboard.snapshots,
+                  activeProvider,
+                  () => done("closed"),
+                  refreshPanel,
+                );
+                tui.requestRender();
+              })
+              .catch(() => {
+                if (loader.signal.aborted) return;
+                forceRefresh = false;
+                panel = new UsagePanel(
+                  theme,
+                  [],
+                  activeProvider,
+                  () => done("closed"),
+                  refreshPanel,
+                );
+                tui.requestRender();
+              });
+          }
 
-        function refreshPanel(): void {
-          forceRefresh = true;
+          function refreshPanel(): void {
+            forceRefresh = true;
+            loadData();
+          }
+
           loadData();
-        }
 
-        loadData();
+          return {
+            handleInput: (data: string) =>
+              panel ? panel.handleInput(data) : loader.handleInput(data),
+            render: (width: number) =>
+              panel ? panel.render(width) : loader.render(width),
+            invalidate: () => {
+              panel?.invalidate();
+              loader.invalidate();
+            },
+            dispose: () => loader.dispose(),
+          };
+        },
+      );
 
-        return {
-          handleInput: (data: string) =>
-            panel ? panel.handleInput(data) : loader.handleInput(data),
-          render: (width: number) =>
-            panel ? panel.render(width) : loader.render(width),
-          invalidate: () => {
-            panel?.invalidate();
-            loader.invalidate();
-          },
-          dispose: () => loader.dispose(),
-        };
-      });
+      if (result === undefined) {
+        cmdCtx.ui.notify("Usage dashboard requires interactive UI", "warning");
+      }
     },
   });
 

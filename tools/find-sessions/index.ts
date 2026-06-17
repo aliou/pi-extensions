@@ -8,10 +8,10 @@ import { ToolBody, ToolCallHeader, ToolFooter } from "@aliou/pi-utils-ui";
 import type {
   AgentToolResult,
   ExtensionAPI,
-  ExtensionContext,
   Theme,
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
+import { defineTool } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import type { SearchOptions, SessionResult } from "@harness/session-store";
 import { searchSessions } from "@harness/session-store";
@@ -46,14 +46,6 @@ const FindSessionsParams = Type.Object({
     }),
   ),
 });
-
-type FindSessionsParamsType = {
-  query: string;
-  cwd?: string;
-  after?: string;
-  before?: string;
-  limit?: number;
-};
 
 interface FindSessionsDetails {
   query: string;
@@ -120,11 +112,10 @@ Use find_sessions when the user explicitly asks to find or search for a previous
 /**
  * Setup the find_sessions tool for discovering sessions by keyword.
  */
-export default async function (pi: ExtensionAPI) {
-  pi.registerTool<typeof FindSessionsParams, FindSessionsDetails>({
-    name: "find_sessions",
-    label: "Find Sessions",
-    description: `Search through past Pi coding sessions by keyword or phrase.
+export const findSessionsTool = defineTool({
+  name: "find_sessions",
+  label: "Find Sessions",
+  description: `Search through past Pi coding sessions by keyword or phrase.
 
 WHEN TO USE:
 - Locate previous sessions by topic ("database", "auth", "bug fix")
@@ -134,197 +125,197 @@ WHEN TO USE:
 
 RESULTS: Returns matching sessions with metadata including name, directory, date, and matched snippet.
 Uses Sesame indexed search.`,
-    promptSnippet: "Find previous Pi sessions by topic, date, or project.",
-    promptGuidelines: [
-      "find_sessions: Use when the user explicitly asks to find or search for a previous session or conversation.",
-      "find_sessions: Use when the user wants past sessions by topic, date, or project.",
-      "find_sessions: Do not use for the current session or for general codebase search.",
-    ],
+  promptSnippet: "Find previous Pi sessions by topic, date, or project.",
+  promptGuidelines: [
+    "find_sessions: Use when the user explicitly asks to find or search for a previous session or conversation.",
+    "find_sessions: Use when the user wants past sessions by topic, date, or project.",
+    "find_sessions: Do not use for the current session or for general codebase search.",
+  ],
 
-    parameters: FindSessionsParams,
+  parameters: FindSessionsParams,
 
-    async execute(
-      _toolCallId: string,
-      params: FindSessionsParamsType,
-      _signal: AbortSignal | undefined,
-      _onUpdate: unknown,
-      ctx: ExtensionContext,
-    ): Promise<ExecuteResult> {
-      const { query, cwd, after, before, limit } = params;
+  async execute(
+    _toolCallId,
+    params,
+    _signal,
+    _onUpdate,
+    ctx,
+  ): Promise<ExecuteResult> {
+    const { query, cwd, after, before, limit } = params;
 
-      // Get current session ID to filter it out
-      const currentSessionId = ctx.sessionManager.getSessionId();
+    // Get current session ID to filter it out
+    const currentSessionId = ctx.sessionManager.getSessionId();
 
-      // Build search options
-      const searchOpts: SearchOptions = {
-        query,
-        cwd,
-        after,
-        before,
-        limit: limit || 10,
-      };
+    // Build search options
+    const searchOpts: SearchOptions = {
+      query,
+      cwd,
+      after,
+      before,
+      limit: limit || 10,
+    };
 
-      // Execute search
-      let results: SessionResult[] = [];
-      try {
-        results = searchSessions(searchOpts);
-        // Filter out current session - users searching for sessions want to find other sessions, not the one they're in
-        results = results.filter((r) => r.id !== currentSessionId);
-      } catch (err) {
-        console.error("[find-sessions] Search error:", err);
-        // Return empty results rather than failing
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                query,
-                resultCount: 0,
-                results: [],
-                error: `Search failed: ${err instanceof Error ? err.message : String(err)}`,
-              }),
-            },
-          ],
-          details: {
-            query,
-            filters: { cwd, after, before, limit },
-            resultCount: 0,
-            results: [],
-          },
-        };
-      }
-
-      // Format result for LLM
-      const resultJson = JSON.stringify({
-        query,
-        resultCount: results.length,
-        results: results.map((r) => ({
-          id: r.id,
-          path: r.path,
-          cwd: r.cwd,
-          name: r.name,
-          created: r.created,
-          modified: r.modified,
-          messageCount: r.messageCount,
-          matchedSnippet: r.matchedSnippet,
-          score: r.score,
-        })),
-      });
-
+    // Execute search
+    let results: SessionResult[] = [];
+    try {
+      results = searchSessions(searchOpts);
+      // Filter out current session - users searching for sessions want to find other sessions, not the one they're in
+      results = results.filter((r) => r.id !== currentSessionId);
+    } catch (err) {
+      console.error("[find-sessions] Search error:", err);
+      // Return empty results rather than failing
       return {
-        content: [{ type: "text", text: resultJson }],
-        details: {
-          query,
-          filters: { cwd, after, before, limit: limit || 10 },
-          resultCount: results.length,
-          results,
-        },
-      };
-    },
-
-    renderCall(args: FindSessionsParamsType, theme: Theme) {
-      const query = args.query.trim();
-      const shortQuery = query.length > 70 ? `${query.slice(0, 67)}...` : query;
-
-      return new ToolCallHeader(
-        {
-          toolName: "Find Sessions",
-          mainArg: `"${shortQuery}"`,
-          optionArgs: [
-            { label: "limit", value: String(args.limit ?? 10), tone: "accent" },
-            ...(args.cwd ? [{ label: "cwd", value: args.cwd }] : []),
-            ...(args.after ? [{ label: "after", value: args.after }] : []),
-            ...(args.before ? [{ label: "before", value: args.before }] : []),
-          ],
-          longArgs:
-            query.length > 70
-              ? [
-                  {
-                    label: "query",
-                    value: query,
-                  },
-                ]
-              : [],
-        },
-        theme,
-      );
-    },
-
-    renderResult(
-      result: AgentToolResult<FindSessionsDetails>,
-      options: ToolRenderResultOptions,
-      theme: Theme,
-    ) {
-      const { details } = result;
-
-      if (!details) {
-        const text = result.content[0];
-        const content = text?.type === "text" ? text.text : "No result";
-        return new Text(content, 0, 0);
-      }
-
-      const { query, resultCount, results, filters } = details;
-      const fields: Array<
-        { label: string; value: string; showCollapsed?: boolean } | Text
-      > = [];
-
-      if (resultCount === 0) {
-        fields.push(
-          new Text(
-            `${theme.fg("muted", "No sessions found matching")} ${theme.fg("accent", `"${query}"`)}`,
-            0,
-            0,
-          ),
-        );
-      } else {
-        const lines: string[] = [];
-
-        if (!options.expanded) {
-          for (const session of results) {
-            const date = (session.created || session.modified || "").slice(
-              0,
-              10,
-            );
-            const label = session.name || "(untitled)";
-            const preview =
-              label.length > 48 ? `${label.slice(0, 48)}...` : label;
-            const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;
-
-            lines.push(
-              `  ${theme.fg("success", "•")} ${theme.fg("accent", session.id.slice(0, 8))} ${theme.fg("muted", "- ")}${theme.fg("muted", date)} ${theme.fg("muted", "- ")}${theme.fg("toolOutput", preview)} ${theme.fg("muted", "- ")}${theme.fg("success", msgCount)}`,
-            );
-          }
-        } else {
-          for (const session of results) {
-            if (lines.length > 0) lines.push("");
-            lines.push(...renderSessionCard(session, query, theme));
-          }
-        }
-
-        if (lines.length > 0) {
-          fields.push(new Text(lines.join("\n"), 0, 0));
-        }
-      }
-
-      const footer = new ToolFooter(theme, {
-        items: [
-          { label: "matches", value: String(resultCount), tone: "success" },
+        content: [
           {
-            label: "limit",
-            value: String(filters.limit ?? 10),
-            tone: "muted",
+            type: "text",
+            text: JSON.stringify({
+              query,
+              resultCount: 0,
+              results: [],
+              error: `Search failed: ${err instanceof Error ? err.message : String(err)}`,
+            }),
           },
         ],
-      });
-
-      return new ToolBody(
-        {
-          fields,
-          footer,
+        details: {
+          query,
+          filters: { cwd, after, before, limit },
+          resultCount: 0,
+          results: [],
         },
-        options,
-        theme,
+      };
+    }
+
+    // Format result for LLM
+    const resultJson = JSON.stringify({
+      query,
+      resultCount: results.length,
+      results: results.map((r) => ({
+        id: r.id,
+        path: r.path,
+        cwd: r.cwd,
+        name: r.name,
+        created: r.created,
+        modified: r.modified,
+        messageCount: r.messageCount,
+        matchedSnippet: r.matchedSnippet,
+        score: r.score,
+      })),
+    });
+
+    return {
+      content: [{ type: "text", text: resultJson }],
+      details: {
+        query,
+        filters: { cwd, after, before, limit: limit || 10 },
+        resultCount: results.length,
+        results,
+      },
+    };
+  },
+
+  renderCall(args, theme) {
+    const query = args.query.trim();
+    const shortQuery = query.length > 70 ? `${query.slice(0, 67)}...` : query;
+
+    return new ToolCallHeader(
+      {
+        toolName: "Find Sessions",
+        mainArg: `"${shortQuery}"`,
+        optionArgs: [
+          { label: "limit", value: String(args.limit ?? 10), tone: "accent" },
+          ...(args.cwd ? [{ label: "cwd", value: args.cwd }] : []),
+          ...(args.after ? [{ label: "after", value: args.after }] : []),
+          ...(args.before ? [{ label: "before", value: args.before }] : []),
+        ],
+        longArgs:
+          query.length > 70
+            ? [
+                {
+                  label: "query",
+                  value: query,
+                },
+              ]
+            : [],
+      },
+      theme,
+    );
+  },
+
+  renderResult(
+    result: AgentToolResult<FindSessionsDetails>,
+    options: ToolRenderResultOptions,
+    theme: Theme,
+  ) {
+    const { details } = result;
+
+    if (!details) {
+      const text = result.content[0];
+      const content = text?.type === "text" ? text.text : "No result";
+      return new Text(content, 0, 0);
+    }
+
+    const { query, resultCount, results, filters } = details;
+    const fields: Array<
+      { label: string; value: string; showCollapsed?: boolean } | Text
+    > = [];
+
+    if (resultCount === 0) {
+      fields.push(
+        new Text(
+          `${theme.fg("muted", "No sessions found matching")} ${theme.fg("accent", `"${query}"`)}`,
+          0,
+          0,
+        ),
       );
-    },
-  });
+    } else {
+      const lines: string[] = [];
+
+      if (!options.expanded) {
+        for (const session of results) {
+          const date = (session.created || session.modified || "").slice(0, 10);
+          const label = session.name || "(untitled)";
+          const preview =
+            label.length > 48 ? `${label.slice(0, 48)}...` : label;
+          const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;
+
+          lines.push(
+            `  ${theme.fg("success", "•")} ${theme.fg("accent", session.id.slice(0, 8))} ${theme.fg("muted", "- ")}${theme.fg("muted", date)} ${theme.fg("muted", "- ")}${theme.fg("toolOutput", preview)} ${theme.fg("muted", "- ")}${theme.fg("success", msgCount)}`,
+          );
+        }
+      } else {
+        for (const session of results) {
+          if (lines.length > 0) lines.push("");
+          lines.push(...renderSessionCard(session, query, theme));
+        }
+      }
+
+      if (lines.length > 0) {
+        fields.push(new Text(lines.join("\n"), 0, 0));
+      }
+    }
+
+    const footer = new ToolFooter(theme, {
+      items: [
+        { label: "matches", value: String(resultCount), tone: "success" },
+        {
+          label: "limit",
+          value: String(filters.limit ?? 10),
+          tone: "muted",
+        },
+      ],
+    });
+
+    return new ToolBody(
+      {
+        fields,
+        footer,
+      },
+      options,
+      theme,
+    );
+  },
+});
+
+export default async function (pi: ExtensionAPI) {
+  pi.registerTool(findSessionsTool);
 }

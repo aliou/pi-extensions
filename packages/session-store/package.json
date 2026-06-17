@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@aliou/sesame": "^0.8.0",
-    "@earendil-works/pi-coding-agent": "0.74.1",
+    "@earendil-works/pi-coding-agent": "0.79.6",
     "@harness/utils": "workspace:*"
   }
 }

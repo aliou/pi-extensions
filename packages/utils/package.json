@@ -11,6 +11,6 @@
     "./types": "./types.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-agent-core": "0.74.1"
+    "@earendil-works/pi-agent-core": "0.79.6"
   }
 }
