@@ -27,6 +27,7 @@ const PLAY_ALERT_SOUND_BINARY = fileURLToPath(
 // const DEFAULT_SOUND = "/System/Library/Sounds/Blow.aiff";
 const DEFAULT_SOUND = "/System/Library/Sounds/Funk.aiff";
 const ATTENTION_SOUND = "/System/Library/Sounds/Glass.aiff";
+const ERROR_SOUND = "/System/Library/Sounds/Basso.aiff";
 
 interface DangerousEvent {
   description: string;
@@ -48,11 +49,15 @@ interface DoneEvent {
   toolCalls?: number;
 }
 
-function isAgentRunAborted(event: unknown): boolean {
-  if (!event || typeof event !== "object") return false;
+/**
+ * Find the last assistant message's stopReason in an event's messages array.
+ * Returns the raw string (e.g. "stop", "aborted", "error") or undefined.
+ */
+function lastAssistantStopReason(event: unknown): string | undefined {
+  if (!event || typeof event !== "object") return undefined;
 
   const messages = (event as { messages?: unknown }).messages;
-  if (!Array.isArray(messages)) return false;
+  if (!Array.isArray(messages)) return undefined;
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
@@ -62,12 +67,25 @@ function isAgentRunAborted(event: unknown): boolean {
     if (role !== "assistant") continue;
 
     const stopReason = (message as { stopReason?: unknown }).stopReason;
-    return (
-      typeof stopReason === "string" && stopReason.toLowerCase() === "aborted"
-    );
+    return typeof stopReason === "string" ? stopReason : undefined;
   }
 
-  return false;
+  return undefined;
+}
+
+function isAgentRunAborted(event: unknown): boolean {
+  const stopReason = lastAssistantStopReason(event);
+  return stopReason?.toLowerCase() === "aborted";
+}
+
+/**
+ * An agent-level error means the last assistant message ended with
+ * stopReason "error" (provider/LLM failure). This is distinct from a
+ * tool-result error tracked via hadError, which only marks individual
+ * tool calls that failed but still let the turn complete normally.
+ */
+function isAgentRunErrored(event: unknown): boolean {
+  return lastAssistantStopReason(event)?.toLowerCase() === "error";
 }
 
 type ToolCallHandler = (
@@ -166,13 +184,14 @@ async function handleAttentionEvent(
 async function handleDoneEvent(pi: ExtensionAPI, data: unknown): Promise<void> {
   const event = data as DoneEvent;
   const message = event.summary ?? "done";
-  await notify(pi, message, DEFAULT_SOUND);
+  const sound = event.status === "error" ? ERROR_SOUND : DEFAULT_SOUND;
+  await notify(pi, message, sound);
 }
 
 export function setupNotificationHook(pi: ExtensionAPI) {
   let loopCount = 0;
   let toolCallCount = 0;
-  let hadError = false;
+  let agentMessageErrored = false;
 
   const startNotifications = TOOL_NOTIFICATIONS.filter(
     (n): n is ToolStartNotification => n.trigger === "start",
@@ -191,6 +210,14 @@ export function setupNotificationHook(pi: ExtensionAPI) {
         `play-alert-sound binary not found at ${PLAY_ALERT_SOUND_BINARY}. Run scripts/build-native-tools.sh`,
         "warning",
       );
+    }
+  });
+
+  pi.on("message_end", async (event) => {
+    if (event.message.role !== "assistant") return;
+
+    if (event.message.stopReason === "error") {
+      agentMessageErrored = true;
     }
   });
 
@@ -214,8 +241,6 @@ export function setupNotificationHook(pi: ExtensionAPI) {
     loopCount++;
 
     for (const result of event.toolResults) {
-      if (result.isError) hadError = true;
-
       const notification = endNotifications.find(
         (n) => n.toolName === result.toolName,
       );
@@ -233,8 +258,11 @@ export function setupNotificationHook(pi: ExtensionAPI) {
     const wasAborted = isAgentRunAborted(event);
 
     if (wasRunning && !wasAborted) {
-      const status = hadError ? "error" : "ok";
-      const summary = `${hadError ? "with errors" : "done"} - ${loopCount} loops, ${toolCallCount} tools`;
+      // Provider/LLM-level failure (stopReason="error") is an agent-level
+      // error, distinct from an individual tool call returning isError.
+      const errored = agentMessageErrored || isAgentRunErrored(event);
+      const status = errored ? "error" : "ok";
+      const summary = `${errored ? "with errors" : "done"} - ${loopCount} loops, ${toolCallCount} tools`;
       pi.events.emit(AD_NOTIFY_DONE_EVENT, {
         source: "chrome:notification",
         status,
@@ -247,7 +275,7 @@ export function setupNotificationHook(pi: ExtensionAPI) {
     // Reset counters for next run
     loopCount = 0;
     toolCallCount = 0;
-    hadError = false;
+    agentMessageErrored = false;
   });
 
   pi.events.on(AD_NOTIFY_DANGEROUS_EVENT, (data: unknown) => {
