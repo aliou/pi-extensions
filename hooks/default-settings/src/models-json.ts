@@ -12,7 +12,6 @@ export interface ModelsJsonConfig {
       modelOverrides?: Record<
         string,
         {
-          contextWindow?: number;
           maxTokens?: number;
           cost?: {
             input?: number;

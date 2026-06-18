@@ -3,14 +3,8 @@ import type { DriftedModelOverride } from "./drift";
 export function formatModelOverrideLines(
   drifted: DriftedModelOverride[],
 ): string[] {
-  return drifted.map(({ provider, modelId, contextWindow, cost }) => {
+  return drifted.map(({ provider, modelId, cost }) => {
     const parts: string[] = [];
-
-    if (contextWindow) {
-      parts.push(
-        fmtField("contextWindow", contextWindow.current, contextWindow.desired),
-      );
-    }
 
     if (cost) {
       for (const [key, { current, desired }] of Object.entries(cost)) {

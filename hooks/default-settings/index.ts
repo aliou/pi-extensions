@@ -7,12 +7,7 @@ import {
   collectMissingEnabledModels,
   formatEnabledModelLines,
 } from "./enabled-models";
-import {
-  CONTEXT_WINDOW_CLAMP,
-  deriveContextWindowClampOverrides,
-  EXPLICIT_MODEL_OVERRIDES,
-  mergeModelOverrides,
-} from "./model-overrides";
+import { MODEL_OVERRIDES } from "./model-overrides";
 import { applyModelOverrides, collectDriftedModelOverrides } from "./src/drift";
 import { formatModelOverrideLines } from "./src/format";
 import { readModelsJson, writeModelsJson } from "./src/models-json";
@@ -23,19 +18,10 @@ export default function defaultSettings(pi: ExtensionAPI): void {
     // Only prompt on fresh starts, not resumes/switches
     if (event.reason !== "startup" && event.reason !== "new") return;
 
-    // Derive context-window clamps from the registry (covers every
-    // auth-configured model whose context window exceeds the cap), merged
-    // with any explicit hand-maintained overrides (e.g. pricing fixes).
-    const registryModels = ctx.modelRegistry.getAvailable();
-    const modelOverrides = mergeModelOverrides(
-      deriveContextWindowClampOverrides(registryModels, CONTEXT_WINDOW_CLAMP),
-      EXPLICIT_MODEL_OVERRIDES,
-    );
-
-    if (Object.keys(modelOverrides).length > 0) {
+    if (Object.keys(MODEL_OVERRIDES).length > 0) {
       const modelsJsonPath = join(getAgentDir(), "models.json");
       const config = readModelsJson(modelsJsonPath);
-      const drifted = collectDriftedModelOverrides(config, modelOverrides);
+      const drifted = collectDriftedModelOverrides(config, MODEL_OVERRIDES);
 
       if (drifted.length > 0) {
         const lines = formatModelOverrideLines(drifted);
@@ -50,7 +36,7 @@ export default function defaultSettings(pi: ExtensionAPI): void {
         const confirmed = await ctx.ui.confirm("Sync models.json?", message);
 
         if (confirmed) {
-          applyModelOverrides(config, modelOverrides);
+          applyModelOverrides(config, MODEL_OVERRIDES);
           writeModelsJson(modelsJsonPath, config);
           ctx.modelRegistry.refresh();
           ctx.ui.notify(

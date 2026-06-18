@@ -85,6 +85,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | Directory | Purpose | Key files |
 |---|---|---|
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming | `hooks/`, `components/`, `lib/`, `native/` |
+| `context-clamp/` | Clamp model context windows at runtime via in-place mutation (no models.json writes) | `index.ts` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `fast-mode/` | Session-local fast-mode controls for Opus and Codex | `index.ts` |

@@ -4,7 +4,6 @@ import type { ModelsJsonConfig } from "./models-json";
 export interface DriftedModelOverride {
   provider: string;
   modelId: string;
-  contextWindow?: { current: number | undefined; desired: number };
   cost?: Record<string, { current: number | undefined; desired: number }>;
 }
 
@@ -22,16 +21,6 @@ export function collectDriftedModelOverrides(
         provider,
         modelId,
       };
-
-      if (override.contextWindow !== undefined) {
-        const current = modelEntry?.contextWindow;
-        if (current !== override.contextWindow) {
-          drifted.contextWindow = {
-            current,
-            desired: override.contextWindow,
-          };
-        }
-      }
 
       if (override.cost !== undefined) {
         const currentCost = modelEntry?.cost;
@@ -53,7 +42,7 @@ export function collectDriftedModelOverrides(
         }
       }
 
-      if (drifted.contextWindow || drifted.cost) {
+      if (drifted.cost) {
         result.push(drifted);
       }
     }
@@ -83,9 +72,6 @@ export function applyModelOverrides(
       }
       const modelEntry = providerConfig.modelOverrides[modelId];
 
-      if (override.contextWindow !== undefined) {
-        modelEntry.contextWindow = override.contextWindow;
-      }
       if (override.cost !== undefined) {
         if (!modelEntry.cost) {
           modelEntry.cost = {};
