@@ -28,7 +28,7 @@
   "dependencies": {
     "@aliou/pi-utils-ui": "^0.4.1",
     "@aliou/sesame": "^0.8.0",
-    "@aliou/sh": "^0.1.0",
+    "@aliou/sh": "^0.2.0",
     "@harness/agent-kit": "workspace:*",
     "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",

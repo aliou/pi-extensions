@@ -21,8 +21,8 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0(@mariozechner/pi-coding-agent@0.73.0(ws@8.20.0)(zod@3.25.76))
       '@aliou/sh':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.2.0
+        version: 0.2.0
       '@harness/agent-kit':
         specifier: workspace:*
         version: link:packages/agent-kit
@@ -212,8 +212,8 @@ packages:
     peerDependencies:
       '@mariozechner/pi-coding-agent': '*'
 
-  '@aliou/sh@0.1.0':
-    resolution: {integrity: sha512-MtVSUqNAHK8a0yQdwv4ADlTIBnEg8bpFXcqp0PaxwqxhSWAxcIrpAIPbsc3CJnUK3R++BcgaxBZ5saicHtU+8Q==}
+  '@aliou/sh@0.2.0':
+    resolution: {integrity: sha512-06PmGKpYl6eAJsZPhEPhBBgL3u/DVpyHoGSAG0Vgy9AQKxhPFrJyT4ckFjbIwTe5+IvsJITU5nkSanxi1FIHdQ==}
     engines: {node: '>=22'}
 
   '@anthropic-ai/sdk@0.91.1':
@@ -2081,7 +2081,7 @@ snapshots:
     dependencies:
       '@mariozechner/pi-coding-agent': 0.73.0(ws@8.20.0)(zod@3.25.76)
 
-  '@aliou/sh@0.1.0': {}
+  '@aliou/sh@0.2.0': {}
 
   '@anthropic-ai/sdk@0.91.1(zod@3.25.76)':
     dependencies:
