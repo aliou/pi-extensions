@@ -55,3 +55,39 @@ export type AdHeaderRegisterCompletionEvent = {
   trigger: string;
   description: string;
 };
+
+// ─── TPS telemetry (hooks/tps) ─────────────────────────────────────────────
+
+export const AD_TPS_TELEMETRY_EVENT = "ad:tps:telemetry";
+
+export interface TpsCost {
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+  total: number;
+}
+
+export interface TpsTelemetry {
+  model: { provider: string; modelId: string };
+  tokens: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    total: number;
+  };
+  timing: {
+    ttftMs: number | null;
+    totalMs: number;
+    generationMs: number;
+    streamMs: number | null;
+    stallMs: number;
+    stallCount: number;
+    messageCount: number;
+  };
+  tps: number | null;
+  isPrimaryBranch: boolean;
+  cost: TpsCost | null;
+  timestamp: number;
+}
