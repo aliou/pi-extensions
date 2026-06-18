@@ -13,14 +13,19 @@ import type {
  * effect immediately without writing to models.json or re-registering
  * providers.
  *
- * Two events:
- *   - `session_start` clamps the initial/restore model. Needed because
- *     `model_select` is never emitted with the `"restore"` source at startup,
- *     so the initial model wouldn't be clamped otherwise.
- *   - `model_select` clamps the newly selected model. Covers model swaps and
- *     re-selections after a `modelRegistry.refresh()` (e.g. triggered by the
- *     `compact-model-swap` hook), which rebuilds the model object fresh and
- *     unclamped.
+ * We clamp on three events because the session's model object can be replaced
+ * (registry refresh, model restore, provider (un)registration) at various
+ * points, replacing our mutated reference with a fresh unclamped one:
+ *   - `session_start` — clamp the initial model early. Catches any
+ *     context-window read between startup and the first turn.
+ *   - `model_select` — clamp on every model swap (/model, cycling). Also
+ *     covers re-selections after a `modelRegistry.refresh()` (e.g. triggered
+ *     by the `compact-model-swap` hook), which rebuilds the model object
+ *     fresh and unclamped.
+ *   - `before_agent_start` — clamp right before each turn. This is the
+ *     safety net: whatever model object the session settled on (after any
+ *     restore/refresh/reassignment that happened since session_start), it is
+ *     clamped at the last moment before the turn reads `contextWindow`.
  */
 export const CONTEXT_WINDOW_CLAMP = 272_000;
 
@@ -31,7 +36,10 @@ export default function contextClamp(pi: ExtensionAPI): void {
    * Guarded against non-finite / missing contextWindow so unknown custom
    * models are skipped rather than corrupted.
    */
-  const clampModel = (model: Model<Api>, ctx: ExtensionContext) => {
+  const clampModel = (model: Model<Api> | undefined, ctx: ExtensionContext) => {
+    if (!model) {
+      return;
+    }
     const current = model.contextWindow;
     if (typeof current !== "number" || !Number.isFinite(current)) return;
     if (current <= CONTEXT_WINDOW_CLAMP) return;
@@ -45,14 +53,14 @@ export default function contextClamp(pi: ExtensionAPI): void {
   };
 
   pi.on("session_start", async (_event, ctx) => {
-    if (!ctx.model) {
-      return;
-    }
-
     clampModel(ctx.model, ctx);
   });
 
   pi.on("model_select", async (event, ctx) => {
     clampModel(event.model, ctx);
+  });
+
+  pi.on("before_agent_start", async (_event, ctx) => {
+    clampModel(ctx.model, ctx);
   });
 }
