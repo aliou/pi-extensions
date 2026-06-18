@@ -31,13 +31,6 @@ export const groups = {
 export const defaultModelRosters = {
   "ad:utility:text": [
     {
-      provider: "synthetic",
-      model: "hf:zai-org/GLM-4.7-Flash",
-      thinking: "off",
-    },
-    { provider: "neuralwatt", model: "glm-5.1-fast", thinking: "off" },
-    { provider: "neuralwatt", model: "glm-5-fast", thinking: "off" },
-    {
       provider: "openai-codex",
       model: "gpt-5.3-codex-spark",
       thinking: "off",
@@ -46,6 +39,12 @@ export const defaultModelRosters = {
         "codex-spark",
       ]),
     },
+    {
+      provider: "synthetic",
+      model: "hf:zai-org/GLM-4.7-Flash",
+      thinking: "off",
+    },
+    { provider: "neuralwatt", model: "glm-5.2-fast", thinking: "off" },
   ],
   "ad:session:read": [
     {
@@ -58,7 +57,7 @@ export const defaultModelRosters = {
       model: "hf:zai-org/GLM-4.7-Flash",
       thinking: "off",
     },
-    { provider: "neuralwatt", model: "glm-5.1-fast", thinking: "off" },
+    { provider: "neuralwatt", model: "glm-5.2-fast", thinking: "off" },
     { provider: "neuralwatt", model: "kimi-k2.6-fast", thinking: "off" },
     { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
   ],

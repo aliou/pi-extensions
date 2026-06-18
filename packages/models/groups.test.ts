@@ -50,7 +50,7 @@ describe("defaultModelRosters", () => {
       neuralwatt: new Set([
         "glm-5-fast",
         "glm-5.1",
-        "glm-5.1-fast",
+        "glm-5.2-fast",
         "kimi-k2.6",
         "kimi-k2.6-fast",
         "kimi-k2.7-code",
