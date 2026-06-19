@@ -2,7 +2,9 @@ import type {
   EditToolInput,
   ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
-import { createEditTool } from "@earendil-works/pi-coding-agent";
+import { createEditToolDefinition } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
+import { formatDisplayPath } from "@harness/utils";
 
 /**
  * Override the built-in edit tool to tolerate stray empty-string entries in
@@ -44,12 +46,27 @@ export function prepareEditArguments(
 }
 
 export default function (pi: ExtensionAPI): void {
-  const nativeEdit = createEditTool(process.cwd());
+  const nativeEdit = createEditToolDefinition(process.cwd());
 
   pi.registerTool({
     ...nativeEdit,
     prepareArguments(args) {
       return prepareEditArguments(args, nativeEdit.prepareArguments);
+    },
+    renderCall(args, theme, ctx) {
+      const displayPath = formatDisplayPath(args.path, ctx.cwd);
+      if (nativeEdit.renderCall) {
+        return nativeEdit.renderCall(
+          { ...args, path: displayPath },
+          theme,
+          ctx,
+        );
+      }
+      return new Text(
+        `${theme.fg("toolTitle", theme.bold("Edit"))} ${theme.fg("text", displayPath)}`,
+        0,
+        0,
+      );
     },
   });
 }

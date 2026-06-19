@@ -25,32 +25,45 @@ vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
   const actual = await importOriginal<object>();
   const originalCreateEditTool = (actual as Record<string, unknown>)
     .createEditTool as typeof import("@earendil-works/pi-coding-agent").createEditTool;
+  const originalCreateEditToolDefinition = (actual as Record<string, unknown>)
+    .createEditToolDefinition as typeof import("@earendil-works/pi-coding-agent").createEditToolDefinition;
+
+  const memfsOperations = {
+    readFile: (path: string) =>
+      vol.promises
+        .readFile(path)
+        .then((b) => (typeof b === "string" ? Buffer.from(b) : b)),
+    writeFile: (path: string, content: string) =>
+      vol.promises.writeFile(path, content),
+    access: (path: string, mode?: number) => vol.promises.access(path, mode),
+  };
 
   return {
     ...actual,
     createEditTool: (
       cwd: string,
       options?: Parameters<typeof originalCreateEditTool>[1],
-    ) => {
-      const memfsOps = {
-        readFile: (path: string) =>
-          vol.promises
-            .readFile(path)
-            .then((b) => (typeof b === "string" ? Buffer.from(b) : b)),
-        writeFile: (path: string, content: string) =>
-          vol.promises.writeFile(path, content),
-        access: (path: string, mode?: number) =>
-          vol.promises.access(path, mode),
-      };
-      return originalCreateEditTool(cwd, {
+    ) =>
+      originalCreateEditTool(cwd, {
         ...options,
-        operations: memfsOps as Parameters<
+        operations: memfsOperations as Parameters<
           typeof originalCreateEditTool
         >[1] extends { operations?: infer O } | undefined
           ? O
           : never,
-      });
-    },
+      }),
+    createEditToolDefinition: (
+      cwd: string,
+      options?: Parameters<typeof originalCreateEditToolDefinition>[1],
+    ) =>
+      originalCreateEditToolDefinition(cwd, {
+        ...options,
+        operations: memfsOperations as Parameters<
+          typeof originalCreateEditToolDefinition
+        >[1] extends { operations?: infer O } | undefined
+          ? O
+          : never,
+      }),
   };
 });
 
