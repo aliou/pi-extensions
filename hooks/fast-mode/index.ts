@@ -1,4 +1,4 @@
-import { streamSimpleAnthropic } from "@earendil-works/pi-ai";
+import { streamSimpleAnthropic } from "@earendil-works/pi-ai/anthropic";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -91,6 +91,16 @@ function appendBetas(...values: Array<string | undefined>): string {
   return [...betas].join(",");
 }
 
+function addOpusFastModePayload(payload: unknown): unknown {
+  if (!isRecord(payload)) return payload;
+
+  const model = payload.model;
+  if (typeof model !== "string" || !isOpusSupportedModel(model)) return payload;
+  if (Object.hasOwn(payload, "speed")) return payload;
+
+  return { ...payload, speed: "fast" };
+}
+
 let opusEnabled = true;
 
 function emitOpus(pi: ExtensionAPI, ctx: ExtensionContext): void {
@@ -140,9 +150,18 @@ export default function fastModeHook(pi: ExtensionAPI): void {
         "anthropic-beta": appendBetas(base, incoming),
       };
 
+      const onPayload = options?.onPayload;
+
       return streamSimpleAnthropic(anthropicModel, context, {
         ...options,
         headers,
+        async onPayload(payload, payloadModel) {
+          const fastPayload = addOpusFastModePayload(payload);
+          if (!onPayload) return fastPayload;
+
+          const nextPayload = await onPayload(fastPayload, payloadModel);
+          return nextPayload === undefined ? fastPayload : nextPayload;
+        },
       });
     },
   });
@@ -168,18 +187,6 @@ export default function fastModeHook(pi: ExtensionAPI): void {
     if (Object.hasOwn(event.payload, "service_tier")) return;
 
     return { ...event.payload, service_tier: "priority" };
-  });
-
-  // Opus: inject speed into provider request
-  pi.on("before_provider_request", (event, ctx) => {
-    if (!opusEnabled || !isRecord(event.payload)) return;
-    if (ctx.model?.provider !== "anthropic") return;
-
-    const model = event.payload.model;
-    if (typeof model !== "string" || !isOpusSupportedModel(model)) return;
-    if (Object.hasOwn(event.payload, "speed")) return;
-
-    return { ...event.payload, speed: "fast" };
   });
 
   // Header registration
