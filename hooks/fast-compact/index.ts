@@ -1,7 +1,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-import { fastCompact } from "./compaction";
-import { createSummarizationSubagent } from "./subagent";
+import { runCompaction } from "./run";
+import type { CompactChoice } from "./types";
+import { CompactModePicker } from "./ui";
+
+const DEFAULT_CHOICE: CompactChoice = { mode: "simple", edit: false };
 
 export default function fastCompactHook(pi: ExtensionAPI) {
   pi.on("session_before_compact", async (event, ctx) => {
@@ -9,43 +12,28 @@ export default function fastCompactHook(pi: ExtensionAPI) {
       return undefined;
     }
 
-    const model = ctx.model;
-    if (!model) {
-      return undefined;
+    let choice: CompactChoice | null | undefined;
+
+    if (ctx.mode === "tui") {
+      choice = await ctx.ui.custom(
+        (tui, theme, _keybindings, done) =>
+          new CompactModePicker(tui, theme, done),
+      );
     }
 
-    const subagent = createSummarizationSubagent(
-      pi,
-      model,
-      pi.getThinkingLevel(),
-    );
-
-    const summarize = async (prompt: string) => {
-      const result = await subagent.runWithParams(
-        { prompt },
-        { callId: "fast-compact", ctx, signal: event.signal },
-      );
-
-      if (result.details.status === "error" || result.details.error) {
-        throw new Error(
-          result.details.error ?? "Subagent summarization failed",
-        );
-      }
-
-      const response = result.details.response;
-      if (response === undefined || response === "") {
-        throw new Error("Subagent returned empty summary");
-      }
-
-      return response;
-    };
+    const resolvedChoice = choice ?? DEFAULT_CHOICE;
 
     try {
-      const compaction = await fastCompact(
-        event.preparation,
-        event.customInstructions,
-        summarize,
-      );
+      const compaction = await runCompaction({
+        pi,
+        ctx,
+        event,
+        choice: resolvedChoice,
+      });
+
+      if (!compaction) {
+        return undefined;
+      }
 
       return { compaction };
     } catch (error) {
