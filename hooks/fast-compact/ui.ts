@@ -15,47 +15,26 @@ import type { CompactChoice, CompactMode } from "./types";
 
 const AUTO_SELECT_DELAY_SECONDS = 30;
 
-interface CompactOption {
-  mode: CompactMode;
-  edit: boolean;
-}
-
-function labelFor(option: CompactOption): string {
-  const mode = option.mode === "simple" ? "Simple" : "Fast";
-  return option.edit ? `${mode} compact (edit)` : `${mode} compact`;
-}
-
-const options: CompactOption[] = [
-  { mode: "simple", edit: false },
-  { mode: "fast", edit: false },
-  { mode: "simple", edit: true },
-  { mode: "fast", edit: true },
-];
-
-const items: SelectItem[] = options.map((option) => ({
-  label: labelFor(option),
-  value: `${option.mode}:${option.edit ? "edit" : "no-edit"}`,
-}));
-
-function parseValue(value: string): CompactOption {
-  const [mode, editFlag] = value.split(":");
-  return {
-    mode: mode as CompactMode,
-    edit: editFlag === "edit",
-  };
+interface StepList {
+  items: SelectItem[];
+  list: SelectList;
+  index: number;
 }
 
 export class CompactModePicker implements Component {
-  private readonly list: SelectList;
   private readonly tui: TUI;
   private readonly theme: Theme;
   private readonly done: (result: CompactChoice | null) => void;
 
-  private selectedIndex = 0;
+  private step: "mode" | "edit" = "mode";
+  private selectedMode: CompactMode = "simple";
   private settled = false;
   private remainingSeconds = AUTO_SELECT_DELAY_SECONDS;
   private timer?: ReturnType<typeof setInterval>;
   private timerActive = true;
+
+  private readonly mode: StepList;
+  private readonly edit: StepList;
 
   constructor(
     tui: TUI,
@@ -66,14 +45,33 @@ export class CompactModePicker implements Component {
     this.theme = theme;
     this.done = done;
 
-    this.list = new SelectList(items, items.length, getSelectListTheme());
-    this.list.onSelect = (item) => {
-      const option = parseValue(item.value);
-      this.finish({ mode: option.mode, edit: option.edit });
-    };
-    this.list.onCancel = () => this.finish(null);
-    this.list.onSelectionChange = (item) => {
-      this.selectedIndex = items.findIndex((i) => i.value === item.value);
+    const modeItems: SelectItem[] = [
+      { label: "Simple compact", value: "simple" },
+      { label: "Fast compact", value: "fast" },
+    ];
+
+    const editItems: SelectItem[] = [
+      { label: "Continue", value: "no-edit" },
+      { label: "Edit summary", value: "edit" },
+    ];
+
+    this.mode = this.buildStep(modeItems, (item) => {
+      this.selectedMode = item.value as CompactMode;
+      this.step = "edit";
+      this.tui.requestRender();
+    });
+
+    this.edit = this.buildStep(editItems, (item) => {
+      this.finish({
+        mode: this.selectedMode,
+        edit: item.value === "edit",
+      });
+    });
+
+    this.mode.list.onCancel = () => this.finish(null);
+    this.edit.list.onCancel = () => {
+      this.step = "mode";
+      this.tui.requestRender();
     };
 
     this.startTimer();
@@ -84,45 +82,79 @@ export class CompactModePicker implements Component {
 
     this.cancelTimer();
 
+    const step = this.currentStep();
+
     if (matchesKey(data, Key.tab)) {
-      this.selectedIndex = (this.selectedIndex + 1) % items.length;
-      this.list.setSelectedIndex(this.selectedIndex);
-      this.list.invalidate();
+      step.index = (step.index + 1) % step.items.length;
+      step.list.setSelectedIndex(step.index);
+      step.list.invalidate();
       this.tui.requestRender();
       return;
     }
 
     if (matchesKey(data, Key.shift("tab"))) {
-      this.selectedIndex =
-        (this.selectedIndex - 1 + items.length) % items.length;
-      this.list.setSelectedIndex(this.selectedIndex);
-      this.list.invalidate();
+      step.index = (step.index - 1 + step.items.length) % step.items.length;
+      step.list.setSelectedIndex(step.index);
+      step.list.invalidate();
       this.tui.requestRender();
       return;
     }
 
-    this.list.handleInput(data);
+    step.list.handleInput(data);
   }
 
   render(width: number): string[] {
-    let help = "↑↓ move · Tab/Shift+Tab move · Enter run · Esc default";
-    if (this.timerActive) {
-      help += ` · default in ${this.remainingSeconds}s`;
+    const step = this.currentStep();
+    const title =
+      this.step === "mode" ? "Compaction mode" : "Compaction options";
+
+    let help = "↑↓ move · Tab/Shift+Tab move · Enter select";
+    if (this.step === "mode") {
+      help += " · Esc default";
+      if (this.timerActive) {
+        help += ` · default in ${this.remainingSeconds}s`;
+      }
+    } else {
+      help += " · Esc back";
     }
+
     const footer = new Text(this.theme.fg("muted", help), 0, 0);
 
     return new Panel({
-      title: "Compaction",
+      title,
       titleStyle: (text) => this.theme.fg("accent", text),
       borderStyle: (text) => this.theme.fg("muted", text),
       border: "round",
-      body: this.list,
+      body: step.list,
       footer,
     }).render(width);
   }
 
   invalidate(): void {
-    this.list.invalidate();
+    this.mode.list.invalidate();
+    this.edit.list.invalidate();
+  }
+
+  private buildStep(
+    items: SelectItem[],
+    onSelect: (item: SelectItem) => void,
+  ): StepList {
+    const list = new SelectList(items, items.length, getSelectListTheme());
+    const step: StepList = { items, list, index: 0 };
+
+    list.onSelect = (item) => {
+      step.index = items.findIndex((i) => i.value === item.value);
+      onSelect(item);
+    };
+    list.onSelectionChange = (item) => {
+      step.index = items.findIndex((i) => i.value === item.value);
+    };
+
+    return step;
+  }
+
+  private currentStep(): StepList {
+    return this.step === "mode" ? this.mode : this.edit;
   }
 
   private startTimer(): void {
