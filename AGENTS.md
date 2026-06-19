@@ -69,7 +69,6 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 |---|---|---|
 | Directory | Commands | Notes |
 |---|---|---|
-| `compact-prefill/` | `/compact:prefill` | Trigger compaction and prefill the editor |
 | `continue/` | `/continue` | Continue from a linked parent session |
 | `copy-session-id/` | `/copy:session-id` | Copy session ID to clipboard |
 | `copy-session-path/` | `/copy:session-path` | Copy session file path to clipboard |
