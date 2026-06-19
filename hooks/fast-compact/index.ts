@@ -1,6 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 import { fastCompact } from "./compaction";
+import { createSummarizationSubagent } from "./subagent";
 
 export default function fastCompactHook(pi: ExtensionAPI) {
   pi.on("session_before_compact", async (event, ctx) => {
@@ -13,25 +14,37 @@ export default function fastCompactHook(pi: ExtensionAPI) {
       return undefined;
     }
 
-    const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
-    if (!auth.ok) {
-      ctx.ui.notify(
-        `[fast-compact] auth unavailable: ${auth.error}`,
-        "warning",
+    const subagent = createSummarizationSubagent(
+      pi,
+      model,
+      pi.getThinkingLevel(),
+    );
+
+    const summarize = async (prompt: string) => {
+      const result = await subagent.runWithParams(
+        { prompt },
+        { callId: "fast-compact", ctx, signal: event.signal },
       );
-      return undefined;
-    }
+
+      if (result.details.status === "error" || result.details.error) {
+        throw new Error(
+          result.details.error ?? "Subagent summarization failed",
+        );
+      }
+
+      const response = result.details.response;
+      if (response === undefined || response === "") {
+        throw new Error("Subagent returned empty summary");
+      }
+
+      return response;
+    };
 
     try {
       const compaction = await fastCompact(
         event.preparation,
-        model,
-        auth.apiKey,
-        auth.headers,
-        auth.env,
         event.customInstructions,
-        event.signal,
-        pi.getThinkingLevel(),
+        summarize,
       );
 
       return { compaction };
