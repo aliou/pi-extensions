@@ -15,10 +15,35 @@ import type { CompactChoice, CompactMode } from "./types";
 
 const AUTO_SELECT_DELAY_SECONDS = 30;
 
-const items: SelectItem[] = [
-  { label: "Simple compact", value: "simple" },
-  { label: "Fast compact", value: "fast" },
+interface CompactOption {
+  mode: CompactMode;
+  edit: boolean;
+}
+
+function labelFor(option: CompactOption): string {
+  const mode = option.mode === "simple" ? "Simple" : "Fast";
+  return option.edit ? `${mode} compact (edit)` : `${mode} compact`;
+}
+
+const options: CompactOption[] = [
+  { mode: "simple", edit: false },
+  { mode: "fast", edit: false },
+  { mode: "simple", edit: true },
+  { mode: "fast", edit: true },
 ];
+
+const items: SelectItem[] = options.map((option) => ({
+  label: labelFor(option),
+  value: `${option.mode}:${option.edit ? "edit" : "no-edit"}`,
+}));
+
+function parseValue(value: string): CompactOption {
+  const [mode, editFlag] = value.split(":");
+  return {
+    mode: mode as CompactMode,
+    edit: editFlag === "edit",
+  };
+}
 
 export class CompactModePicker implements Component {
   private readonly list: SelectList;
@@ -27,7 +52,6 @@ export class CompactModePicker implements Component {
   private readonly done: (result: CompactChoice | null) => void;
 
   private selectedIndex = 0;
-  private edit = false;
   private settled = false;
   private remainingSeconds = AUTO_SELECT_DELAY_SECONDS;
   private timer?: ReturnType<typeof setInterval>;
@@ -43,8 +67,10 @@ export class CompactModePicker implements Component {
     this.done = done;
 
     this.list = new SelectList(items, items.length, getSelectListTheme());
-    this.list.onSelect = (item) =>
-      this.finish({ mode: item.value as CompactMode, edit: this.edit });
+    this.list.onSelect = (item) => {
+      const option = parseValue(item.value);
+      this.finish({ mode: option.mode, edit: option.edit });
+    };
     this.list.onCancel = () => this.finish(null);
     this.list.onSelectionChange = (item) => {
       this.selectedIndex = items.findIndex((i) => i.value === item.value);
@@ -67,8 +93,10 @@ export class CompactModePicker implements Component {
     }
 
     if (matchesKey(data, Key.shift("tab"))) {
-      this.edit = !this.edit;
-      this.invalidate();
+      this.selectedIndex =
+        (this.selectedIndex - 1 + items.length) % items.length;
+      this.list.setSelectedIndex(this.selectedIndex);
+      this.list.invalidate();
       this.tui.requestRender();
       return;
     }
@@ -77,8 +105,7 @@ export class CompactModePicker implements Component {
   }
 
   render(width: number): string[] {
-    const editLabel = this.edit ? "on" : "off";
-    let help = `Tab mode · Shift+Tab edit · Enter run · Esc default · edit: ${editLabel}`;
+    let help = "↑↓ move · Tab/Shift+Tab move · Enter run · Esc default";
     if (this.timerActive) {
       help += ` · default in ${this.remainingSeconds}s`;
     }
