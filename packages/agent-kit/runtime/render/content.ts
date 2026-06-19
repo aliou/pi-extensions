@@ -228,6 +228,7 @@ function renderConfiguredToolCall(
   )?.render;
 
   return (
-    renderer?.(toolCall, options, theme, cwd) ?? renderToolCall(toolCall, theme)
+    renderer?.(toolCall, options, theme, cwd) ??
+    renderToolCall(toolCall, theme, cwd)
   );
 }

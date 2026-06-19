@@ -1,5 +1,6 @@
 import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
 import { Markdown, Text } from "@earendil-works/pi-tui";
+import { formatDisplayPath } from "@harness/utils";
 import type { SubagentToolCall } from "../types";
 import { extractParagraphs } from "./utils";
 
@@ -39,16 +40,30 @@ export function renderSubagentToolLine(
   );
 }
 
-export function renderToolCall(toolCall: SubagentToolCall, theme: Theme) {
+export function renderToolCall(
+  toolCall: SubagentToolCall,
+  theme: Theme,
+  cwd: string,
+) {
   const indicator = formatToolCallIndicator(toolCall, theme);
-  return new Text(
-    `${indicator} ${theme.fg("toolTitle", toolCall.toolName)} ${theme.fg(
-      "toolOutput",
-      formatArgs(toolCall.args),
-    )}`,
-    0,
-    0,
-  );
+  const argsText = formatArgs(toolCall.args);
+  const cwdSuffix = formatCwdSuffix(toolCall.args.cwd, cwd, theme);
+  const parts = [
+    indicator,
+    theme.fg("toolTitle", toolCall.toolName),
+    argsText ? theme.fg("toolOutput", argsText) : undefined,
+    cwdSuffix,
+  ].filter((part): part is string => Boolean(part));
+  return new Text(parts.join(" "), 0, 0);
+}
+
+function formatCwdSuffix(
+  cwdArg: unknown,
+  cwd: string,
+  theme: Theme,
+): string | undefined {
+  if (!cwdArg || typeof cwdArg !== "string") return undefined;
+  return theme.fg("muted", `(cwd: ${formatDisplayPath(cwdArg, cwd)})`);
 }
 
 function formatToolCallIndicator(toolCall: SubagentToolCall, theme: Theme) {
@@ -63,8 +78,11 @@ function formatToolCallIndicator(toolCall: SubagentToolCall, theme: Theme) {
 }
 
 function formatArgs(args: Record<string, unknown>) {
+  const displayArgs = { ...args };
+  delete displayArgs.cwd;
+  if (Object.keys(displayArgs).length === 0) return "";
   try {
-    return JSON.stringify(args);
+    return JSON.stringify(displayArgs);
   } catch (_error) {
     void _error;
     return "[unserializable args]";
