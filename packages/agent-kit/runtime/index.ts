@@ -1,5 +1,6 @@
 export type { ToolRenderContext } from "./render";
 export {
+  formatSubagentCwd,
   renderHeaderMarkdown,
   renderSubagentCall,
   renderSubagentResult,

@@ -1,8 +1,16 @@
 import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
 import { Markdown, Text } from "@earendil-works/pi-tui";
-import { isNotNil } from "@harness/utils";
+import { formatDisplayPath, isNotNil } from "@harness/utils";
 import type { SubagentConfig } from "../../types";
 import type { ToolRenderContext } from "./types";
+
+export function formatSubagentCwd(
+  cwdArg: unknown,
+  ctxCwd: string,
+): string | undefined {
+  if (!cwdArg || typeof cwdArg !== "string") return undefined;
+  return formatDisplayPath(cwdArg, ctxCwd);
+}
 
 export function renderSubagentCall(
   config: SubagentConfig,
@@ -14,7 +22,8 @@ export function renderSubagentCall(
     return config.renderHeader(args, theme, ctx);
   }
 
-  return renderDefaultHeader(config, args, theme);
+  const cwd = formatSubagentCwd(args.cwd, ctx.cwd);
+  return renderDefaultHeader(config, args, theme, cwd);
 }
 
 /**
@@ -27,11 +36,15 @@ export function renderHeaderMarkdown(opts: {
   body: string;
   theme: Theme;
   resuming?: boolean;
+  cwd?: string;
 }) {
-  const { label, body, theme, resuming } = opts;
+  const { label, body, theme, resuming, cwd } = opts;
   const title = theme.fg("toolTitle", theme.bold(label));
   const trimmed = body.trim();
-  const suffix = resuming ? ` ${theme.fg("muted", "(resuming)")}` : "";
+  const suffixes: string[] = [];
+  if (resuming) suffixes.push(theme.fg("muted", "(resuming)"));
+  if (cwd) suffixes.push(theme.fg("muted", `(cwd: ${cwd})`));
+  const suffix = suffixes.length ? ` ${suffixes.join(" ")}` : "";
   const text = trimmed ? `${title} ${trimmed}${suffix}` : `${title}${suffix}`;
   return new Markdown(text, 0, 0, getMarkdownTheme());
 }
@@ -40,17 +53,22 @@ function renderDefaultHeader(
   config: SubagentConfig,
   args: Record<string, unknown>,
   theme: Theme,
+  cwd?: string,
 ) {
   const displayArgs = Object.entries(args)
-    .filter(([key]) => key !== "sessionId")
+    .filter(([key]) => key !== "sessionId" && key !== "cwd")
     .map(([key, value]) => `${theme.fg("dim", key)}: ${String(value)}`)
     .join(", ");
   const resuming = isNotNil(args.sessionId);
 
+  const suffixes: string[] = [];
+  if (resuming) suffixes.push(theme.fg("muted", "(resuming)"));
+  if (cwd) suffixes.push(theme.fg("muted", `(cwd: ${cwd})`));
+
   const header = [
     theme.fg("toolTitle", theme.bold(config.label)),
     displayArgs ? theme.fg("text", displayArgs) : undefined,
-    resuming && theme.fg("muted", "(resuming)"),
+    ...suffixes,
   ]
     .filter(Boolean)
     .join(" ");

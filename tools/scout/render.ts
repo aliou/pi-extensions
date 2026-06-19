@@ -1,6 +1,7 @@
 import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
 import { Markdown } from "@earendil-works/pi-tui";
 import {
+  formatSubagentCwd,
   renderHeaderMarkdown,
   renderSubagentToolLine,
   type ToolRenderContext,
@@ -15,13 +16,14 @@ import type { ScoutParamsType } from "./types";
 export function renderScoutHeader(
   args: ScoutParamsType & { sessionId?: string },
   theme: Theme,
-  _ctx: ToolRenderContext,
+  ctx: ToolRenderContext,
 ) {
   return renderHeaderMarkdown({
     label: "Scout",
     body: args.query ?? "",
     theme,
     resuming: isNotNil(args.sessionId),
+    cwd: formatSubagentCwd(args.cwd, ctx.cwd),
   });
 }
 
