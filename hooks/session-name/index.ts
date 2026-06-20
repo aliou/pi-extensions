@@ -14,8 +14,26 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     description: "Generate or refine a concise session name.",
     systemPrompt: SESSION_NAME_SYSTEM_PROMPT,
     tools: createSessionNameTools(pi),
-    modelGroup: "ad:utility:text",
-    session: { inheritSessionId: false },
+    modelPreferences: [
+      {
+        provider: "openai-codex",
+        model: "gpt-5.3-codex-spark",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "hf:zai-org/GLM-4.7-Flash",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "neuralwatt",
+        model: "glm-5.2-fast",
+        thinking: "off",
+        weight: 1,
+      },
+    ],
     parameters: Type.Object({
       turns: Type.Array(
         Type.Object({

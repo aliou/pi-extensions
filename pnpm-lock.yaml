@@ -102,9 +102,6 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 0.79.6
         version: 0.79.6
-      '@harness/models':
-        specifier: workspace:*
-        version: link:../models
       '@harness/utils':
         specifier: workspace:*
         version: link:../utils

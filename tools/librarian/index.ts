@@ -24,7 +24,32 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     renderDetails: renderLibrarianDetails,
     buildPrompt,
     tools,
-    modelGroup: "ad:codebase:remote",
+    modelPreferences: [
+      {
+        provider: "openai-codex",
+        model: "gpt-5.3-codex-spark",
+        thinking: "off",
+        weight: 2,
+      },
+      {
+        provider: "neuralwatt",
+        model: "qwen3.6-35b-fast",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:small:text",
+        thinking: "medium",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:small:vision",
+        thinking: "medium",
+        weight: 1,
+      },
+    ],
   });
 
   subagent.register();

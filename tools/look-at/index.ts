@@ -50,7 +50,32 @@ Always provide a clear objective describing what you want to learn from the imag
     ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],
-    modelGroup: "ad:vision:inspect",
+    modelPreferences: [
+      {
+        provider: "neuralwatt",
+        model: "kimi-k2.6-fast",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "openai-codex",
+        model: "gpt-5.4-mini",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:small:vision",
+        thinking: "medium",
+        weight: 0.5,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:large:vision",
+        thinking: "medium",
+        weight: 0.5,
+      },
+    ],
     parameters: LookAtParams,
     renderHeader: renderLookAtHeader,
     renderDetails: renderLookAtDetails,

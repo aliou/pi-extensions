@@ -27,9 +27,9 @@ export function createSummarizationSubagent(
         provider: model.provider,
         model: model.id,
         thinking: thinkingLevel,
+        weight: 1,
       },
     ],
-    session: { inheritSessionId: false },
     buildPrompt: (params) => ({ text: params.prompt }),
   });
 }

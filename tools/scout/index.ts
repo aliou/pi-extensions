@@ -29,7 +29,32 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
-    modelGroup: "ad:codebase:local",
+    modelPreferences: [
+      {
+        provider: "openai-codex",
+        model: "gpt-5.3-codex-spark",
+        thinking: "medium",
+        weight: 2,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:small:text",
+        thinking: "medium",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:small:vision",
+        thinking: "medium",
+        weight: 1,
+      },
+      {
+        provider: "neuralwatt",
+        model: "qwen3.6-35b-fast",
+        thinking: "medium",
+        weight: 1,
+      },
+    ],
   });
 
   subagent.register();

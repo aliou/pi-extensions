@@ -52,7 +52,20 @@ export default async function artisan(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
-    modelGroup: "ad:advisor:design",
+    modelPreferences: [
+      {
+        provider: "anthropic",
+        model: "claude-opus-4-8",
+        thinking: "medium",
+        weight: 1.5,
+      },
+      {
+        provider: "openai-codex",
+        model: "gpt-5.5",
+        thinking: "medium",
+        weight: 1,
+      },
+    ],
   });
 
   subagent.register();

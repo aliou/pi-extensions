@@ -9,15 +9,9 @@ import {
   SettingsManager,
   type Skill,
 } from "@earendil-works/pi-coding-agent";
-import {
-  buildProjectionHints,
-  CachedModelUsage,
-  ModelBroker,
-  type ModelChoice,
-  readUsageCache,
-} from "@harness/models";
 import { isNil } from "@harness/utils/nil";
 import type { TSchema } from "typebox";
+import { pickModel, resolveModel, type SubagentModelChoice } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
   collectSubagentToolGuidelines,
@@ -163,7 +157,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
 
   private async createAgentSession(
     ctx: ExtensionContext,
-    selection: ModelChoice,
+    selection: SubagentModelChoice,
     sessionManager: SessionManager,
     invocationSkills: Skill[] = [],
   ) {
@@ -208,14 +202,6 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       settingsManager: this.settingsManager,
     });
 
-    // When inheritSessionId is true (default), group the subagent's provider
-    // requests under the parent Pi session by forwarding the parent session ID
-    // as SimpleStreamOptions.sessionId. Background subagents (e.g. session
-    // naming) opt out to keep their own session ID.
-    if (this.config.session?.inheritSessionId ?? true) {
-      session.agent.sessionId = ctx.sessionManager.getSessionId();
-    }
-
     return session;
   }
 
@@ -242,14 +228,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     return SessionManager.open(sessionFile);
   }
 
-  private async pickModelOrThrow(ctx: ExtensionContext) {
-    const selection = await this.createModelBroker(ctx).then((models) => {
-      if (this.config.modelGroup) return models.choose(this.config.modelGroup);
-      if (this.config.modelPreferences) {
-        return models.chooseFrom(this.config.modelPreferences)[0] ?? null;
-      }
-      return null;
-    });
+  private pickModelOrThrow(ctx: ExtensionContext): SubagentModelChoice {
+    const selection = pickModel(
+      ctx.modelRegistry,
+      this.config.modelPreferences,
+    );
     if (!selection) {
       throw new Error(`No model available for ${this.config.label} subagent`);
     }
@@ -258,14 +241,15 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     return selection;
   }
 
-  private async resolveModelOrThrow(
+  private resolveModelOrThrow(
     ctx: ExtensionContext,
     record?: SubagentSessionRecord,
-  ) {
-    const models = await this.createModelBroker(ctx);
-    const selection = this.config.modelGroup
-      ? models.resolve(this.config.modelGroup, record?.model)
-      : (models.chooseFrom(this.config.modelPreferences ?? [])[0] ?? null);
+  ): SubagentModelChoice {
+    const selection = resolveModel(
+      ctx.modelRegistry,
+      this.config.modelPreferences,
+      record?.model,
+    );
     if (!selection) {
       throw new Error(`No model available for ${this.config.label} subagent`);
     }
@@ -274,28 +258,13 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     return selection;
   }
 
-  private async createModelBroker(ctx: ExtensionContext): Promise<ModelBroker> {
-    const cache = await readUsageCache().catch(() => null);
-    const projections = cache
-      ? await buildProjectionHints(cache.snapshots).catch(() => new Map())
-      : new Map();
-
-    return new ModelBroker({
-      registry: ctx.modelRegistry,
-      usage: cache
-        ? new CachedModelUsage({
-            snapshots: cache.snapshots,
-            projections,
-            fresh: cache.fresh,
-          })
-        : undefined,
-    });
-  }
-
-  private notifySkippedModels(ctx: ExtensionContext, selection: ModelChoice) {
+  private notifySkippedModels(
+    ctx: ExtensionContext,
+    selection: SubagentModelChoice,
+  ) {
     for (const skipped of selection.skipped) {
       ctx.ui.notify(
-        `[model] skipped ${skipped.preference.provider}/${skipped.preference.model}: ${skipped.detail ?? skipped.reason}`,
+        `[model] skipped ${skipped.preference.provider}/${skipped.preference.model}: ${skipped.reason}`,
         "warning",
       );
     }

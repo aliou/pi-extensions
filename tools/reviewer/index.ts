@@ -45,7 +45,26 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
-    modelGroup: "ad:review:diff",
+    modelPreferences: [
+      {
+        provider: "anthropic",
+        model: "claude-sonnet-4-6",
+        thinking: "medium",
+        weight: 1,
+      },
+      {
+        provider: "openai-codex",
+        model: "gpt-5.5",
+        thinking: "low",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:large:text",
+        thinking: "medium",
+        weight: 1,
+      },
+    ],
   });
 
   subagent.register();

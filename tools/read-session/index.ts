@@ -16,7 +16,32 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: SYSTEM_PROMPT,
     tools,
-    modelGroup: "ad:session:read",
+    modelPreferences: [
+      {
+        provider: "openai-codex",
+        model: "gpt-5.3-codex-spark",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "neuralwatt",
+        model: "qwen3.6-35b-fast",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:small:vision",
+        thinking: "medium",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "syn:small:text",
+        thinking: "medium",
+        weight: 1,
+      },
+    ],
     parameters: ReadSessionParams,
     renderHeader: renderReadSessionHeader,
     buildPrompt({ targetSessionId: sessionId, goal }) {

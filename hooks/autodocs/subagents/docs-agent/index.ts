@@ -80,7 +80,26 @@ export function createDocsSubagents(pi: ExtensionAPI): DocsSubagents {
     buildPrompt,
     tools: createCheckTools(checkHolder),
     resolveSkills,
-    modelGroup: "ad:utility:text",
+    modelPreferences: [
+      {
+        provider: "openai-codex",
+        model: "gpt-5.3-codex-spark",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "hf:zai-org/GLM-4.7-Flash",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "neuralwatt",
+        model: "glm-5.2-fast",
+        thinking: "off",
+        weight: 1,
+      },
+    ],
     resumable: false,
   });
 
@@ -94,7 +113,26 @@ export function createDocsSubagents(pi: ExtensionAPI): DocsSubagents {
     buildPrompt,
     tools: createApplyTools(),
     resolveSkills,
-    modelGroup: "ad:utility:text",
+    modelPreferences: [
+      {
+        provider: "openai-codex",
+        model: "gpt-5.3-codex-spark",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "hf:zai-org/GLM-4.7-Flash",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "neuralwatt",
+        model: "glm-5.2-fast",
+        thinking: "off",
+        weight: 1,
+      },
+    ],
     resumable: false,
   });
 

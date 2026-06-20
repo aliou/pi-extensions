@@ -1,6 +1,6 @@
 import type { Usage } from "@earendil-works/pi-ai";
 import type { Maybe } from "@harness/utils";
-import type { SubagentModel } from "../models";
+import type { SubagentResolvedModel } from "../models";
 
 export type SubagentToolCallStatus = "running" | "success" | "error";
 
@@ -41,7 +41,7 @@ export interface SubagentDetails {
   sessionId: string;
   sessionFile: string;
 
-  model?: SubagentModel;
+  model?: SubagentResolvedModel;
   prompt: string;
   params?: unknown;
 

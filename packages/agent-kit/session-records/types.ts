@@ -1,5 +1,5 @@
 import type { Skill } from "@earendil-works/pi-coding-agent";
-import type { ModelPreferenceRecord } from "@harness/models";
+import type { SubagentResolvedModel } from "../models";
 
 export const SUBAGENT_SESSION_CUSTOM_TYPE = "subagent_session" as const;
 
@@ -9,6 +9,6 @@ export interface SubagentSessionRecord {
   sessionId: string;
   sessionFile: string;
   parentSessionId: string;
-  model?: ModelPreferenceRecord;
+  model?: SubagentResolvedModel;
   skills?: Skill[];
 }

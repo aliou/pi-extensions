@@ -25,9 +25,9 @@ export async function runQqSubagent(
         provider: ctx.model.provider,
         model: ctx.model.id,
         thinking: "off",
+        weight: 1,
       },
     ],
-    session: { inheritSessionId: false },
     parameters: QqParams,
     buildPrompt: (params) => ({ text: params.prompt }),
   });

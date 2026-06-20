@@ -1,4 +1,8 @@
+export { pickModel, resolveModel } from "./model-resolver";
 export type {
-  ModelPreference as SubagentModel,
-  ModelPreferenceRecord as SubagentResolvedModel,
-} from "@harness/models";
+  SubagentModelChoice,
+  SubagentModelPreference,
+  SubagentResolvedModel,
+  SubagentResolvedModel as SubagentModel,
+  SubagentSkippedModel,
+} from "./types";

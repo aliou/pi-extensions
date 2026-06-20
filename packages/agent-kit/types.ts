@@ -8,12 +8,12 @@ import type {
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import type { Component } from "@earendil-works/pi-tui";
-import type { ModelGroupId, ModelPreference } from "@harness/models";
 import type { Static, TSchema } from "typebox";
+import type { SubagentModelPreference } from "./models";
 import type { ToolRenderContext } from "./runtime/render/types";
 import type { SubagentToolCall } from "./runtime/types";
 
-export type { ModelPreference as SubagentModel } from "@harness/models";
+export type { SubagentResolvedModel as SubagentModel } from "./models";
 export type { SubagentDetails, SubagentToolCall } from "./runtime";
 export type { SubagentSessionRecord } from "./session-records";
 
@@ -59,15 +59,6 @@ export interface SubagentPromptResult {
   images?: ImageContent[];
 }
 
-export interface SubagentSessionConfig {
-  /**
-   * When true (default), the subagent forwards the parent Pi session ID
-   * to the provider, grouping all API calls under the parent session.
-   * When false, the subagent uses its own session ID for provider calls.
-   */
-  inheritSessionId?: boolean;
-}
-
 export interface SubagentConfig<Params extends TSchema = TSchema> {
   name: string;
   label: string;
@@ -77,9 +68,7 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   tools: SubagentToolSpec[];
   skills?: Skill[];
   extensionPaths?: string[];
-  modelGroup?: ModelGroupId;
-  modelPreferences?: ModelPreference[];
-  session?: SubagentSessionConfig;
+  modelPreferences: SubagentModelPreference[];
   resumable?: boolean;
 
   parameters: Params;
