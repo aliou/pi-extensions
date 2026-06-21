@@ -1,18 +1,9 @@
 import { homedir as getHomedir } from "node:os";
 import { resolve } from "node:path";
-import type {
-  BashSpawnContext,
-  ExtensionAPI,
-  ExtensionContext,
-} from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createBashTool } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { renderCall, renderResult } from "./render";
-import {
-  AD_BASH_SPAWN_HOOK_REQUEST_EVENT,
-  type SpawnHookContributor,
-  type SpawnHookRequestPayload,
-} from "./types";
 
 const homedir = getHomedir();
 
@@ -26,39 +17,6 @@ const homedir = getHomedir();
 export default function (pi: ExtensionAPI): void {
   const cwd = process.cwd();
   const nativeBash = createBashTool(cwd);
-
-  const contributors = new Map<string, SpawnHookContributor>();
-  const getContributors = () =>
-    Array.from(contributors.values()).sort(
-      (a, b) => (a.priority ?? 100) - (b.priority ?? 100),
-    );
-
-  let didNotifyInstalledSpawnHooks = false;
-
-  const registerContributor = (contributor: SpawnHookContributor) => {
-    contributors.set(contributor.id, contributor);
-  };
-
-  const notifyInstalledSpawnHooks = (ctx: ExtensionContext) => {
-    if (didNotifyInstalledSpawnHooks || !ctx.hasUI) return;
-
-    const installed = getContributors();
-    if (installed.length === 0) return;
-
-    didNotifyInstalledSpawnHooks = true;
-    ctx.ui.notify(
-      `Bash spawn hooks installed: ${installed.map((c) => c.id).join(", ")}`,
-      "info",
-    );
-  };
-
-  const composedSpawnHook = (ctx: BashSpawnContext): BashSpawnContext => {
-    let next = ctx;
-    for (const contributor of getContributors()) {
-      next = contributor.spawnHook(next);
-    }
-    return next;
-  };
 
   const schema = Type.Object({
     command: Type.String({ description: "Bash command to execute" }),
@@ -89,9 +47,7 @@ export default function (pi: ExtensionAPI): void {
     },
     async execute(toolCallId, params, signal, onUpdate, ctx) {
       const effectiveCwd = params.cwd ? resolve(ctx.cwd, params.cwd) : ctx.cwd;
-      const bashForCwd = createBashTool(effectiveCwd, {
-        spawnHook: composedSpawnHook,
-      });
+      const bashForCwd = createBashTool(effectiveCwd);
       const start = Date.now();
       const result = await bashForCwd.execute(
         toolCallId,
@@ -102,21 +58,7 @@ export default function (pi: ExtensionAPI): void {
       // Attach duration to details so renderResult can display it
       const durationMs = Date.now() - start;
       result.details = { ...result.details, _durationMs: durationMs };
-      notifyInstalledSpawnHooks(ctx);
       return result;
     },
-  });
-
-  // Request hook contributors from other extensions.
-  const requestContributors = () => {
-    pi.events.emit(AD_BASH_SPAWN_HOOK_REQUEST_EVENT, {
-      register: registerContributor,
-    } satisfies SpawnHookRequestPayload);
-  };
-
-  // Fire once at setup and once on session start to avoid load-order misses.
-  requestContributors();
-  pi.on("session_start", () => {
-    requestContributors();
   });
 }
