@@ -1,9 +1,12 @@
 import { homedir as getHomedir } from "node:os";
 import { resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createBashTool } from "@earendil-works/pi-coding-agent";
+import {
+  createBashTool,
+  createBashToolDefinition,
+} from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
-import { renderCall, renderResult } from "./render";
 
 const homedir = getHomedir();
 
@@ -16,7 +19,7 @@ const homedir = getHomedir();
  */
 export default function (pi: ExtensionAPI): void {
   const cwd = process.cwd();
-  const nativeBash = createBashTool(cwd);
+  const nativeBash = createBashToolDefinition(cwd);
 
   const schema = Type.Object({
     command: Type.String({ description: "Bash command to execute" }),
@@ -39,26 +42,48 @@ export default function (pi: ExtensionAPI): void {
       "bash: Reserve bash for git, build/test, package managers, ssh, curl, and process management.",
       "bash: Prefer native tools like read, find, grep, edit, and write over shell commands when available.",
     ],
-    renderCall(args, theme) {
-      return renderCall(args, theme, homedir);
-    },
-    renderResult(result, options, theme) {
-      return renderResult(result, options, theme);
+    renderCall(args, theme, context) {
+      const state = context.state as {
+        startedAt?: number;
+        endedAt?: number;
+        interval?: NodeJS.Timeout;
+      };
+      if (context.executionStarted && state.startedAt === undefined) {
+        state.startedAt = Date.now();
+        state.endedAt = undefined;
+      }
+
+      const command = args.command ?? "";
+      const timeout = args.timeout as number | undefined;
+      const cwdArg = args.cwd as string | undefined;
+
+      const commandDisplay = command ? command : theme.fg("toolOutput", "...");
+      const cwdDisplay = cwdArg?.startsWith(homedir)
+        ? `~${cwdArg.slice(homedir.length)}`
+        : cwdArg;
+      const cwdSuffix = cwdDisplay
+        ? theme.fg("muted", ` (cwd: ${cwdDisplay})`)
+        : "";
+      const timeoutSuffix = timeout
+        ? theme.fg("muted", ` (timeout ${timeout}s)`)
+        : "";
+
+      const text =
+        (context.lastComponent as Text | undefined) ?? new Text("", 0, 0);
+      text.setText(
+        `${theme.fg("toolTitle", theme.bold(`$ ${commandDisplay}`))}${cwdSuffix}${timeoutSuffix}`,
+      );
+      return text;
     },
     async execute(toolCallId, params, signal, onUpdate, ctx) {
       const effectiveCwd = params.cwd ? resolve(ctx.cwd, params.cwd) : ctx.cwd;
       const bashForCwd = createBashTool(effectiveCwd);
-      const start = Date.now();
-      const result = await bashForCwd.execute(
+      return bashForCwd.execute(
         toolCallId,
         { command: params.command, timeout: params.timeout },
         signal,
         onUpdate,
       );
-      // Attach duration to details so renderResult can display it
-      const durationMs = Date.now() - start;
-      result.details = { ...result.details, _durationMs: durationMs };
-      return result;
     },
   });
 }
