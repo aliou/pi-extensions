@@ -1,8 +1,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-import { fastCompact } from "./compaction";
+import { compact } from "./compaction";
 
-export default function fastCompactHook(pi: ExtensionAPI) {
+export default function compactHook(pi: ExtensionAPI) {
   pi.on("session_before_compact", async (event, ctx) => {
     if (event.signal.aborted) {
       return undefined;
@@ -15,15 +15,12 @@ export default function fastCompactHook(pi: ExtensionAPI) {
 
     const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
     if (!auth.ok) {
-      ctx.ui.notify(
-        `[fast-compact] auth unavailable: ${auth.error}`,
-        "warning",
-      );
+      ctx.ui.notify(`[compact] auth unavailable: ${auth.error}`, "warning");
       return undefined;
     }
 
     try {
-      const compaction = await fastCompact(
+      const compaction = await compact(
         event.preparation,
         model,
         auth.apiKey,
@@ -37,7 +34,7 @@ export default function fastCompactHook(pi: ExtensionAPI) {
       return { compaction };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      ctx.ui.notify(`[fast-compact] compaction failed: ${message}`, "error");
+      ctx.ui.notify(`[compact] compaction failed: ${message}`, "error");
       return undefined;
     }
   });

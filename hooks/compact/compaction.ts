@@ -83,7 +83,7 @@ async function generateTurnPrefixSummary(
  * Compaction that behaves like the native implementation, but runs the two
  * summarization calls sequentially instead of concurrently.
  */
-export async function fastCompact(
+export async function compact(
   preparation: CompactionPreparation,
   model: Model<Api>,
   apiKey: string | undefined,

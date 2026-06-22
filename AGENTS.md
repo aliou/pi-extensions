@@ -86,7 +86,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
-| `fast-compact/` | Sequential compaction via `session_before_compact` | `index.ts`, `compaction.ts`, `prompts.ts`, `utils.ts` |
+| `compact/` | Sequential compaction via `session_before_compact` | `index.ts`, `compaction.ts`, `prompts.ts`, `utils.ts` |
 | `fast-mode/` | Session-local fast-mode controls for Opus and Codex | `index.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |
 | `project-trust/` | Auto-trust projects matching configured path prefixes; falls through to core for everything else | `index.ts`, `config.ts`, `types.ts` |
