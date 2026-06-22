@@ -1,10 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-import { runCompaction } from "./run";
-import type { CompactChoice } from "./types";
-import { CompactModePicker } from "./ui";
-
-const DEFAULT_CHOICE: CompactChoice = { mode: "simple", edit: false };
+import { fastCompact } from "./compaction";
 
 export default function fastCompactHook(pi: ExtensionAPI) {
   pi.on("session_before_compact", async (event, ctx) => {
@@ -12,28 +8,31 @@ export default function fastCompactHook(pi: ExtensionAPI) {
       return undefined;
     }
 
-    let choice: CompactChoice | null | undefined;
-
-    if (ctx.mode === "tui") {
-      choice = await ctx.ui.custom(
-        (tui, theme, _keybindings, done) =>
-          new CompactModePicker(tui, theme, done),
-      );
+    const model = ctx.model;
+    if (!model) {
+      return undefined;
     }
 
-    const resolvedChoice = choice ?? DEFAULT_CHOICE;
+    const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
+    if (!auth.ok) {
+      ctx.ui.notify(
+        `[fast-compact] auth unavailable: ${auth.error}`,
+        "warning",
+      );
+      return undefined;
+    }
 
     try {
-      const compaction = await runCompaction({
-        pi,
-        ctx,
-        event,
-        choice: resolvedChoice,
-      });
-
-      if (!compaction) {
-        return undefined;
-      }
+      const compaction = await fastCompact(
+        event.preparation,
+        model,
+        auth.apiKey,
+        auth.headers,
+        auth.env,
+        event.customInstructions,
+        event.signal,
+        pi.getThinkingLevel(),
+      );
 
       return { compaction };
     } catch (error) {
