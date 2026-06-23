@@ -44,11 +44,7 @@ type AnthropicModel = Parameters<typeof streamSimpleAnthropic>[0];
 const FAST_MODE_BETA = "fast-mode-2026-02-01";
 const CLAUDE_CODE_BETAS = ["claude-code-20250219", "oauth-2025-04-20"];
 
-const OPUS_FAST_MODELS = new Set([
-  "claude-opus-4-8",
-  "claude-opus-4-7",
-  "claude-opus-4-6",
-]);
+const OPUS_FAST_MODELS = new Set(["claude-opus-4-8", "claude-opus-4-7"]);
 
 function isOpusSupportedModel(model: string): boolean {
   return OPUS_FAST_MODELS.has(model);
