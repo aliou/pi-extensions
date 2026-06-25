@@ -58,7 +58,23 @@ export const askUserTool = defineTool({
 
     const uiResult = await runAskUserUI(ctx, params);
 
-    if (!uiResult) {
+    if (uiResult === undefined) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ask_user custom UI is not available in ${ctx.mode} mode`,
+          },
+        ],
+        details: {
+          questions: params.questions,
+          answers: [],
+          error: `custom UI not available in ${ctx.mode} mode`,
+        },
+      };
+    }
+
+    if (uiResult === null) {
       return {
         content: [{ type: "text", text: "User cancelled" }],
         details: {
