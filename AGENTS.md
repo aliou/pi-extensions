@@ -83,7 +83,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 
 | Directory | Purpose | Key files |
 |---|---|---|
-| `chrome/` | Header, footer, terminal title, notifications, auto-naming | `hooks/`, `components/`, `lib/`, `native/` |
+| `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, and latest TPS telemetry | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `compact/` | Sequential compaction via `session_before_compact` | `index.ts`, `compaction.ts`, `prompts.ts`, `utils.ts` |
@@ -95,6 +95,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `session-name/` | Auto-name sessions | `index.ts` |
 | `skill-autocomplete/` | `?` skill directory autocomplete | `index.ts` |
 | `tmux-autocomplete/` | `@tmux:` tmux session/window autocomplete | `index.ts`, `provider.ts`, `tmux.ts`, `types.ts` |
+| `tps/` | Per-turn tokens-per-second telemetry emitted as `ad:tps:telemetry` for footer display and other consumers | `index.ts`, `utils.ts`, `types.ts` |
 | `zoxide-autocomplete/` | `@z:` project path autocomplete | `index.ts` |
 
 ## Tools

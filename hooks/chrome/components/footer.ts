@@ -15,8 +15,10 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
   AD_EDITOR_STASH_CHANGED_EVENT,
   AD_MODEL_FAST_MODE_CHANGED_EVENT,
+  AD_TPS_TELEMETRY_EVENT,
   type AdEditorStashChangedEvent,
   type AdModelFastModeChangedEvent,
+  type TpsTelemetry,
 } from "@harness/events";
 import { GitStatusWatcher } from "../lib/git-status";
 import {
@@ -40,6 +42,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
   let requestRender: (() => void) | undefined;
   let gitStatusWatcher: GitStatusWatcher | undefined;
   let stashHasContent = false;
+  let latestTps: number | null | undefined;
 
   pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
     const event = (data ?? {}) as Partial<AdEditorStashChangedEvent>;
@@ -53,6 +56,13 @@ export function createCustomFooter(pi: ExtensionAPI) {
     if (event.provider != null) {
       setFastModeProvider(event.provider, event.enabled === true);
     }
+    if (!ctx) return;
+    requestRender?.();
+  });
+
+  pi.events.on(AD_TPS_TELEMETRY_EVENT, (data: unknown) => {
+    const event = data as Partial<TpsTelemetry> | undefined;
+    latestTps = typeof event?.tps === "number" ? event.tps : null;
     if (!ctx) return;
     requestRender?.();
   });
@@ -73,7 +83,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
     const gitStatus = gitStatusWatcher?.getStatus();
     const pathData = buildPathParts(theme, branch, gitStatus, stashHasContent);
 
-    const statsParts = buildStatsParts(theme, usage, contextUsage);
+    const statsParts = buildStatsParts(theme, usage, contextUsage, latestTps);
     const statsLine = statsParts.join(" ");
     const statsWidth = visibleWidth(statsLine);
     const minPadding = 2;
@@ -126,6 +136,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
           theme,
           usage,
           contextUsage,
+          latestTps,
         );
         const minimalStatsLine = minimalStatsParts.join(" ");
         const minimalStatsWidth = visibleWidth(minimalStatsLine);

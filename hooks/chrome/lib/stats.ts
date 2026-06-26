@@ -29,6 +29,11 @@ interface ContextUsage {
   display: string;
 }
 
+function formatTps(tps: number | null | undefined): string | undefined {
+  if (tps == null) return undefined;
+  return `${tps.toFixed(1)} tps`;
+}
+
 /**
  * Calculate cumulative cost from session entries.
  */
@@ -93,6 +98,7 @@ export function buildStatsParts(
   theme: Theme,
   usage: CumulativeUsage,
   contextUsage: ContextUsage | undefined,
+  latestTps?: number | null,
 ): string[] {
   const costStr =
     Math.abs(usage.branchCost - usage.totalCost) < 0.0005
@@ -101,7 +107,9 @@ export function buildStatsParts(
         : `$${usage.branchCost.toFixed(3)}`
       : `$${usage.branchCost.toFixed(3)} ($${usage.totalCost.toFixed(3)})`;
 
-  const stats = [costStr, contextUsage?.display].filter(Boolean).join(" ");
+  const stats = [formatTps(latestTps), costStr, contextUsage?.display]
+    .filter(Boolean)
+    .join(" ");
   if (!contextUsage) return [stats];
 
   if (contextUsage.percent > CONTEXT_ERROR_THRESHOLD) {
@@ -122,6 +130,7 @@ export function buildMinimalStatsParts(
   theme: Theme,
   usage: CumulativeUsage,
   contextUsage: ContextUsage | undefined,
+  latestTps?: number | null,
 ): string[] {
-  return buildStatsParts(theme, usage, contextUsage);
+  return buildStatsParts(theme, usage, contextUsage, latestTps);
 }
