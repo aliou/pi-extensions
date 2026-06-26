@@ -29,7 +29,7 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
       },
       {
         provider: "neuralwatt",
-        model: "glm-5.2-fast",
+        model: "glm-5.2-short-fast-flex",
         thinking: "off",
         weight: 1,
       },

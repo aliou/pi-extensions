@@ -30,6 +30,12 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
         weight: 1,
       },
       {
+        provider: "neuralwatt",
+        model: "glm-5.2-short-fast-flex",
+        thinking: "off",
+        weight: 1,
+      },
+      {
         provider: "synthetic",
         model: "syn:small:vision",
         thinking: "medium",
