@@ -90,7 +90,6 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `fast-mode/` | Session-local fast-mode controls for Opus and Codex | `index.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |
 | `project-trust/` | Auto-trust projects matching configured path prefixes; falls through to core for everything else | `index.ts`, `config.ts`, `types.ts` |
-| `update-flag/` | `--update` one-shot: run `pi update --all` then quit | `index.ts`, `result-panel.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
 | `session-autocomplete/` | `@@` autocomplete for session references | `index.ts`, `provider.ts` |
 | `session-name/` | Auto-name sessions | `index.ts` |
