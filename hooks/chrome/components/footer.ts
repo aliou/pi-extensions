@@ -136,10 +136,18 @@ export function createCustomFooter(pi: ExtensionAPI) {
           theme,
           usage,
           contextUsage,
-          latestTps,
         );
-        const minimalStatsLine = minimalStatsParts.join(" ");
-        const minimalStatsWidth = visibleWidth(minimalStatsLine);
+        let minimalStatsLine = minimalStatsParts.join(" ");
+        let minimalStatsWidth = visibleWidth(minimalStatsLine);
+
+        // Defensive: if minimal stats still exceed the terminal width (e.g.
+        // the context-window string is long on a very narrow terminal),
+        // truncate hard rather than emit an over-wide line — pi's TUI throws
+        // on any rendered line wider than the viewport.
+        if (minimalStatsWidth > width) {
+          minimalStatsLine = truncateToWidth(minimalStatsLine, width, "");
+          minimalStatsWidth = visibleWidth(minimalStatsLine);
+        }
 
         const availForPath = Math.max(
           0,

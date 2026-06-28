@@ -124,13 +124,32 @@ export function buildStatsParts(
 }
 
 /**
- * Build minimal stats for small screens (context used + price only)
+ * Build minimal stats for small screens.
+ *
+ * Drops the tps readout and the cumulative-cost parenthetical, keeping only
+ * the branch cost and context-usage line. Used when the full stats line cannot
+ * fit alongside the path, so the footer never emits a line wider than the
+ * terminal (which would crash pi's TUI render loop).
+ *
+ * Color wrapping mirrors buildStatsParts so context-pressure warnings still
+ * fire in minimal mode.
  */
 export function buildMinimalStatsParts(
   theme: Theme,
   usage: CumulativeUsage,
   contextUsage: ContextUsage | undefined,
-  latestTps?: number | null,
 ): string[] {
-  return buildStatsParts(theme, usage, contextUsage, latestTps);
+  const costStr = `$${usage.branchCost.toFixed(3)}`;
+  const stats = [costStr, contextUsage?.display].filter(Boolean).join(" ");
+  if (!contextUsage) return [stats];
+
+  if (contextUsage.percent > CONTEXT_ERROR_THRESHOLD) {
+    return [theme.fg("error", stats)];
+  }
+
+  if (contextUsage.percent > CONTEXT_WARNING_THRESHOLD) {
+    return [theme.fg("warning", stats)];
+  }
+
+  return [stats];
 }
