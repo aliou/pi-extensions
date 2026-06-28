@@ -78,9 +78,11 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   /**
    * Tools exposed to the subagent. May be a static list, or a function that
    * resolves the list per invocation from the tool params (e.g. to pick which
-   * tools are present based on the request). The resolved list is also stashed
-   * in `SubagentDetails.resolvedTools` so the renderer can look up per-tool
-   * renderers without re-evaluating the function.
+   * tools are present based on the request).
+   *
+   * When a resolver is used, per-tool renderers are not looked up (dynamically
+   * selected tools fall back to the default renderer); only static arrays
+   * expose per-tool `render` functions.
    */
   tools: SubagentToolSpec[] | SubagentToolsResolver<Params>;
   skills?: Skill[];

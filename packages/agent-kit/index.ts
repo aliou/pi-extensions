@@ -54,12 +54,7 @@ export function createSubagent<Params extends TSchema>(
       invocationSkills,
       invocationTools,
       async (session) => {
-        return new SubagentRuntime(
-          config,
-          session,
-          options.signal,
-          invocationTools,
-        ).execute(
+        return new SubagentRuntime(config, session, options.signal).execute(
           options.callId ?? config.name,
           params,
           options.onUpdate,
@@ -115,12 +110,7 @@ export function createSubagent<Params extends TSchema>(
           ctx,
         );
         const session = await sessions.resume(sessionId, ctx, invocationTools);
-        const runtime = new SubagentRuntime<Params>(
-          config,
-          session,
-          signal,
-          invocationTools,
-        );
+        const runtime = new SubagentRuntime<Params>(config, session, signal);
         return runtime.execute(
           toolCallId,
           restParams as Static<Params>,

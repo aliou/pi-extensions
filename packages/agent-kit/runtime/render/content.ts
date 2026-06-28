@@ -4,7 +4,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
-import type { SubagentConfig, SubagentToolSpec } from "../../types";
+import type { SubagentConfig } from "../../types";
 import type { SubagentDetails, SubagentToolCall } from "../types";
 import { renderThinking, renderToolCall } from "./activity";
 import { formatCollapsedHint } from "./footer";
@@ -53,7 +53,7 @@ export function renderSubagentResult(
   const running = details.status === "running" || options.isPartial;
   let footerPrefix: string | undefined;
   if (running) {
-    container.addChild(renderRunning(details, options, theme, ctx.cwd));
+    container.addChild(renderRunning(config, details, options, theme, ctx.cwd));
   } else {
     const text = details.response ?? details.error ?? "";
     if (options.expanded) {
@@ -104,6 +104,7 @@ function splitParagraphs(text: string) {
 }
 
 function renderRunning(
+  config: SubagentConfig,
   details: SubagentDetails,
   options: ToolRenderResultOptions,
   theme: Theme,
@@ -112,7 +113,13 @@ function renderRunning(
   const container = new Container();
 
   if (!options.expanded) {
-    const recentActivity = renderRecentActivity(details, options, theme, cwd);
+    const recentActivity = renderRecentActivity(
+      config,
+      details,
+      options,
+      theme,
+      cwd,
+    );
 
     if (!recentActivity) {
       container.addChild(
@@ -122,7 +129,7 @@ function renderRunning(
       container.addChild(recentActivity);
     }
   } else {
-    const activity = renderActivity(details, options, theme, cwd);
+    const activity = renderActivity(config, details, options, theme, cwd);
 
     if (!activity) {
       container.addChild(
@@ -137,6 +144,7 @@ function renderRunning(
 }
 
 function renderRecentActivity(
+  config: SubagentConfig,
   details: SubagentDetails,
   options: ToolRenderResultOptions,
   theme: Theme,
@@ -144,19 +152,28 @@ function renderRecentActivity(
 ) {
   const latestItems = details.activity.slice(-3);
   if (latestItems.length === 0) return undefined;
-  return renderActivityItems(details, latestItems, options, theme, cwd);
+  return renderActivityItems(config, details, latestItems, options, theme, cwd);
 }
 
 function renderActivity(
+  config: SubagentConfig,
   details: SubagentDetails,
   options: ToolRenderResultOptions,
   theme: Theme,
   cwd: string,
 ) {
-  return renderActivityItems(details, details.activity, options, theme, cwd);
+  return renderActivityItems(
+    config,
+    details,
+    details.activity,
+    options,
+    theme,
+    cwd,
+  );
 }
 
 function renderActivityItems(
+  config: SubagentConfig,
   details: SubagentDetails,
   items: SubagentDetails["activity"],
   options: ToolRenderResultOptions,
@@ -182,13 +199,7 @@ function renderActivityItems(
         if (!toolCall) break;
 
         container.addChild(
-          renderConfiguredToolCall(
-            details.resolvedTools ?? [],
-            toolCall,
-            options,
-            theme,
-            cwd,
-          ),
+          renderConfiguredToolCall(config, toolCall, options, theme, cwd),
         );
         renderedCount += 1;
         break;
@@ -206,12 +217,15 @@ function renderActivityItems(
 }
 
 function renderConfiguredToolCall(
-  tools: SubagentToolSpec[],
+  config: SubagentConfig,
   toolCall: SubagentToolCall,
   options: ToolRenderResultOptions,
   theme: Theme,
   cwd: string,
 ) {
+  // config.tools may be a per-invocation resolver; only static arrays expose
+  // per-tool renderers. Dynamic tools fall back to the default renderer.
+  const tools = Array.isArray(config.tools) ? config.tools : [];
   const renderer = tools.find(
     (tool) => tool.name === toolCall.toolName,
   )?.render;

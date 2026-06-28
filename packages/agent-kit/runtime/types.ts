@@ -1,7 +1,6 @@
 import type { Usage } from "@earendil-works/pi-ai";
 import type { Maybe } from "@harness/utils";
 import type { SubagentResolvedModel } from "../models";
-import type { SubagentToolSpec } from "../types";
 
 export type SubagentToolCallStatus = "running" | "success" | "error";
 
@@ -45,13 +44,6 @@ export interface SubagentDetails {
   model?: SubagentResolvedModel;
   prompt: string;
   params?: unknown;
-
-  /**
-   * Tools resolved for this invocation. When `SubagentConfig.tools` is a
-   * function it is evaluated per invocation; the result is stashed here so the
-   * renderer can look up per-tool renderers without re-evaluating the function.
-   */
-  resolvedTools?: SubagentToolSpec[];
 
   status: SubagentStatus;
   thinking: boolean;
