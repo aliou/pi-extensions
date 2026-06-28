@@ -59,13 +59,30 @@ export interface SubagentPromptResult {
   images?: ImageContent[];
 }
 
+/**
+ * Resolve the subagent's tool set per invocation. Receives the validated tool
+ * params and the extension context, and returns the tools to expose to the
+ * subagent for that run. Mirrors `resolveSkills`.
+ */
+export type SubagentToolsResolver<Params extends TSchema = TSchema> = (
+  params: Static<Params>,
+  ctx: ExtensionContext,
+) => SubagentToolSpec[] | Promise<SubagentToolSpec[]>;
+
 export interface SubagentConfig<Params extends TSchema = TSchema> {
   name: string;
   label: string;
   description: string;
   promptGuidelines?: string[];
   systemPrompt: string;
-  tools: SubagentToolSpec[];
+  /**
+   * Tools exposed to the subagent. May be a static list, or a function that
+   * resolves the list per invocation from the tool params (e.g. to pick which
+   * tools are present based on the request). The resolved list is also stashed
+   * in `SubagentDetails.resolvedTools` so the renderer can look up per-tool
+   * renderers without re-evaluating the function.
+   */
+  tools: SubagentToolSpec[] | SubagentToolsResolver<Params>;
   skills?: Skill[];
   extensionPaths?: string[];
   modelPreferences: SubagentModelPreference[];

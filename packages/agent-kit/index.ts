@@ -1,4 +1,8 @@
-import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+  defineTool,
+  type ExtensionAPI,
+  type ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
 import {
   renderSubagentCall,
@@ -11,7 +15,11 @@ import {
 } from "./schemas";
 import { SubagentSessionManager } from "./session-manager";
 import { SubagentSessionRecordStore } from "./session-records";
-import type { SubagentConfig } from "./types";
+import type {
+  SubagentConfig,
+  SubagentToolSpec,
+  SubagentToolsResolver,
+} from "./types";
 
 export type SubagentRunOptions<Params extends TSchema> = {
   callId?: string;
@@ -36,11 +44,22 @@ export function createSubagent<Params extends TSchema>(
     options: SubagentRunOptions<Params>,
   ) => {
     const invocationSkills = config.resolveSkills?.(params, options.ctx) ?? [];
+    const invocationTools = await resolveTools(
+      config.tools,
+      params,
+      options.ctx,
+    );
     return sessions.withNewSession(
       options.ctx,
       invocationSkills,
+      invocationTools,
       async (session) => {
-        return new SubagentRuntime(config, session, options.signal).execute(
+        return new SubagentRuntime(
+          config,
+          session,
+          options.signal,
+          invocationTools,
+        ).execute(
           options.callId ?? config.name,
           params,
           options.onUpdate,
@@ -90,8 +109,18 @@ export function createSubagent<Params extends TSchema>(
         ctx,
       ) {
         const { sessionId, ...restParams } = params;
-        const session = await sessions.resume(sessionId, ctx);
-        const runtime = new SubagentRuntime<Params>(config, session, signal);
+        const invocationTools = await resolveTools(
+          config.tools,
+          restParams as Static<Params>,
+          ctx,
+        );
+        const session = await sessions.resume(sessionId, ctx, invocationTools);
+        const runtime = new SubagentRuntime<Params>(
+          config,
+          session,
+          signal,
+          invocationTools,
+        );
         return runtime.execute(
           toolCallId,
           restParams as Static<Params>,
@@ -129,4 +158,12 @@ export function createSubagent<Params extends TSchema>(
     subscribe,
     register,
   };
+}
+
+export async function resolveTools<Params extends TSchema>(
+  tools: SubagentToolSpec[] | SubagentToolsResolver<Params>,
+  params: Static<Params>,
+  ctx: ExtensionContext,
+): Promise<SubagentToolSpec[]> {
+  return typeof tools === "function" ? await tools(params, ctx) : tools;
 }

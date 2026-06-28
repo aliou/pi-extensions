@@ -3,7 +3,7 @@ import type {
   AgentSessionEvent,
 } from "@earendil-works/pi-coding-agent";
 import type { TSchema } from "typebox";
-import type { SubagentConfig } from "../types";
+import type { SubagentConfig, SubagentToolSpec } from "../types";
 import { emptyUsage, SubagentCostTracker } from "./cost-tracker";
 import { SubagentMessageTracker } from "./message-tracker";
 import { SubagentToolCallTracker } from "./tool-call-tracker";
@@ -15,7 +15,11 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
   private costTracker = new SubagentCostTracker();
   private details: SubagentDetails;
 
-  constructor(config: SubagentConfig<Params>, session: AgentSession) {
+  constructor(
+    config: SubagentConfig<Params>,
+    session: AgentSession,
+    resolvedTools: SubagentToolSpec[] = [],
+  ) {
     this.details = {
       sessionId: session.sessionId,
       sessionFile: session.sessionFile ?? "",
@@ -38,6 +42,7 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
       activity: [],
       usage: emptyUsage(),
       responseTokens: 0,
+      resolvedTools,
       startedAt: null,
       endedAt: null,
     };

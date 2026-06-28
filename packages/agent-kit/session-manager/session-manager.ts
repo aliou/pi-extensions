@@ -22,7 +22,7 @@ import {
   type SubagentSessionRecord,
   type SubagentSessionRecordStore,
 } from "../session-records";
-import type { SubagentConfig } from "../types";
+import type { SubagentConfig, SubagentToolSpec } from "../types";
 
 const DEFAULT_SUBAGENT_EXTENSION_PATHS: string[] = [];
 
@@ -41,6 +41,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
   async withNewSession<T>(
     ctx: ExtensionContext,
     invocationSkills: Skill[],
+    invocationTools: SubagentToolSpec[],
     fn: (session: AgentSession) => Promise<T>,
   ): Promise<T> {
     const selection = await this.pickModelOrThrow(ctx);
@@ -51,6 +52,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       selection,
       sessionManager,
       invocationSkills,
+      invocationTools,
     );
 
     try {
@@ -68,7 +70,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     }
   }
 
-  async resume(sessionId: string, ctx: ExtensionContext) {
+  async resume(
+    sessionId: string,
+    ctx: ExtensionContext,
+    invocationTools: SubagentToolSpec[],
+  ) {
     const record = this.records.findBySessionId(
       ctx,
       this.config.name,
@@ -82,6 +88,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       selection,
       sessionManager,
       record?.skills ?? [],
+      invocationTools,
     );
   }
 
@@ -160,10 +167,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     selection: SubagentModelChoice,
     sessionManager: SessionManager,
     invocationSkills: Skill[] = [],
+    invocationTools: SubagentToolSpec[] = [],
   ) {
     const cwd = ctx.cwd;
-    const tools = this.config.tools.map((tool) => tool.name);
-    const customTools = this.config.tools
+    const tools = invocationTools.map((tool) => tool.name);
+    const customTools = invocationTools
       .filter((tool) => tool.type === "custom")
       .map((tool) => tool.spec(cwd));
 
@@ -182,7 +190,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     // prompt is used. Collect them from custom + extension tools and inject
     // via getAppendSystemPrompt() to restore the missing guidance.
     const toolGuidelines = collectSubagentToolGuidelines(
-      this.config.tools,
+      invocationTools,
       cwd,
       resourceLoader.getExtensions(),
     );

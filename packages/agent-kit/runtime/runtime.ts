@@ -8,7 +8,7 @@ import type {
 import { isBlank } from "@harness/utils";
 import type { Optional } from "@harness/utils/types";
 import type { Static, TSchema } from "typebox";
-import type { SubagentConfig } from "../types";
+import type { SubagentConfig, SubagentToolSpec } from "../types";
 import { appendSubagentSessionFooter, textContent } from "./content";
 import { SubagentRuntimeState } from "./runtime-state";
 import { formatSubagentStatus } from "./status";
@@ -22,10 +22,11 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
     private config: SubagentConfig<Params>,
     private session: AgentSession,
     private signal: Optional<AbortSignal>,
+    resolvedTools: SubagentToolSpec[] = [],
   ) {
     this.signal = signal;
     this.signal?.addEventListener?.("abort", this.onAbort);
-    this.state = new SubagentRuntimeState(config, session);
+    this.state = new SubagentRuntimeState(config, session, resolvedTools);
   }
 
   async execute(
