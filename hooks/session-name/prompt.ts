@@ -3,7 +3,7 @@ import type { SessionNameTurn } from "./types";
 export const SESSION_NAME_SYSTEM_PROMPT = `You name Pi coding-agent sessions.
 
 You must call the set_name tool exactly once using its name argument.
-Do not produce normal assistant text.
+After calling set_name, stop. Do not call it again and do not produce normal assistant text.
 
 Name rules:
 - 4-7 words when possible.
