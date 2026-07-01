@@ -193,6 +193,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
         ctx.model?.id,
         hasReasoning,
         thinkingLevel ?? "off",
+        usage.latestCacheHitRate,
       );
       const modelWidth = visibleWidth(modelLine);
 

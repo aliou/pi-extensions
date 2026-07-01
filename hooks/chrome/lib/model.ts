@@ -3,6 +3,15 @@ import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 const FAST_SYMBOL = "\u26A1";
 
 /**
+ * Cache-hit-rate color tiers for the footer.
+ *   90–100%: success (green)
+ *   80–90%:  warning (orange)
+ *   below 80%: error (red)
+ */
+export const CACHE_HIT_RATE_WARNING_THRESHOLD = 90;
+export const CACHE_HIT_RATE_ERROR_THRESHOLD = 80;
+
+/**
  * Set of providers with fast mode currently enabled.
  * Updated by the chrome footer via the AD_MODEL_FAST_MODE_CHANGED_EVENT.
  */
@@ -35,6 +44,31 @@ function thinkingLevelToColorToken(level: string): ThemeColor {
 }
 
 /**
+ * Build the cache hit rate segment for the model line.
+ *
+ * Rendered before the fast-mode symbol so it sits to the left of the model
+ * name. Colored by tier:
+ *   90–100%: success (green)
+ *   80–90%:  warning (orange)
+ *   below 80%: error (red)
+ * Returns an empty string when no cache activity has been recorded yet.
+ */
+function buildCacheHitRatePart(
+  theme: Theme,
+  cacheHitRate: number | undefined,
+): string {
+  if (cacheHitRate === undefined) return "";
+  const text = `cache ${cacheHitRate.toFixed(0)}% `;
+  const color: ThemeColor =
+    cacheHitRate >= CACHE_HIT_RATE_WARNING_THRESHOLD
+      ? "success"
+      : cacheHitRate >= CACHE_HIT_RATE_ERROR_THRESHOLD
+        ? "warning"
+        : "error";
+  return theme.fg(color, text);
+}
+
+/**
  * Build model line for footer line 2 right side
  */
 export function buildModelLine(
@@ -43,8 +77,10 @@ export function buildModelLine(
   modelId: string | undefined,
   hasReasoning: boolean,
   thinkingLevel: string,
+  cacheHitRate?: number | undefined,
 ): string {
   const prefix = getFastPrefix(provider);
+  const cachePart = buildCacheHitRatePart(theme, cacheHitRate);
   const providerName = `${prefix}${provider ?? "unknown"}`;
   const modelPart = `${providerName}/${modelId ?? "no-model"}:`;
 
@@ -55,13 +91,16 @@ export function buildModelLine(
         : "off";
     const thinkingColorToken = thinkingLevelToColorToken(thinkingLevel);
     return (
+      cachePart +
       theme.fg("thinkingMinimal", modelPart) +
       theme.fg(thinkingColorToken, formattedLevel)
     );
   }
 
   return (
-    theme.fg("thinkingMinimal", modelPart) + theme.fg("thinkingOff", "none")
+    cachePart +
+    theme.fg("thinkingMinimal", modelPart) +
+    theme.fg("thinkingOff", "none")
   );
 }
 
