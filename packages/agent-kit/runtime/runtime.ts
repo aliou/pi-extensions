@@ -17,6 +17,8 @@ import type { SubagentDetails } from "./types";
 export class SubagentRuntime<Params extends TSchema = TSchema> {
   private unsubscribe?: () => void;
   private state: SubagentRuntimeState;
+  private toolCallCount = 0;
+  private limitAbort = false;
 
   constructor(
     private config: SubagentConfig<Params>,
@@ -80,6 +82,24 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
         details: this.state.snapshot(),
       };
     } catch (err: unknown) {
+      if (this.limitAbort) {
+        const response = this.session.getLastAssistantText() ?? "";
+        this.state.markSuccess(response);
+
+        const content = this.config.resumable
+          ? appendSubagentSessionFooter(
+              response,
+              this.config.name,
+              this.session.sessionId,
+            )
+          : response;
+
+        return {
+          content: [textContent(content)],
+          details: this.state.snapshot(),
+        };
+      }
+
       if (this.signal?.aborted) {
         this.state.markAborted();
         throw new Error(this.state.value.error ?? "Subagent aborted");
@@ -108,6 +128,20 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
   ) {
     const changed = this.state.applyEvent(event);
     if (!changed) return;
+
+    if (event.type === "tool_execution_start") {
+      this.toolCallCount++;
+    }
+
+    if (
+      event.type === "tool_execution_end" &&
+      this.config.maxToolCalls != null &&
+      this.toolCallCount >= this.config.maxToolCalls &&
+      !this.limitAbort
+    ) {
+      this.limitAbort = true;
+      this.session.abort();
+    }
 
     this.emitUpdate(onUpdate);
   }

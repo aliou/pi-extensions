@@ -14,6 +14,7 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     description: "Generate or refine a concise session name.",
     systemPrompt: SESSION_NAME_SYSTEM_PROMPT,
     tools: createSessionNameTools(pi),
+    maxToolCalls: 1,
     modelPreferences: [
       {
         provider: "openai-codex",

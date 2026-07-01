@@ -89,6 +89,8 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   extensionPaths?: string[];
   modelPreferences: SubagentModelPreference[];
   resumable?: boolean;
+  /** Maximum number of tool calls the subagent may execute before it is forcibly stopped. */
+  maxToolCalls?: number;
 
   parameters: Params;
   renderHeader?: SubagentHeaderRenderer<Params>;
