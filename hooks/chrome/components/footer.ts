@@ -20,6 +20,7 @@ import {
   type AdModelFastModeChangedEvent,
   type TpsTelemetry,
 } from "@harness/events";
+import { getCacheFreshness } from "../lib/cache-status";
 import { GitStatusWatcher } from "../lib/git-status";
 import {
   buildModelIdLine,
@@ -43,6 +44,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
   let gitStatusWatcher: GitStatusWatcher | undefined;
   let stashHasContent = false;
   let latestTps: number | null | undefined;
+  let showResumeCacheFreshness = false;
 
   pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
     const event = (data ?? {}) as Partial<AdEditorStashChangedEvent>;
@@ -187,6 +189,9 @@ export function createCustomFooter(pi: ExtensionAPI) {
 
       const thinkingLevel = pi.getThinkingLevel();
       const hasReasoning = !!ctx.model?.reasoning;
+      const cacheFreshness = showResumeCacheFreshness
+        ? getCacheFreshness(ctx.sessionManager.getBranch())
+        : undefined;
       const modelLine = buildModelLine(
         theme,
         ctx.model?.provider,
@@ -194,6 +199,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
         hasReasoning,
         thinkingLevel ?? "off",
         usage.latestCacheHitRate,
+        cacheFreshness,
       );
       const modelWidth = visibleWidth(modelLine);
 
@@ -234,8 +240,12 @@ export function createCustomFooter(pi: ExtensionAPI) {
   };
 
   return {
-    setup: (context: ExtensionContext) => {
+    setup: (
+      context: ExtensionContext,
+      options: { showResumeCacheFreshness?: boolean } = {},
+    ) => {
       ctx = context;
+      showResumeCacheFreshness = options.showResumeCacheFreshness === true;
       ctx.ui.setFooter((tui, theme, footerData) => {
         requestRender = () => tui.requestRender?.();
 
@@ -266,6 +276,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
       if (ctx) {
         ctx.ui.setFooter(undefined);
         ctx = undefined;
+        showResumeCacheFreshness = false;
       }
     },
   };

@@ -47,24 +47,49 @@ interface Fixture {
  * 142.0 tps with branch cost $0.009 and total cost $0.140, context 5% of a
  * 200k window, model glm-5.2-short.
  */
-function createFixture(): Fixture {
+function createFixture(
+  options: {
+    showResumeCacheFreshness?: boolean;
+    compactedAfterAssistant?: boolean;
+  } = {},
+): Fixture {
   // First assistant entry is the branch leaf; getBranch() returns it so
   // branchCost diverges from totalCost and the stats line carries the
   // cumulative parenthetical — exactly the crashing output.
   const branchEntry = {
     type: "message",
+    timestamp: new Date(0).toISOString(),
     message: {
       role: "assistant",
-      usage: { cost: { total: 0.009 } },
+      api: "openai-completions",
+      provider: "synthetic",
+      model: "hf:zai-org/GLM-4.7-Flash",
+      timestamp: 0,
+      usage: {
+        input: 100,
+        cacheRead: 0,
+        cacheWrite: 0,
+        cost: { total: 0.009 },
+      },
     },
   };
   const totalEntry = {
     type: "message",
     message: {
       role: "assistant",
-      usage: { cost: { total: 0.14 } },
+      usage: { input: 100, cacheRead: 0, cacheWrite: 0, cost: { total: 0.14 } },
     },
   };
+  const compactionEntry = {
+    type: "compaction",
+    timestamp: new Date(1_000).toISOString(),
+    summary: "summary",
+    firstKeptEntryId: "assistant-entry",
+    tokensBefore: 10_000,
+  };
+  const branchEntries = options.compactedAfterAssistant
+    ? [branchEntry, compactionEntry]
+    : [branchEntry];
 
   const handlers = new Map<string, ((data: unknown) => void)[]>();
   const pi = {
@@ -89,7 +114,7 @@ function createFixture(): Fixture {
     sessionManager: {
       getSessionName: () => undefined,
       getEntries: () => [branchEntry, totalEntry],
-      getBranch: () => [branchEntry],
+      getBranch: () => branchEntries,
     },
     getContextUsage: () => ({
       contextWindow: 200_000,
@@ -113,7 +138,9 @@ function createFixture(): Fixture {
   } as unknown as ExtensionContext;
 
   const footer = createCustomFooter(pi);
-  footer.setup(ctx);
+  footer.setup(ctx, {
+    showResumeCacheFreshness: options.showResumeCacheFreshness === true,
+  });
 
   // Feed the crashing TPS telemetry. Emitted before setup set ctx, but the
   // handler records latestTps before the early `if (!ctx) return` guard.
@@ -151,5 +178,24 @@ describe("custom footer width safety", () => {
     for (const line of lines) {
       expect(visibleWidth(line)).toBeLessThanOrEqual(10);
     }
+  });
+
+  it("keeps cache percent in the model cache segment", () => {
+    fixture = createFixture({ showResumeCacheFreshness: true });
+    const lines = fixture.component.render(120);
+
+    expect(lines[1]).toContain("cache 0% ×");
+    expect(lines[1]).not.toContain("cache stale");
+  });
+
+  it("shows unknown cache after compaction without a newer assistant", () => {
+    fixture = createFixture({
+      showResumeCacheFreshness: true,
+      compactedAfterAssistant: true,
+    });
+    const lines = fixture.component.render(120);
+
+    expect(lines[1]).toContain("cache ?");
+    expect(lines[1]).not.toContain("cache 0%");
   });
 });

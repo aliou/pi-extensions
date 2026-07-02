@@ -1,4 +1,5 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
+import type { CacheFreshness } from "./cache-status";
 
 const FAST_SYMBOL = "\u26A1";
 
@@ -53,19 +54,57 @@ function thinkingLevelToColorToken(level: string): ThemeColor {
  *   below 80%: error (red)
  * Returns an empty string when no cache activity has been recorded yet.
  */
-function buildCacheHitRatePart(
+function formatRemaining(ms: number): string {
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+  return restMinutes === 0 ? `${hours}h` : `${hours}h${restMinutes}m`;
+}
+
+function getCacheHitRateColor(cacheHitRate: number | undefined): ThemeColor {
+  if (cacheHitRate === undefined) return "success";
+  return cacheHitRate >= CACHE_HIT_RATE_WARNING_THRESHOLD
+    ? "success"
+    : cacheHitRate >= CACHE_HIT_RATE_ERROR_THRESHOLD
+      ? "warning"
+      : "error";
+}
+
+function buildCachePart(
   theme: Theme,
   cacheHitRate: number | undefined,
+  cacheFreshness?: CacheFreshness | undefined,
 ): string {
-  if (cacheHitRate === undefined) return "";
-  const text = `cache ${cacheHitRate.toFixed(0)}% `;
-  const color: ThemeColor =
-    cacheHitRate >= CACHE_HIT_RATE_WARNING_THRESHOLD
-      ? "success"
-      : cacheHitRate >= CACHE_HIT_RATE_ERROR_THRESHOLD
-        ? "warning"
-        : "error";
-  return theme.fg(color, text);
+  const remainingMs =
+    cacheFreshness?.state === "valid" &&
+    cacheFreshness.ttlMs !== undefined &&
+    cacheFreshness.ageMs !== undefined
+      ? Math.max(0, cacheFreshness.ttlMs - cacheFreshness.ageMs)
+      : undefined;
+
+  if (cacheFreshness?.state === "unknown") {
+    return theme.fg("warning", "cache ? ");
+  }
+
+  const expired = cacheFreshness?.state === "stale";
+  if (cacheHitRate === undefined && remainingMs === undefined && !expired) {
+    return "";
+  }
+
+  const hitRateText =
+    cacheHitRate === undefined ? "cache" : `cache ${cacheHitRate.toFixed(0)}%`;
+  const remainingText =
+    remainingMs === undefined ? "" : ` ${formatRemaining(remainingMs)}`;
+  const expiredText = expired ? " ×" : "";
+  return theme.fg(
+    expired ? "error" : getCacheHitRateColor(cacheHitRate),
+    `${hitRateText}${remainingText}${expiredText} `,
+  );
 }
 
 /**
@@ -78,9 +117,10 @@ export function buildModelLine(
   hasReasoning: boolean,
   thinkingLevel: string,
   cacheHitRate?: number | undefined,
+  cacheFreshness?: CacheFreshness | undefined,
 ): string {
   const prefix = getFastPrefix(provider);
-  const cachePart = buildCacheHitRatePart(theme, cacheHitRate);
+  const cachePart = buildCachePart(theme, cacheHitRate, cacheFreshness);
   const providerName = `${prefix}${provider ?? "unknown"}`;
   const modelPart = `${providerName}/${modelId ?? "no-model"}:`;
 

@@ -83,7 +83,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 
 | Directory | Purpose | Key files |
 |---|---|---|
-| `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, and latest TPS telemetry | `hooks/`, `components/`, `lib/`, `native/` |
+| `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, latest TPS telemetry, cache hit rate, and resume cache freshness | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `compact/` | Sequential compaction via `session_before_compact` | `index.ts`, `compaction.ts`, `prompts.ts`, `utils.ts` |
