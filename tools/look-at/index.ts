@@ -53,7 +53,7 @@ Always provide a clear objective describing what you want to learn from the imag
     modelPreferences: [
       {
         provider: "neuralwatt",
-        model: "kimi-k2.6-fast",
+        model: "qwen3.6-35b-fast",
         thinking: "off",
         weight: 1,
       },

@@ -58,7 +58,7 @@ export const defaultModelRosters = {
       thinking: "off",
     },
     { provider: "neuralwatt", model: "glm-5.2-fast", thinking: "off" },
-    { provider: "neuralwatt", model: "kimi-k2.6-fast", thinking: "off" },
+    { provider: "neuralwatt", model: "qwen3.5-397b-fast", thinking: "off" },
     { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
   ],
   "ad:codebase:local": [
@@ -69,15 +69,14 @@ export const defaultModelRosters = {
     },
     {
       provider: "synthetic",
-      model: "hf:moonshotai/Kimi-K2.6",
+      model: "hf:moonshotai/Kimi-K2.7-Code",
       thinking: "medium",
     },
     {
       provider: "synthetic",
-      model: "hf:Qwen/Qwen3.5-397B-A17B",
+      model: "hf:Qwen/Qwen3.6-27B",
       thinking: "medium",
     },
-    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "medium" },
     { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
     {
       provider: "openai-codex",
@@ -99,10 +98,9 @@ export const defaultModelRosters = {
     },
     {
       provider: "synthetic",
-      model: "hf:Qwen/Qwen3.5-397B-A17B",
+      model: "hf:Qwen/Qwen3.6-27B",
       thinking: "medium",
     },
-    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "medium" },
     { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
   ],
   "ad:review:diff": [
@@ -153,8 +151,7 @@ export const defaultModelRosters = {
       model: "kimi-k2.7-code",
       thinking: "medium",
     },
-    { provider: "neuralwatt", model: "glm-5.1", thinking: "medium" },
-    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "medium" },
+    { provider: "neuralwatt", model: "glm-5.2", thinking: "high" },
   ],
   "ad:advisor:design": [
     {
@@ -168,21 +165,15 @@ export const defaultModelRosters = {
       model: "hf:MiniMaxAI/MiniMax-M3",
       thinking: "medium",
     },
-    { provider: "neuralwatt", model: "kimi-k2.6", thinking: "medium" },
+    { provider: "neuralwatt", model: "kimi-k2.7-code", thinking: "medium" },
     { provider: "neuralwatt", model: "qwen3.5-397b", thinking: "medium" },
-    {
-      provider: "neuralwatt",
-      model: "kimi-k2.7-code",
-      thinking: "medium",
-    },
   ],
   "ad:vision:inspect": [
     {
       provider: "synthetic",
-      model: "hf:moonshotai/Kimi-K2.6",
+      model: "hf:Qwen/Qwen3.6-27B",
       thinking: "off",
     },
-    { provider: "neuralwatt", model: "kimi-k2.6-fast", thinking: "off" },
     { provider: "neuralwatt", model: "qwen3.6-35b-fast", thinking: "off" },
     {
       provider: "neuralwatt",

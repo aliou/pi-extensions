@@ -48,13 +48,11 @@ describe("defaultModelRosters", () => {
     const availableByProvider = {
       anthropic: new Set(["claude-opus-4-8", "claude-sonnet-4-6"]),
       neuralwatt: new Set([
-        "glm-5-fast",
-        "glm-5.1",
+        "glm-5.2",
         "glm-5.2-fast",
-        "kimi-k2.6",
-        "kimi-k2.6-fast",
         "kimi-k2.7-code",
         "qwen3.5-397b",
+        "qwen3.5-397b-fast",
         "qwen3.6-35b-fast",
       ]),
       "openai-codex": new Set([
@@ -64,9 +62,9 @@ describe("defaultModelRosters", () => {
       ]),
       synthetic: new Set([
         "hf:MiniMaxAI/MiniMax-M3",
-        "hf:moonshotai/Kimi-K2.6",
+        "hf:moonshotai/Kimi-K2.7-Code",
         "hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4",
-        "hf:Qwen/Qwen3.5-397B-A17B",
+        "hf:Qwen/Qwen3.6-27B",
         "hf:zai-org/GLM-4.7-Flash",
       ]),
     };
@@ -78,6 +76,38 @@ describe("defaultModelRosters", () => {
         ];
       expect(providerModels, candidate.provider).toBeDefined();
       expect(providerModels?.has(candidate.model), candidate.model).toBe(true);
+    }
+  });
+
+  it("only uses supported thinking levels for listed models", () => {
+    const supportedThinking = {
+      "anthropic/claude-opus-4-8": new Set(["medium"]),
+      "anthropic/claude-sonnet-4-6": new Set(["medium"]),
+      "neuralwatt/glm-5.2": new Set(["off", "high", "xhigh"]),
+      "neuralwatt/glm-5.2-fast": new Set(["off"]),
+      "neuralwatt/kimi-k2.7-code": new Set(["medium"]),
+      "neuralwatt/qwen3.5-397b": new Set(["medium"]),
+      "neuralwatt/qwen3.5-397b-fast": new Set(["off"]),
+      "neuralwatt/qwen3.6-35b-fast": new Set(["off"]),
+      "openai-codex/gpt-5.3-codex-spark": new Set(["off"]),
+      "openai-codex/gpt-5.4-mini": new Set(["off", "low"]),
+      "openai-codex/gpt-5.5": new Set(["low", "medium"]),
+      "synthetic/hf:MiniMaxAI/MiniMax-M3": new Set(["medium"]),
+      "synthetic/hf:moonshotai/Kimi-K2.7-Code": new Set(["medium"]),
+      "synthetic/hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4": new Set([
+        "off",
+        "medium",
+      ]),
+      "synthetic/hf:Qwen/Qwen3.6-27B": new Set(["off", "medium"]),
+      "synthetic/hf:zai-org/GLM-4.7-Flash": new Set(["off", "medium"]),
+    };
+
+    for (const candidate of allCandidates()) {
+      const modelKey = `${candidate.provider}/${candidate.model}`;
+      const levels =
+        supportedThinking[modelKey as keyof typeof supportedThinking];
+      expect(levels, modelKey).toBeDefined();
+      expect(levels?.has(candidate.thinking), modelKey).toBe(true);
     }
   });
 });

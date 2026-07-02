@@ -61,7 +61,7 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
       {
         provider: "synthetic",
         model: "syn:large:text",
-        thinking: "medium",
+        thinking: "xhigh",
         weight: 1,
       },
     ],

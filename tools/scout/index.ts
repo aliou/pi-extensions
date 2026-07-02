@@ -50,7 +50,7 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
       },
       {
         provider: "neuralwatt",
-        model: "qwen3.6-35b-fast",
+        model: "qwen3.6-35b",
         thinking: "medium",
         weight: 1,
       },
