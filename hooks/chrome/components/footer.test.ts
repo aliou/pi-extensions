@@ -180,22 +180,25 @@ describe("custom footer width safety", () => {
     }
   });
 
-  it("keeps cache percent in the model cache segment", () => {
+  it("shows empty set with since when cache is stale, dropping hit rate", () => {
     fixture = createFixture({ showResumeCacheFreshness: true });
     const lines = fixture.component.render(120);
 
-    expect(lines[1]).toContain("cache 0% ×");
-    expect(lines[1]).not.toContain("cache stale");
+    expect(lines[1]).toContain("∅");
+    expect(lines[1]).not.toContain("≡");
+    expect(lines[1]).not.toContain("0%");
+    expect(lines[1]).not.toContain("?");
   });
 
-  it("shows unknown cache after compaction without a newer assistant", () => {
+  it("shows empty set with unknown marker after compaction", () => {
     fixture = createFixture({
       showResumeCacheFreshness: true,
       compactedAfterAssistant: true,
     });
     const lines = fixture.component.render(120);
 
-    expect(lines[1]).toContain("cache ?");
-    expect(lines[1]).not.toContain("cache 0%");
+    expect(lines[1]).toContain("∅ ?");
+    expect(lines[1]).not.toContain("≡");
+    expect(lines[1]).not.toContain("0%");
   });
 });

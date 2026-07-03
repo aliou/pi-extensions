@@ -2,6 +2,7 @@ import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
 import {
   ANTHROPIC_SHORT_CACHE_TTL_MS,
+  formatExpiredSince,
   getCacheFreshness,
   NEURALWATT_GLM_CACHE_TTL_MS,
   NEURALWATT_KIMI_CACHE_TTL_MS,
@@ -194,5 +195,42 @@ describe("cache-status", () => {
     };
 
     expect(getCacheFreshness([userEntry])).toBeUndefined();
+  });
+});
+
+describe("formatExpiredSince", () => {
+  const SECOND = 1000;
+  const MINUTE = 60 * SECOND;
+  const HOUR = 60 * MINUTE;
+  const DAY = 24 * HOUR;
+
+  it("formats sub-minute ages as seconds", () => {
+    expect(formatExpiredSince(0)).toBe("0s");
+    expect(formatExpiredSince(45 * SECOND)).toBe("45s");
+    expect(formatExpiredSince(59_499)).toBe("59s");
+  });
+
+  it("formats sub-hour ages as rounded minutes", () => {
+    expect(formatExpiredSince(10 * MINUTE)).toBe("10m");
+    expect(formatExpiredSince(59 * MINUTE + 29 * SECOND)).toBe("59m");
+    expect(formatExpiredSince(59 * MINUTE + 30 * SECOND)).toBe("1h");
+  });
+
+  it("formats sub-day ages as rounded hours", () => {
+    expect(formatExpiredSince(23 * HOUR)).toBe("23h");
+    expect(formatExpiredSince(23 * HOUR + 29 * MINUTE)).toBe("23h");
+    expect(formatExpiredSince(23 * HOUR + 30 * MINUTE)).toBe("1d");
+  });
+
+  it("shows days plus hours for multi-day ages", () => {
+    expect(formatExpiredSince(DAY + 12 * HOUR)).toBe("1d12h");
+    expect(formatExpiredSince(DAY + 22 * HOUR)).toBe("1d22h");
+  });
+
+  it("rolls the hour remainder up to the next whole day within an hour of it", () => {
+    expect(formatExpiredSince(DAY + 23 * HOUR)).toBe("2d");
+    expect(formatExpiredSince(DAY + 23 * HOUR + 30 * MINUTE)).toBe("2d");
+    expect(formatExpiredSince(2 * DAY)).toBe("2d");
+    expect(formatExpiredSince(2 * DAY + 12 * HOUR)).toBe("2d12h");
   });
 });

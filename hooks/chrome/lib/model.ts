@@ -1,5 +1,5 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
-import type { CacheFreshness } from "./cache-status";
+import { type CacheFreshness, formatExpiredSince } from "./cache-status";
 
 const FAST_SYMBOL = "\u26A1";
 
@@ -80,6 +80,25 @@ function buildCachePart(
   cacheHitRate: number | undefined,
   cacheFreshness?: CacheFreshness | undefined,
 ): string {
+  // Cache unusable: expired or unknown. Show the empty set and, when we
+  // know how long ago it expired, a rounded relative duration. Hit rate is
+  // no longer relevant once the cache is gone, so it is dropped entirely.
+  if (
+    cacheFreshness?.state === "stale" ||
+    cacheFreshness?.state === "unknown"
+  ) {
+    const sinceMs =
+      cacheFreshness.state === "stale" &&
+      cacheFreshness.ageMs !== undefined &&
+      cacheFreshness.ttlMs !== undefined
+        ? Math.max(0, cacheFreshness.ageMs - cacheFreshness.ttlMs)
+        : undefined;
+    const color = cacheFreshness.state === "stale" ? "error" : "warning";
+    const text =
+      sinceMs === undefined ? "∅ ? " : `∅ ${formatExpiredSince(sinceMs)} `;
+    return theme.fg(color, text);
+  }
+
   const remainingMs =
     cacheFreshness?.state === "valid" &&
     cacheFreshness.ttlMs !== undefined &&
@@ -87,23 +106,17 @@ function buildCachePart(
       ? Math.max(0, cacheFreshness.ttlMs - cacheFreshness.ageMs)
       : undefined;
 
-  if (cacheFreshness?.state === "unknown") {
-    return theme.fg("warning", "cache ? ");
-  }
-
-  const expired = cacheFreshness?.state === "stale";
-  if (cacheHitRate === undefined && remainingMs === undefined && !expired) {
+  if (cacheHitRate === undefined && remainingMs === undefined) {
     return "";
   }
 
   const hitRateText =
-    cacheHitRate === undefined ? "cache" : `cache ${cacheHitRate.toFixed(0)}%`;
+    cacheHitRate === undefined ? "≡" : `≡ ${cacheHitRate.toFixed(0)}%`;
   const remainingText =
     remainingMs === undefined ? "" : ` ${formatRemaining(remainingMs)}`;
-  const expiredText = expired ? " ×" : "";
   return theme.fg(
-    expired ? "error" : getCacheHitRateColor(cacheHitRate),
-    `${hitRateText}${remainingText}${expiredText} `,
+    getCacheHitRateColor(cacheHitRate),
+    `${hitRateText}${remainingText} `,
   );
 }
 

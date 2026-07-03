@@ -36,6 +36,15 @@ import {
 } from "../lib/stats";
 
 /**
+ * Interval at which the footer re-renders while resume-cache freshness is
+ * shown. The remaining cache TTL ticks down on each render until it reaches
+ * 0, at which point the segment flips to the stale color. Without this
+ * timer the countdown would only advance when some other event (TPS, stash,
+ * branch change) happened to trigger a render.
+ */
+const CACHE_FRESHNESS_RENDER_INTERVAL_MS = 30_000;
+
+/**
  * Create a footer component with 2-line layout.
  */
 export function createCustomFooter(pi: ExtensionAPI) {
@@ -258,9 +267,19 @@ export function createCustomFooter(pi: ExtensionAPI) {
           requestRender?.();
         });
 
+        // Keep the cache-freshness countdown live even when no other event
+        // triggers a render. Cleared on dispose.
+        const cacheFreshnessTimer = showResumeCacheFreshness
+          ? setInterval(
+              () => requestRender?.(),
+              CACHE_FRESHNESS_RENDER_INTERVAL_MS,
+            )
+          : undefined;
+
         return {
           dispose: () => {
             requestRender = undefined;
+            if (cacheFreshnessTimer) clearInterval(cacheFreshnessTimer);
             gitStatusWatcher?.dispose();
             gitStatusWatcher = undefined;
             unsub();
