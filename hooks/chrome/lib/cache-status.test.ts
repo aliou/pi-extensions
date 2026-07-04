@@ -121,6 +121,8 @@ describe("cache-status", () => {
   });
 
   it("uses 5 minutes for default Anthropic cache", () => {
+    // Pass an explicit short retention so the assertion is deterministic
+    // regardless of an ambient PI_CACHE_RETENTION=long in the environment.
     const status = getCacheFreshness(
       [
         assistantEntry({
@@ -131,6 +133,7 @@ describe("cache-status", () => {
         }),
       ],
       10_000 + ANTHROPIC_SHORT_CACHE_TTL_MS + 1,
+      "short",
     );
 
     expect(status?.state).toBe("stale");
