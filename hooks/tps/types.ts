@@ -1,44 +1,5 @@
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 
-// ─── pi-internal event types (not exported from pi's public API) ───────────
-// These mirror @earendil-works/pi-coding-agent's internal extension event
-// payloads. When pi starts exporting them, replace these with imports.
-
-export interface TurnStartEvent {
-  type: "turn_start";
-  turnIndex: number;
-  timestamp: number;
-}
-
-export interface TurnEndEvent {
-  type: "turn_end";
-  turnIndex: number;
-  message: unknown;
-  toolResults: unknown[];
-}
-
-export interface MessageStartEvent {
-  type: "message_start";
-  message: unknown;
-}
-
-export interface MessageUpdateEvent {
-  type: "message_update";
-  message: unknown;
-}
-
-export interface MessageEndEvent {
-  type: "message_end";
-  message: unknown;
-}
-
-export interface ToolExecutionStartEvent {
-  type: "tool_execution_start";
-  toolCallId: string;
-  toolName: string;
-  args: unknown;
-}
-
 // ─── In-memory turn accumulator ───────────────────────────────────────────
 // Internal to this hook. The emitted shape lives in @harness/events (TpsTelemetry).
 

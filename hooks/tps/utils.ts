@@ -3,15 +3,10 @@ import type { TpsTelemetry } from "@harness/events";
 import { MAX_PLAUSIBLE_TPS, type TurnTiming } from "./types";
 
 /** Type guard: the message is an assistant message with usable usage info. */
-export function isAssistantMessage(
-  message: unknown,
-): message is AssistantMessage {
-  if (!message || typeof message !== "object") return false;
-  const msg = message as Record<string, unknown>;
-  if (msg.role !== "assistant") return false;
-  if (typeof msg.usage !== "object" || msg.usage === null) return false;
-  const usage = msg.usage as Record<string, unknown>;
-  return typeof usage.input === "number" && typeof usage.output === "number";
+export function isAssistantMessage(message: {
+  role?: unknown;
+}): message is AssistantMessage {
+  return message.role === "assistant";
 }
 
 /**

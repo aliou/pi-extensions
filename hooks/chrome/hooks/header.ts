@@ -24,23 +24,19 @@ export function setupHeaderHook(pi: ExtensionAPI) {
 
     const seenCmds = new Set<string>();
     const offCmd = pi.events.on(AD_HEADER_REGISTER_COMMAND_EVENT, (data) => {
-      if (data && typeof data === "object") {
-        const d = data as AdHeaderRegisterCommandEvent;
-        if (!seenCmds.has(d.name)) {
-          seenCmds.add(d.name);
-          commands.push(d);
-        }
+      const d = data as AdHeaderRegisterCommandEvent;
+      if (!seenCmds.has(d.name)) {
+        seenCmds.add(d.name);
+        commands.push(d);
       }
     });
 
     const seenShcs = new Set<string>();
     const offShc = pi.events.on(AD_HEADER_REGISTER_SHORTCUT_EVENT, (data) => {
-      if (data && typeof data === "object") {
-        const d = data as AdHeaderRegisterShortcutEvent;
-        if (!seenShcs.has(d.key)) {
-          seenShcs.add(d.key);
-          shortcuts.push(d);
-        }
+      const d = data as AdHeaderRegisterShortcutEvent;
+      if (!seenShcs.has(d.key)) {
+        seenShcs.add(d.key);
+        shortcuts.push(d);
       }
     });
 
@@ -48,12 +44,10 @@ export function setupHeaderHook(pi: ExtensionAPI) {
     const offCompletion = pi.events.on(
       AD_HEADER_REGISTER_COMPLETION_EVENT,
       (data) => {
-        if (data && typeof data === "object") {
-          const d = data as AdHeaderRegisterCompletionEvent;
-          if (!seenCompletions.has(d.trigger)) {
-            seenCompletions.add(d.trigger);
-            completions.push(d);
-          }
+        const d = data as AdHeaderRegisterCompletionEvent;
+        if (!seenCompletions.has(d.trigger)) {
+          seenCompletions.add(d.trigger);
+          completions.push(d);
         }
       },
     );

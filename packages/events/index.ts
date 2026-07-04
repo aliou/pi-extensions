@@ -19,6 +19,26 @@ export const AD_NOTIFY_DANGEROUS_EVENT = "ad:notify:dangerous";
 export const AD_NOTIFY_ATTENTION_EVENT = "ad:notify:attention";
 export const AD_NOTIFY_DONE_EVENT = "ad:notify:done";
 
+export interface AdNotifyDangerousEvent {
+  description: string;
+  toolName?: string;
+  toolCallId?: string;
+}
+
+export interface AdNotifyAttentionEvent {
+  description?: string;
+  reason?: string;
+  toolName?: string;
+  toolCallId?: string;
+}
+
+export interface AdNotifyDoneEvent {
+  summary?: string;
+  status?: "ok" | "error";
+  loops?: number;
+  toolCalls?: number;
+}
+
 export const AD_TERMINAL_TITLE_ATTENTION_EVENT = "ad:terminal-title:attention";
 
 export const AD_MODEL_FAST_MODE_CHANGED_EVENT = "ad:model-fast-mode:changed";

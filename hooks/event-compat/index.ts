@@ -42,9 +42,8 @@ type GuardrailsActionPromptedPayload = {
 };
 
 function mapGuardrailsRiskDetected(
-  data: unknown,
+  event: GuardrailsRiskDetectedPayload,
 ): Record<string, unknown> | undefined {
-  const event = data as GuardrailsRiskDetectedPayload;
   const risk = event.risk;
   const description = risk.reason ?? "dangerous command";
 
@@ -62,9 +61,8 @@ function mapGuardrailsRiskDetected(
 }
 
 function mapGuardrailsActionPrompted(
-  data: unknown,
+  event: GuardrailsActionPromptedPayload,
 ): Record<string, unknown> | undefined {
-  const event = data as GuardrailsActionPromptedPayload;
   if (event.feature !== "pathAccess") return undefined;
   if (event.prompt?.kind !== "confirmation") return undefined;
 
@@ -86,14 +84,24 @@ const BRIDGES: EventBridge[] = [
   {
     from: "guardrails:risk:detected",
     to: AD_NOTIFY_DANGEROUS_EVENT,
-    map: mapGuardrailsRiskDetected,
+    map: (data) =>
+      mapGuardrailsRiskDetected(data as GuardrailsRiskDetectedPayload),
   },
   {
     from: "guardrails:action:prompted",
     to: AD_NOTIFY_ATTENTION_EVENT,
-    map: mapGuardrailsActionPrompted,
+    map: (data) =>
+      mapGuardrailsActionPrompted(data as GuardrailsActionPromptedPayload),
   },
 ];
+
+function registerBridge(pi: ExtensionAPI, bridge: EventBridge): void {
+  pi.events.on(bridge.from, (data: unknown) => {
+    const mapped = bridge.map(data);
+    if (!mapped) return;
+    pi.events.emit(bridge.to, mapped);
+  });
+}
 
 /**
  * Bridge external extension events into harness-native events.
@@ -103,10 +111,6 @@ const BRIDGES: EventBridge[] = [
  */
 export default function (pi: ExtensionAPI): void {
   for (const bridge of BRIDGES) {
-    pi.events.on(bridge.from, (data: unknown) => {
-      const mapped = bridge.map(data);
-      if (!mapped) return;
-      pi.events.emit(bridge.to, mapped);
-    });
+    registerBridge(pi, bridge);
   }
 }

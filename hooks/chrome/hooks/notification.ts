@@ -9,6 +9,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { ToolResultMessage } from "@earendil-works/pi-ai";
 import type {
+  AgentEndEvent,
   ExtensionAPI,
   ExtensionContext,
   ToolCallEvent,
@@ -17,6 +18,9 @@ import {
   AD_NOTIFY_ATTENTION_EVENT,
   AD_NOTIFY_DANGEROUS_EVENT,
   AD_NOTIFY_DONE_EVENT,
+  type AdNotifyAttentionEvent,
+  type AdNotifyDangerousEvent,
+  type AdNotifyDoneEvent,
 } from "@harness/events";
 
 // Path to the native binary (resolved relative to this file)
@@ -29,51 +33,23 @@ const DEFAULT_SOUND = "/System/Library/Sounds/Funk.aiff";
 const ATTENTION_SOUND = "/System/Library/Sounds/Glass.aiff";
 const ERROR_SOUND = "/System/Library/Sounds/Basso.aiff";
 
-interface DangerousEvent {
-  description: string;
-  toolName?: string;
-  toolCallId?: string;
-}
-
-interface AttentionEvent {
-  description?: string;
-  reason?: string;
-  toolName?: string;
-  toolCallId?: string;
-}
-
-interface DoneEvent {
-  summary?: string;
-  status?: "ok" | "error";
-  loops?: number;
-  toolCalls?: number;
-}
-
 /**
  * Find the last assistant message's stopReason in an event's messages array.
  * Returns the raw string (e.g. "stop", "aborted", "error") or undefined.
  */
-function lastAssistantStopReason(event: unknown): string | undefined {
-  if (!event || typeof event !== "object") return undefined;
-
-  const messages = (event as { messages?: unknown }).messages;
-  if (!Array.isArray(messages)) return undefined;
-
+function lastAssistantStopReason(event: AgentEndEvent): string | undefined {
+  const { messages } = event;
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
-    if (!message || typeof message !== "object") continue;
+    if (message?.role !== "assistant") continue;
 
-    const role = (message as { role?: unknown }).role;
-    if (role !== "assistant") continue;
-
-    const stopReason = (message as { stopReason?: unknown }).stopReason;
-    return typeof stopReason === "string" ? stopReason : undefined;
+    return message.stopReason;
   }
 
   return undefined;
 }
 
-function isAgentRunAborted(event: unknown): boolean {
+function isAgentRunAborted(event: AgentEndEvent): boolean {
   const stopReason = lastAssistantStopReason(event);
   return stopReason?.toLowerCase() === "aborted";
 }
@@ -84,7 +60,7 @@ function isAgentRunAborted(event: unknown): boolean {
  * tool-result error tracked via hadError, which only marks individual
  * tool calls that failed but still let the turn complete normally.
  */
-function isAgentRunErrored(event: unknown): boolean {
+function isAgentRunErrored(event: AgentEndEvent): boolean {
   return lastAssistantStopReason(event)?.toLowerCase() === "error";
 }
 
@@ -165,24 +141,24 @@ async function notify(
 
 async function handleDangerousLikeEvent(
   pi: ExtensionAPI,
-  data: unknown,
+  event: AdNotifyDangerousEvent,
 ): Promise<void> {
-  const event = data as DangerousEvent;
   const message = `Dangerous command detected: ${event.description}`;
   await notify(pi, message, ATTENTION_SOUND);
 }
 
 async function handleAttentionEvent(
   pi: ExtensionAPI,
-  data: unknown,
+  event: AdNotifyAttentionEvent,
 ): Promise<void> {
-  const event = data as AttentionEvent;
   const message = event.description ?? event.reason ?? "Waiting for user input";
   await notify(pi, message, ATTENTION_SOUND);
 }
 
-async function handleDoneEvent(pi: ExtensionAPI, data: unknown): Promise<void> {
-  const event = data as DoneEvent;
+async function handleDoneEvent(
+  pi: ExtensionAPI,
+  event: AdNotifyDoneEvent,
+): Promise<void> {
   const message = event.summary ?? "done";
   const sound = event.status === "error" ? ERROR_SOUND : DEFAULT_SOUND;
   await notify(pi, message, sound);
@@ -279,14 +255,14 @@ export function setupNotificationHook(pi: ExtensionAPI) {
   });
 
   pi.events.on(AD_NOTIFY_DANGEROUS_EVENT, (data: unknown) => {
-    void handleDangerousLikeEvent(pi, data);
+    void handleDangerousLikeEvent(pi, data as AdNotifyDangerousEvent);
   });
 
   pi.events.on(AD_NOTIFY_ATTENTION_EVENT, (data: unknown) => {
-    void handleAttentionEvent(pi, data);
+    void handleAttentionEvent(pi, data as AdNotifyAttentionEvent);
   });
 
   pi.events.on(AD_NOTIFY_DONE_EVENT, (data: unknown) => {
-    void handleDoneEvent(pi, data);
+    void handleDoneEvent(pi, data as AdNotifyDoneEvent);
   });
 }

@@ -1,14 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { AD_TPS_TELEMETRY_EVENT } from "@harness/events";
-import {
-  type MessageEndEvent,
-  type MessageStartEvent,
-  type MessageUpdateEvent,
-  STALL_THRESHOLD_MS,
-  type ToolExecutionStartEvent,
-  type TurnEndEvent,
-  type TurnTiming,
-} from "./types";
+import { STALL_THRESHOLD_MS, type TurnTiming } from "./types";
 import { buildTelemetry, isAssistantMessage } from "./utils";
 
 /**
@@ -57,7 +49,7 @@ export default function tps(pi: ExtensionAPI): void {
   // message_start fires at stream creation, before any tokens. Defer TTFT to
   // the first message_update. Reset the stall clock so inter-message gaps
   // (tool execution) aren't counted as inference stalls.
-  pi.on("message_start", (event: MessageStartEvent) => {
+  pi.on("message_start", (event) => {
     if (!currentTiming) return;
     if (!isAssistantMessage(event.message)) return;
     const now = performance.now();
@@ -68,7 +60,7 @@ export default function tps(pi: ExtensionAPI): void {
   });
 
   // Token-by-token updates during streaming: TTFT capture + stall detection.
-  pi.on("message_update", (event: MessageUpdateEvent) => {
+  pi.on("message_update", (event) => {
     if (!currentTiming) return;
     if (!isAssistantMessage(event.message)) return;
     const now = performance.now();
@@ -102,12 +94,12 @@ export default function tps(pi: ExtensionAPI): void {
   });
 
   // Mark this turn as a tool call so the dynamic cap clamps its TPS.
-  pi.on("tool_execution_start", (_event: ToolExecutionStartEvent) => {
+  pi.on("tool_execution_start", () => {
     if (!currentTiming) return;
     currentTiming.isToolCall = true;
   });
 
-  pi.on("message_end", (event: MessageEndEvent) => {
+  pi.on("message_end", (event) => {
     if (!currentTiming) return;
     if (!isAssistantMessage(event.message)) return;
     const now = performance.now();
@@ -126,7 +118,7 @@ export default function tps(pi: ExtensionAPI): void {
 
   // ── Calculate, cap, emit ────────────────────────────────────────────────
 
-  pi.on("turn_end", (_event: TurnEndEvent) => {
+  pi.on("turn_end", () => {
     if (!currentTiming) return;
     const timing = currentTiming;
     currentTiming = null;

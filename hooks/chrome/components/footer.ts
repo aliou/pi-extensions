@@ -56,24 +56,22 @@ export function createCustomFooter(pi: ExtensionAPI) {
   let showResumeCacheFreshness = false;
 
   pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
-    const event = (data ?? {}) as Partial<AdEditorStashChangedEvent>;
-    stashHasContent = event.hasContent === true;
+    const event = data as AdEditorStashChangedEvent;
+    stashHasContent = event.hasContent;
     if (!ctx) return;
     requestRender?.();
   });
 
   pi.events.on(AD_MODEL_FAST_MODE_CHANGED_EVENT, (data: unknown) => {
-    const event = (data ?? {}) as Partial<AdModelFastModeChangedEvent>;
-    if (event.provider != null) {
-      setFastModeProvider(event.provider, event.enabled === true);
-    }
+    const event = data as AdModelFastModeChangedEvent;
+    setFastModeProvider(event.provider, event.enabled);
     if (!ctx) return;
     requestRender?.();
   });
 
   pi.events.on(AD_TPS_TELEMETRY_EVENT, (data: unknown) => {
-    const event = data as Partial<TpsTelemetry> | undefined;
-    latestTps = typeof event?.tps === "number" ? event.tps : null;
+    const event = data as TpsTelemetry;
+    latestTps = event.tps;
     if (!ctx) return;
     requestRender?.();
   });
