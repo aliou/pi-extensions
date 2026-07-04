@@ -87,7 +87,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `compact/` | Sequential compaction via `session_before_compact` | `index.ts`, `compaction.ts`, `prompts.ts`, `utils.ts` |
-| `fast-mode/` | Session-local fast-mode controls for Opus and Codex | `index.ts` |
+| `fast-mode/` | Session-local fast-mode controls for Anthropic and Codex | `index.ts`, `anthropic.ts`, `codex.ts`, `helpers.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |
 | `project-trust/` | Auto-trust projects matching configured path prefixes; falls through to core for everything else | `index.ts`, `config.ts`, `types.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
