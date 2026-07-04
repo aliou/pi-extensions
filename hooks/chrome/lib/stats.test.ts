@@ -1,6 +1,10 @@
-import type { Theme } from "@earendil-works/pi-coding-agent";
-import { describe, expect, it } from "vitest";
-import { buildMinimalStatsParts, buildStatsParts } from "./stats";
+import type { ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
+import { assert, describe, expect, it } from "vitest";
+import {
+  buildMinimalStatsParts,
+  buildStatsParts,
+  getContextUsage,
+} from "./stats";
 
 const theme = {
   fg: (_color: string, text: string) => text,
@@ -14,8 +18,29 @@ const usage = {
 const contextUsage = {
   window: 272_000,
   percent: 10,
+  colorPercent: 10,
   display: "10.0% 27.2k/272k",
 };
+
+describe("getContextUsage", () => {
+  it("displays the real window but color-calibrates large windows", () => {
+    const ctx = {
+      model: { contextWindow: 1_000_000 },
+      getContextUsage: () => ({
+        contextWindow: 1_000_000,
+        tokens: 100_000,
+      }),
+    } as unknown as ExtensionContext;
+
+    const result = getContextUsage(ctx);
+
+    assert(result, "context usage should exist");
+    expect(result.window).toBe(1_000_000);
+    expect(result.percent).toBe(10);
+    expect(result.colorPercent).toBeCloseTo(36.76, 2);
+    expect(result.display).toBe("10.0% 100k/1.0M");
+  });
+});
 
 describe("buildStatsParts", () => {
   it("places TPS before cost", () => {
@@ -49,6 +74,7 @@ describe("buildMinimalStatsParts", () => {
   const splitContextUsage = {
     window: 200_000,
     percent: 5,
+    colorPercent: 5,
     display: "5.0% 10.0k/200k",
   };
 
@@ -76,6 +102,7 @@ describe("buildMinimalStatsParts", () => {
     const overError = {
       ...splitContextUsage,
       percent: 60,
+      colorPercent: 60,
       display: "60.0% 10.0k/200k",
     };
     expect(buildMinimalStatsParts(errorTheme, splitUsage, overError)).toEqual([

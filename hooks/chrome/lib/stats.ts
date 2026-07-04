@@ -8,13 +8,13 @@ export const CONTEXT_ERROR_THRESHOLD = 50;
 /**
  * Reference context window used to calibrate footer context-pressure colors.
  *
- * When a model's real context window exceeds this, the usage percentage (and
- * therefore the warning/error colors) is computed against this reference
- * rather than the full window. This keeps the color signal firing at the same
- * absolute token counts regardless of how large the model's context window is
- * (e.g. a 1M-context Gemini model still turns warning at ~95k and error at
- * ~136k, matching the previous context-clamp behavior) without mutating the
- * model object or affecting compaction.
+ * When a model's real context window exceeds this, only the warning/error color
+ * thresholds are computed against this reference rather than the full window.
+ * The displayed percentage and denominator still use the real model window.
+ * This keeps the color signal firing at the same absolute token counts
+ * regardless of how large the model's context window is (e.g. a 1M-context
+ * Gemini model still turns warning at ~95k and error at ~136k) without making
+ * the footer look like the model itself is capped.
  */
 export const REFERENCE_CONTEXT_WINDOW = 272_000;
 
@@ -32,6 +32,7 @@ interface CumulativeUsage {
 interface ContextUsage {
   window: number;
   percent: number;
+  colorPercent: number;
   display: string;
 }
 
@@ -84,26 +85,26 @@ export function getContextUsage(
   const contextUsage = ctx.getContextUsage();
   if (!contextUsage) return undefined;
 
-  // Calibrate against the reference window when the model's real window is
-  // larger, so colors fire at consistent absolute token counts. See
-  // REFERENCE_CONTEXT_WINDOW for rationale.
   const rawWindow = contextUsage.contextWindow ?? ctx.model?.contextWindow ?? 0;
-  const referenceWindow =
+  const colorWindow =
     rawWindow > REFERENCE_CONTEXT_WINDOW ? REFERENCE_CONTEXT_WINDOW : rawWindow;
 
   const tokens = contextUsage.tokens;
-  const known = tokens !== null && referenceWindow > 0;
-  const contextPercentValue = known ? (tokens / referenceWindow) * 100 : 0;
+  const known = tokens !== null && rawWindow > 0;
+  const colorKnown = tokens !== null && colorWindow > 0;
+  const contextPercentValue = known ? (tokens / rawWindow) * 100 : 0;
+  const colorPercentValue = colorKnown ? (tokens / colorWindow) * 100 : 0;
   const contextPercent = known ? contextPercentValue.toFixed(1) : "?";
   const tokensDisplay = tokens !== null ? formatTokens(tokens) : "?";
 
   return {
-    window: referenceWindow,
+    window: rawWindow,
     percent: contextPercentValue,
+    colorPercent: colorPercentValue,
     display:
       contextPercent === "?"
-        ? `? ?/${formatTokens(referenceWindow)}`
-        : `${contextPercent}% ${tokensDisplay}/${formatTokens(referenceWindow)}`,
+        ? `? ?/${formatTokens(rawWindow)}`
+        : `${contextPercent}% ${tokensDisplay}/${formatTokens(rawWindow)}`,
   };
 }
 
@@ -128,11 +129,11 @@ export function buildStatsParts(
     .join(" ");
   if (!contextUsage) return [stats];
 
-  if (contextUsage.percent > CONTEXT_ERROR_THRESHOLD) {
+  if (contextUsage.colorPercent > CONTEXT_ERROR_THRESHOLD) {
     return [theme.fg("error", stats)];
   }
 
-  if (contextUsage.percent > CONTEXT_WARNING_THRESHOLD) {
+  if (contextUsage.colorPercent > CONTEXT_WARNING_THRESHOLD) {
     return [theme.fg("warning", stats)];
   }
 
@@ -159,11 +160,11 @@ export function buildMinimalStatsParts(
   const stats = [costStr, contextUsage?.display].filter(Boolean).join(" ");
   if (!contextUsage) return [stats];
 
-  if (contextUsage.percent > CONTEXT_ERROR_THRESHOLD) {
+  if (contextUsage.colorPercent > CONTEXT_ERROR_THRESHOLD) {
     return [theme.fg("error", stats)];
   }
 
-  if (contextUsage.percent > CONTEXT_WARNING_THRESHOLD) {
+  if (contextUsage.colorPercent > CONTEXT_WARNING_THRESHOLD) {
     return [theme.fg("warning", stats)];
   }
 
