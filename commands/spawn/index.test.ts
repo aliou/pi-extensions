@@ -72,20 +72,24 @@ describe("breadcrumbs /spawn command", () => {
       },
     ]);
 
-    const setEditorText = vi.fn();
-    const custom = vi.fn(async () => "last") as never;
-
     pi = await createPiTestHarness(setupSpawnCommand, {
       context: {
         sessionManager: parentSm,
-        ui: { setEditorText, custom },
+        ui: { custom: vi.fn(async () => "last") as never },
       },
     });
 
-    await pi.command("spawn").execute("focus on tests");
+    await pi.command("spawn").execute("");
 
     expect(pi.newSession).toHaveBeenCalledTimes(1);
-    expect(setEditorText).toHaveBeenCalledWith("focus on tests");
+    expect(pi.sendMessage).toHaveBeenCalledTimes(1);
+
+    const calls = pi.sendMessage.mock.calls;
+    expect(calls).toHaveLength(1);
+    const [message, options] = calls[0] ?? [];
+    expect(message?.customType).toBe(SESSION_LINK_SOURCE_TYPE);
+    expect(message.display).toBe(true);
+    expect(options).toEqual({ triggerTurn: true });
 
     const childSm = pi.getChildSessionManager();
     assert(childSm, "childSm should be defined");
@@ -111,7 +115,6 @@ describe("breadcrumbs /spawn command", () => {
     expect(content).not.toContain("Role: assistant");
 
     const details = sourceEntry.details as SessionLinkSourceDetails;
-    expect(details.goal).toBe("focus on tests");
     expect(details.linkType).toBe("continue");
     expect(details.contextStrategy).toBe("last-assistant");
   });
@@ -134,6 +137,12 @@ describe("breadcrumbs /spawn command", () => {
     });
 
     await pi.command("spawn").execute("");
+
+    expect(pi.sendMessage).toHaveBeenCalledTimes(1);
+    const calls = pi.sendMessage.mock.calls;
+    expect(calls).toHaveLength(1);
+    const [, options] = calls[0] ?? [];
+    expect(options).toEqual({ triggerTurn: false });
 
     const childSm = pi.getChildSessionManager();
     assert(childSm, "childSm should be defined");

@@ -61,6 +61,13 @@ export interface PiTestHarness {
    */
   newSession: ExtensionCommandContext["newSession"];
   /**
+   * Spy for `ReplacedSessionContext.sendMessage`. Calls persist a
+   * `CustomMessageEntry` to the most recent child `SessionManager` (mirroring
+   * production) so tests can assert on child entries, and record `options`
+   * (e.g. `triggerTurn`) via normal vi.fn call tracking.
+   */
+  sendMessage: ReturnType<typeof vi.fn>;
+  /**
    * Returns the `SessionManager` that was created for the most recent
    * child session (from the `newSession` spy), or `undefined` if no
    * child session has been created yet.
@@ -133,6 +140,34 @@ export async function createPiTestHarness(
   // Also invokes withSession if provided, with a context that mirrors the
   // replacement-session ctx (fresh ui spies etc).
   let childSm: SessionManager | undefined;
+  // sendMessage spy persisted to the child SessionManager, mirroring how
+  // production ReplacedSessionContext.sendMessage lands CustomMessageEntries.
+  // Typed loosely (content/details as unknown) to avoid coupling tests to
+  // TextContent/ImageContent unions; the child SessionManager accepts the
+  // values as-is at runtime.
+  const sendMessage = vi.fn(
+    async (
+      message: {
+        customType: string;
+        content: unknown;
+        display: boolean;
+        details?: unknown;
+      },
+      options?: {
+        triggerTurn?: boolean;
+        deliverAs?: "steer" | "followUp" | "nextTurn";
+      },
+    ) => {
+      if (!childSm) return;
+      childSm.appendCustomMessageEntry(
+        message.customType,
+        message.content as string,
+        message.display,
+        message.details,
+      );
+      void options;
+    },
+  );
   const newSession = vi.fn(
     async (opts?: Parameters<ExtensionCommandContext["newSession"]>[0]) => {
       childSm = SessionManagerClass.inMemory();
@@ -140,17 +175,21 @@ export async function createPiTestHarness(
         await opts.setup(childSm);
       }
       if (opts?.withSession) {
-        // NOTE: replacementCtx is built from harness defaults, not bound to
-        // childSm. In production, withSession receives a ReplacedSessionContext
-        // tied to the new session. Tests asserting session-specific identity
-        // (e.g. sessionId) should validate against childSm directly instead.
+        // NOTE: replacementCtx is built from harness defaults, but bound to
+        // childSm so ReplacedSessionContext.sessionManager reads/writes land
+        // on the same child the setup callback saw. In production, withSession
+        // receives a ReplacedSessionContext tied to the new session.
         const replacementCtx = createCommandContext({
           cwd,
           ...harnessContext,
+          sessionManager: childSm,
           ui: { ...harnessContext.ui },
         });
-        // ReplacedSessionContext extends ExtensionCommandContext but is
-        // not publicly exported, so we cast from the test context.
+        // ReplacedSessionContext extends ExtensionCommandContext but is not
+        // publicly exported, so we attach the sendMessage spy via cast.
+        (
+          replacementCtx as unknown as { sendMessage: typeof sendMessage }
+        ).sendMessage = sendMessage;
         await opts.withSession(
           replacementCtx as Parameters<NonNullable<typeof opts.withSession>>[0],
         );
@@ -213,6 +252,7 @@ export async function createPiTestHarness(
     extension,
     runtime,
     newSession,
+    sendMessage,
     getChildSessionManager: () => childSm,
     command,
     tool,

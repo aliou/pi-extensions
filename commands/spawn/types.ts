@@ -13,14 +13,12 @@ export const SESSION_LINK_SOURCE_TYPE = "session-link-source";
 
 export interface SessionLinkMarkerDetails {
   targetSessionFile: string;
-  goal: string;
   linkType: SessionLinkType;
   contextStrategy: SessionContextStrategy;
 }
 
 export interface SessionLinkSourceDetails {
   parentSessionFile: string;
-  goal: string;
   linkType: SessionLinkType;
   contextStrategy: SessionContextStrategy;
 }

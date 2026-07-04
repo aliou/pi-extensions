@@ -1,9 +1,10 @@
 /**
- * Spawn command - /spawn [note]
+ * Spawn command - /spawn
  *
  * Creates a new child session linked to the current one. The interactive UI
  * chooses whether to carry no context, the last assistant message, or an
- * edited version of the last assistant message into the child.
+ * edited version of the last assistant message into the child. Choosing
+ * carry-content starts the new session's first agent turn automatically.
  */
 
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -43,13 +44,12 @@ export default async function (pi: ExtensionAPI) {
 
   pi.registerCommand("spawn", {
     description: "Create a new child session linked to the current one",
-    handler: async (args, ctx) => {
+    handler: async (_args, ctx) => {
       if (!ctx.hasUI) {
         ctx.ui.notify("spawn requires interactive mode", "error");
         return;
       }
 
-      const note = args.trim() || "";
       const parentSessionId = ctx.sessionManager.getSessionId() ?? "unknown";
       const parentLeafId = ctx.sessionManager.getLeafId();
       const currentSessionFile = ctx.sessionManager.getSessionFile();
@@ -90,34 +90,35 @@ export default async function (pi: ExtensionAPI) {
               true,
               {
                 targetSessionFile: sm.getSessionFile() ?? "",
-                goal: note,
                 linkType: "continue",
                 contextStrategy,
               },
             );
           }
-
-          const sourceContent = buildSpawnSourceContent({
-            parentSessionId,
-            parentLastMessage,
-          });
-
-          sm.appendCustomMessageEntry<SessionLinkSourceDetails>(
-            SESSION_LINK_SOURCE_TYPE,
-            sourceContent,
-            true,
-            {
-              parentSessionFile: parentFile ?? "",
-              goal: note,
-              linkType: "continue",
-              contextStrategy,
-            },
-          );
         },
         withSession: async (newCtx) => {
-          if (note) {
-            newCtx.ui.setEditorText(note);
-          }
+          // ReplacedSessionContext.sendMessage injects a CustomMessage (same
+          // persisted/rendered type as appendCustomMessageEntry) and can
+          // trigger the first agent turn. In blank mode we keep the source
+          // marker for rendering without autostarting.
+          const parentSessionFile =
+            newCtx.sessionManager.getHeader()?.parentSession ?? "";
+          await newCtx.sendMessage(
+            {
+              customType: SESSION_LINK_SOURCE_TYPE,
+              content: buildSpawnSourceContent({
+                parentSessionId,
+                parentLastMessage,
+              }),
+              display: true,
+              details: {
+                parentSessionFile,
+                linkType: "continue",
+                contextStrategy,
+              },
+            },
+            { triggerTurn: contextStrategy === "last-assistant" },
+          );
         },
       });
 
