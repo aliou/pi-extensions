@@ -1,9 +1,8 @@
 import type { streamSimpleAnthropic } from "@earendil-works/pi-ai";
 
-import { isRecord } from "./helpers";
-
 type AnthropicModel = Parameters<typeof streamSimpleAnthropic>[0];
 type AnthropicStreamOptions = Parameters<typeof streamSimpleAnthropic>[2];
+type AnthropicRequestPayload = Record<string, unknown> & { model?: unknown };
 
 /**
  * Anthropic beta header that opts requests into fast mode.
@@ -71,9 +70,9 @@ export function appendBetas(...values: Array<string | undefined>): string {
  * model supports Anthropic fast mode and the caller hasn't already set `speed`.
  * Returns the payload unchanged otherwise.
  */
-export function addAnthropicFastModePayload(payload: unknown): unknown {
-  if (!isRecord(payload)) return payload;
-
+export function addAnthropicFastModePayload(
+  payload: AnthropicRequestPayload,
+): AnthropicRequestPayload {
   const model = payload.model;
   if (typeof model !== "string" || !isAnthropicSupportedModel(model))
     return payload;
@@ -114,7 +113,9 @@ export function buildAnthropicStreamOptions(
     ...options,
     headers,
     async onPayload(payload, payloadModel) {
-      const fastPayload = addAnthropicFastModePayload(payload);
+      const fastPayload = addAnthropicFastModePayload(
+        payload as AnthropicRequestPayload,
+      );
       if (!onPayload) return fastPayload;
 
       const nextPayload = await onPayload(fastPayload, payloadModel);

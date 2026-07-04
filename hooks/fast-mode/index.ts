@@ -14,7 +14,11 @@ import {
   buildAnthropicStreamOptions,
   isAnthropicSupportedModel,
 } from "./anthropic";
-import { injectCodexServiceTier, isCodexSupportedModel } from "./codex";
+import {
+  type CodexRequestPayload,
+  injectCodexServiceTier,
+  isCodexSupportedModel,
+} from "./codex";
 
 type AnthropicModel = Parameters<typeof streamSimpleAnthropic>[0];
 
@@ -96,7 +100,10 @@ export default function fastModeHook(pi: ExtensionAPI): void {
 
   pi.on("before_provider_request", (event, ctx) => {
     if (ctx.model?.provider !== "openai-codex") return;
-    return injectCodexServiceTier(event.payload, codexEnabled);
+    return injectCodexServiceTier(
+      event.payload as CodexRequestPayload,
+      codexEnabled,
+    );
   });
 
   once(pi, AD_HEADER_COLLECT_EVENT, () => {

@@ -12,53 +12,51 @@ type EventBridge = {
   map: EventMapper;
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === "object";
-}
+type GuardrailsAction = {
+  command?: string;
+};
 
-function mapGuardrailsDangerous(
-  data: unknown,
-): Record<string, unknown> | undefined {
-  if (!isRecord(data)) return undefined;
+type GuardrailsRiskMetadata = {
+  pattern?: string;
+};
 
-  const description =
-    typeof data.description === "string"
-      ? data.description
-      : "dangerous command";
-
-  const payload: Record<string, unknown> = {
-    source: "defaults:event-compat:guardrails",
-    description,
+type GuardrailsRiskDetectedPayload = {
+  risk: {
+    reason?: string;
+    action?: GuardrailsAction;
+    metadata?: GuardrailsRiskMetadata;
   };
+  toolName?: string;
+  toolCallId?: string;
+};
 
-  if (typeof data.command === "string") payload.command = data.command;
-  if (typeof data.pattern === "string") payload.pattern = data.pattern;
-  if (typeof data.toolName === "string") payload.toolName = data.toolName;
-  if (typeof data.toolCallId === "string") payload.toolCallId = data.toolCallId;
-
-  return payload;
-}
+type GuardrailsActionPromptedPayload = {
+  feature: "pathAccess" | string;
+  prompt?: {
+    kind?: string;
+  };
+  context?: {
+    toolName?: string;
+  };
+  reason?: string;
+};
 
 function mapGuardrailsRiskDetected(
   data: unknown,
 ): Record<string, unknown> | undefined {
-  if (!isRecord(data) || !isRecord(data.risk)) return undefined;
-
-  const risk = data.risk;
-  const action = isRecord(risk.action) ? risk.action : undefined;
-  const metadata = isRecord(risk.metadata) ? risk.metadata : undefined;
-  const description =
-    typeof risk.reason === "string" ? risk.reason : "dangerous command";
+  const event = data as GuardrailsRiskDetectedPayload;
+  const risk = event.risk;
+  const description = risk.reason ?? "dangerous command";
 
   const payload: Record<string, unknown> = {
     source: "defaults:event-compat:guardrails",
     description,
   };
 
-  if (typeof action?.command === "string") payload.command = action.command;
-  if (typeof metadata?.pattern === "string") payload.pattern = metadata.pattern;
-  if (typeof data.toolName === "string") payload.toolName = data.toolName;
-  if (typeof data.toolCallId === "string") payload.toolCallId = data.toolCallId;
+  if (risk.action?.command) payload.command = risk.action.command;
+  if (risk.metadata?.pattern) payload.pattern = risk.metadata.pattern;
+  if (event.toolName) payload.toolName = event.toolName;
+  if (event.toolCallId) payload.toolCallId = event.toolCallId;
 
   return payload;
 }
@@ -66,36 +64,25 @@ function mapGuardrailsRiskDetected(
 function mapGuardrailsActionPrompted(
   data: unknown,
 ): Record<string, unknown> | undefined {
-  if (!isRecord(data)) return undefined;
-  if (data.feature !== "pathAccess") return undefined;
+  const event = data as GuardrailsActionPromptedPayload;
+  if (event.feature !== "pathAccess") return undefined;
+  if (event.prompt?.kind !== "confirmation") return undefined;
 
-  const prompt = isRecord(data.prompt) ? data.prompt : undefined;
-  if (prompt?.kind !== "confirmation") return undefined;
-
-  const context = isRecord(data.context) ? data.context : undefined;
-  const description =
-    typeof data.reason === "string"
-      ? data.reason
-      : "Path access requires confirmation";
+  const description = event.reason ?? "Path access requires confirmation";
 
   const payload: Record<string, unknown> = {
     source: "defaults:event-compat:guardrails",
     description,
   };
 
-  if (typeof context?.toolName === "string") {
-    payload.toolName = context.toolName;
+  if (event.context?.toolName) {
+    payload.toolName = event.context.toolName;
   }
 
   return payload;
 }
 
 const BRIDGES: EventBridge[] = [
-  {
-    from: "guardrails:dangerous",
-    to: AD_NOTIFY_DANGEROUS_EVENT,
-    map: mapGuardrailsDangerous,
-  },
   {
     from: "guardrails:risk:detected",
     to: AD_NOTIFY_DANGEROUS_EVENT,

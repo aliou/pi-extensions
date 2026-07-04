@@ -1,8 +1,8 @@
-import { isRecord } from "./helpers";
-
 /**
  * Models eligible for Codex fast mode (OpenAI priority service tier).
  */
+export type CodexRequestPayload = Record<string, unknown> & { model?: unknown };
+
 const CODEX_PRIORITY_MODELS = new Set([
   "gpt-5.5",
   "gpt-5.4",
@@ -21,10 +21,10 @@ export function isCodexSupportedModel(model: string): boolean {
  * Returns the payload unchanged otherwise.
  */
 export function injectCodexServiceTier(
-  payload: unknown,
+  payload: CodexRequestPayload,
   enabled: boolean,
-): unknown {
-  if (!enabled || !isRecord(payload)) return payload;
+): CodexRequestPayload {
+  if (!enabled) return payload;
 
   const model = payload.model;
   if (typeof model !== "string" || !isCodexSupportedModel(model))
