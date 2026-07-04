@@ -2,7 +2,7 @@ import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
 import { Markdown, Text } from "@earendil-works/pi-tui";
 import { formatDisplayPath, isNotNil } from "@harness/utils";
 import type { SubagentConfig } from "../../types";
-import type { ToolRenderContext } from "./types";
+import type { SubagentRenderState, ToolRenderContext } from "./types";
 
 export function formatSubagentCwd(
   cwdArg: unknown,
@@ -16,7 +16,7 @@ export function renderSubagentCall(
   config: SubagentConfig,
   args: Record<string, unknown>,
   theme: Theme,
-  ctx: ToolRenderContext,
+  ctx: ToolRenderContext<SubagentRenderState>,
 ) {
   if (config.renderHeader) {
     return config.renderHeader(args, theme, ctx);

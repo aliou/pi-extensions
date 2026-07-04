@@ -15,8 +15,9 @@ export function formatDuration(
   startedAt: Maybe<number>,
   endedAt: Maybe<number>,
 ) {
-  if (startedAt === null || endedAt === null) return undefined;
-  const seconds = Math.round((endedAt - startedAt) / 1000);
+  if (startedAt === null) return undefined;
+  const end = endedAt ?? Date.now();
+  const seconds = Math.round((end - startedAt) / 1000);
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remaining = seconds % 60;
