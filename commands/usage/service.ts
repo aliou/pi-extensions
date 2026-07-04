@@ -5,8 +5,10 @@ import {
   writeUsageCache,
 } from "@harness/models/usage";
 import {
+  getApertureBaseUrl,
   type ProviderUsageClient,
   type ProviderUsageFetchContext,
+  ProviderUsageHttpError,
   type ProviderUsageSnapshot,
   providerUsageClients,
 } from "@harness/provider-usage";
@@ -56,8 +58,11 @@ export async function loadUsageDashboard(
 async function fetchAllProviderSnapshots(
   options: LoadUsageOptions,
 ): Promise<ProviderUsageSnapshot[]> {
+  const apertureBaseUrl = getApertureBaseUrl();
   const snapshots = await Promise.all(
-    providerUsageClients.map((client) => safeFetchProvider(client, options)),
+    providerUsageClients.map((client) =>
+      safeFetchProvider(client, options, apertureBaseUrl),
+    ),
   );
   return Promise.all(
     snapshots.map((snapshot) => withProviderStatus(snapshot, options.signal)),
@@ -67,6 +72,7 @@ async function fetchAllProviderSnapshots(
 async function safeFetchProvider(
   client: ProviderUsageClient,
   options: LoadUsageOptions,
+  apertureBaseUrl: string | undefined,
 ): Promise<ProviderUsageSnapshot> {
   const fetchedAt = new Date();
   try {
@@ -74,6 +80,7 @@ async function safeFetchProvider(
       authStorage: options.authStorage,
       signal: options.signal,
       timeoutMs: 10_000,
+      apertureBaseUrl,
     });
   } catch (error) {
     return {
@@ -148,6 +155,31 @@ async function fetchStatusPage(
 }
 
 function errorMessage(error: unknown): string {
+  if (error instanceof ProviderUsageHttpError) {
+    const detail = formatHttpErrorBody(error.body);
+    return detail ? `${error.message} — ${detail}` : error.message;
+  }
   if (error instanceof Error) return error.message;
   return String(error);
+}
+
+/** Extract a short human-readable reason from a failed provider HTTP body. */
+function formatHttpErrorBody(body: unknown): string | undefined {
+  if (body == null) return undefined;
+  if (typeof body === "string") {
+    const trimmed = body.trim();
+    return trimmed ? truncate(trimmed) : undefined;
+  }
+  const obj = body as { error?: { message?: unknown }; message?: unknown };
+  const message = obj?.error?.message ?? obj?.message;
+  if (typeof message === "string") return truncate(message.trim());
+  try {
+    return truncate(JSON.stringify(body));
+  } catch {
+    return undefined;
+  }
+}
+
+function truncate(value: string): string {
+  return value.length > 220 ? `${value.slice(0, 220)}…` : value;
 }

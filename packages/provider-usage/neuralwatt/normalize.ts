@@ -6,13 +6,13 @@ import type {
 import type { NeuralwattQuotaResponse } from "./raw-types";
 
 const PROVIDER = "neuralwatt" as const;
-const ENDPOINT = "https://api.neuralwatt.com/v1/quota";
 
 export function normalizeNeuralwattUsage(
   raw: NeuralwattQuotaResponse,
   fetchedAt: Date,
+  endpoint: string,
 ): ProviderUsageSnapshot {
-  const source: UsageSource = { kind: "api", endpoint: ENDPOINT, fetchedAt };
+  const source: UsageSource = { kind: "api", endpoint, fetchedAt };
   const updatedAt = raw.snapshot_at ? new Date(raw.snapshot_at) : fetchedAt;
   const quotas: UsageQuota[] = [];
 

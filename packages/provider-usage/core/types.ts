@@ -31,6 +31,13 @@ export interface ProviderUsageFetchContext {
   now?: Date;
   fetch?: typeof fetch;
   timeoutMs?: number;
+  /**
+   * Aperture gateway base URL. Proxied providers (synthetic, neuralwatt) fetch
+   * usage through `${apertureBaseUrl}/v1/connectors/{id}/...` instead of
+   * hitting upstream APIs directly. Anthropic (Claude Code subscription
+   * OAuth endpoint) and OpenAI Codex ignore this.
+   */
+  apertureBaseUrl?: string;
 }
 
 export interface ProviderUsageParseContext {

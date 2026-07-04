@@ -6,13 +6,13 @@ import type {
 import type { SyntheticLimit, SyntheticQuotasResponse } from "./raw-types";
 
 const PROVIDER = "synthetic" as const;
-const ENDPOINT = "https://api.synthetic.new/v2/quotas";
 
 export function normalizeSyntheticUsage(
   raw: SyntheticQuotasResponse,
   fetchedAt: Date,
+  endpoint: string,
 ): ProviderUsageSnapshot {
-  const source: UsageSource = { kind: "api", endpoint: ENDPOINT, fetchedAt };
+  const source: UsageSource = { kind: "api", endpoint, fetchedAt };
   const quotas: UsageQuota[] = [];
 
   if (raw.weeklyTokenLimit) {
