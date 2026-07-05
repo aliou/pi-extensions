@@ -14,19 +14,19 @@ import type { TSchema } from "typebox";
 import { pickModel, resolveModel, type SubagentModelChoice } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
-  collectSubagentToolGuidelines,
-  collectSubagentToolSnippets,
-  formatToolGuidelinesSection,
-  formatToolSnippetsSection,
-} from "../resources/tool-guidelines";
-import {
   SUBAGENT_SESSION_CUSTOM_TYPE,
   type SubagentSessionRecord,
   type SubagentSessionRecordStore,
 } from "../session-records";
 import type { SubagentConfig, SubagentToolSpec } from "../types";
 
-const DEFAULT_SUBAGENT_EXTENSION_PATHS: string[] = [];
+const DEFAULT_SUBAGENT_EXTENSION_PATHS: string[] = [
+  // Injects pi-core's toolSnippets + promptGuidelines into the subagent's
+  // custom system prompt (pi-core skips them in the customPrompt branch).
+  // The handler reads them off event.systemPromptOptions and appends
+  // "## Available tools" + "## Tool usage guidelines" sections.
+  "./packages/agent-kit/extensions/subagent-tool-prompt",
+];
 
 export class SubagentSessionManager<Params extends TSchema = TSchema> {
   private settingsManager = SettingsManager.inMemory({
@@ -187,27 +187,6 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       ),
     );
     await resourceLoader.reload();
-
-    // Pi's buildSystemPrompt() skips the "Available tools" list and tool
-    // promptGuidelines when a custom prompt is used. Collect both from custom,
-    // extension, and Pi built-in tool sources, then inject via
-    // getAppendSystemPrompt() to restore the missing guidance.
-    const extensions = resourceLoader.getExtensions();
-    const toolSnippets = collectSubagentToolSnippets(
-      invocationTools,
-      cwd,
-      extensions,
-    );
-    const toolGuidelines = collectSubagentToolGuidelines(
-      invocationTools,
-      cwd,
-      extensions,
-    );
-    const appendSystemPrompt: string[] = [];
-    const snippetsSection = formatToolSnippetsSection(toolSnippets);
-    if (snippetsSection) appendSystemPrompt.push(snippetsSection);
-    appendSystemPrompt.push(...formatToolGuidelinesSection(toolGuidelines));
-    resourceLoader.setAppendSystemPrompt(appendSystemPrompt);
 
     const { session } = await createAgentSession({
       cwd,
