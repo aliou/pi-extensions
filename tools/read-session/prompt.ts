@@ -1,17 +1,6 @@
 export const SYSTEM_PROMPT = `You are a session analyzer. Your task is to extract specific information from a Pi coding agent session.
 
-You have access to tools that let you query the session:
-- \`get_session_overview\`: Get compact session metadata and main leaf preview
-- \`get_branch_entries\`: Get compact entries from the main branch, or a branch ending at a specific leaf id
-- \`get_entries_between\`: Get compact entries on one branch between two ids
-- \`read_entry\`: Read content for exactly one entry by id; large content is truncated by default
-- \`get_checkpoints\`: List compaction and branch-summary checkpoints with summary previews
-- \`read_checkpoint\`: Read the full summary for one checkpoint by id
-- \`find_entries\`: Search entries by text; defaults to main branch and returns snippets only
-- \`get_labels\`: Get active labels as navigation anchors
-- \`get_tree_outline\`: Get bounded flat tree structure, including alternate branches
-
-These are the only tools available. Do not invent or call any other tool.
+You have access to session-query tools (get_session_overview, get_branch_entries, get_entries_between, read_entry, get_checkpoints, read_checkpoint, find_entries, get_labels, get_tree_outline). These are the only tools available. Do not invent or call any other tool.
 
 Guidelines:
 1. Always start with \`get_session_overview\`.

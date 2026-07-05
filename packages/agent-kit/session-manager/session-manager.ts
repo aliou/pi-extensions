@@ -15,7 +15,9 @@ import { pickModel, resolveModel, type SubagentModelChoice } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
   collectSubagentToolGuidelines,
+  collectSubagentToolSnippets,
   formatToolGuidelinesSection,
+  formatToolSnippetsSection,
 } from "../resources/tool-guidelines";
 import {
   SUBAGENT_SESSION_CUSTOM_TYPE,
@@ -186,15 +188,25 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     );
     await resourceLoader.reload();
 
-    // Pi's buildSystemPrompt() skips tool promptGuidelines when a custom
-    // prompt is used. Collect them from custom + extension tools and inject
-    // via getAppendSystemPrompt() to restore the missing guidance.
+    // Pi's buildSystemPrompt() skips the "Available tools" list and tool
+    // promptGuidelines when a custom prompt is used. Collect both from custom,
+    // extension, and Pi built-in tool sources, then inject via
+    // getAppendSystemPrompt() to restore the missing guidance.
+    const extensions = resourceLoader.getExtensions();
+    const toolSnippets = collectSubagentToolSnippets(
+      invocationTools,
+      cwd,
+      extensions,
+    );
     const toolGuidelines = collectSubagentToolGuidelines(
       invocationTools,
       cwd,
-      resourceLoader.getExtensions(),
+      extensions,
     );
-    const appendSystemPrompt = formatToolGuidelinesSection(toolGuidelines);
+    const appendSystemPrompt: string[] = [];
+    const snippetsSection = formatToolSnippetsSection(toolSnippets);
+    if (snippetsSection) appendSystemPrompt.push(snippetsSection);
+    appendSystemPrompt.push(...formatToolGuidelinesSection(toolGuidelines));
     resourceLoader.setAppendSystemPrompt(appendSystemPrompt);
 
     const { session } = await createAgentSession({
