@@ -14,7 +14,7 @@ function withSessionHeader(
     ...options,
     headers: {
       ...options?.headers,
-      "x-claude-code-session-id": options?.sessionId,
+      "X-Session-Affinity": options?.sessionId,
     },
   };
 }
