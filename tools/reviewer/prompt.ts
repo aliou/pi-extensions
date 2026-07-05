@@ -17,7 +17,12 @@ After reading the diff, do the following:
 4. Evaluate abstraction fit in both directions: flag unnecessary indirection (over-abstraction)
    and missing abstractions (duplication or branching complexity). For each finding, cite concrete
    locations and recommend exactly one action—simplify/inline or introduce/extract a shared
-   concept—only when it improves current code (avoid speculative refactors).`;
+   concept—only when it improves current code (avoid speculative refactors).
+
+Stop rules:
+- Read the diff and the referenced files once. Do not re-read or re-search the same paths.
+- Stop once every changed hunk has been reviewed. Do not explore unrelated parts of the repo.
+- Only your last message is returned to the main agent. Make it the complete review.`;
 
 export function buildPrompt(params: ReviewerParamsType): SubagentPromptResult {
   const diffDescription = `Diff description:

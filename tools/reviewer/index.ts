@@ -45,24 +45,21 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
+    // Primary: gpt-5.5 at medium (balanced default per OpenAI guidance).
+    // Fallback: synthetic GLM-5.2 at high. ~9% bleed at weight 0.1; takes over
+    // when openai-codex is unavailable.
     modelPreferences: [
       {
-        provider: "anthropic",
-        model: "claude-sonnet-4-6",
+        provider: "openai-codex",
+        model: "gpt-5.5",
         thinking: "medium",
         weight: 1,
       },
       {
-        provider: "openai-codex",
-        model: "gpt-5.5",
-        thinking: "low",
-        weight: 1,
-      },
-      {
         provider: "synthetic",
-        model: "syn:large:text",
-        thinking: "xhigh",
-        weight: 1,
+        model: "hf:zai-org/GLM-5.2",
+        thinking: "high",
+        weight: 0.1,
       },
     ],
   });
