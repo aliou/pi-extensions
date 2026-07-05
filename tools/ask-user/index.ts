@@ -36,6 +36,8 @@ export const askUserTool = defineTool({
   name: "ask_user",
   label: "Ask User",
   description: DESCRIPTION,
+  promptSnippet:
+    "Ask the user to choose between options (structured questions)",
   parameters: AskUserQuestionParams,
   promptGuidelines: PROMPT_GUIDELINES,
 

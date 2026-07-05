@@ -44,6 +44,7 @@ const getCurrentTimeTool = defineTool({
   label: "Get Current Time",
   description:
     "Get the current date and time. Returns formatted time along with date, time, timezone, and day of week as separate fields.",
+  promptSnippet: "Get the current date and time",
   parameters: GetCurrentTimeParams,
   promptGuidelines: [
     "get_current_time: Use when you need the current date or time instead of assuming or guessing.",

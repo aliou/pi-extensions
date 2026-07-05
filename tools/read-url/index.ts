@@ -37,6 +37,7 @@ function createReadUrlTool(_pi: ExtensionAPI) {
     label: "Read URL",
     description:
       "Fetch a URL as Markdown via handlers with markdown.new fallback.",
+    promptSnippet: "Fetch a URL as Markdown (docs, articles, web content)",
     parameters: ReadUrlParams,
     promptGuidelines: [
       "read_url: Use for finding documentation, articles, recent information, or any web content.",
