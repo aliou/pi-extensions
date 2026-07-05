@@ -11,6 +11,11 @@ export const readEntry = defineTool({
   label: "Read Entry",
   description:
     "Read content for exactly one session entry by id. Large content is truncated by default.",
+  promptSnippet:
+    "Read content for one session entry by id (truncated if large)",
+  promptGuidelines: [
+    "Call read_entry only for entry ids you need to answer; avoid large reads.",
+  ],
   parameters: Type.Object({
     id: Type.String({ description: "Entry id" }),
     maxChars: Type.Optional(

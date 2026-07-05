@@ -11,6 +11,12 @@ export const branchEntries = defineTool({
   label: "Get Branch Entries",
   description:
     "Get compact entries from the main branch, or from a branch ending at a specific leaf id. Returns previews only.",
+  promptSnippet:
+    "Compact entries from the main branch (or a branch ending at a leaf)",
+  promptGuidelines: [
+    "Use get_branch_entries with fromEnd and a small limit for latest/current questions.",
+    "Prefer the main branch; use full-tree tools only for alternate-branch questions.",
+  ],
   parameters: Type.Object({
     leafId: Type.Optional(Type.String({ description: "Branch leaf entry id" })),
     fromEnd: Type.Optional(

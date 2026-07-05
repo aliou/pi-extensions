@@ -11,6 +11,10 @@ export const entriesBetween = defineTool({
   label: "Get Entries Between",
   description:
     "Get compact entries on the main branch between two entry ids. Returns previews only.",
+  promptSnippet: "Compact entries on the main branch between two ids",
+  promptGuidelines: [
+    "Use get_entries_between to focus on a narrow id range around a relevant checkpoint.",
+  ],
   parameters: Type.Object({
     startId: Type.String({ description: "First entry id to include" }),
     endId: Type.Optional(

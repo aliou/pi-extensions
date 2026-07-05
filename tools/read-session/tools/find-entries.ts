@@ -12,6 +12,10 @@ export const findEntries = defineTool({
   label: "Find Entries",
   description:
     "Search entries by text. Defaults to main branch. Returns matching ids and snippets only.",
+  promptSnippet: "Search session entries by text (ids + snippets)",
+  promptGuidelines: [
+    "Use find_entries for keyword goals; it defaults to the main branch and returns snippets only.",
+  ],
   parameters: Type.Object({
     query: Type.String(),
     scope: Type.Optional(

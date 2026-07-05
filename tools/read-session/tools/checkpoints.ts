@@ -12,6 +12,10 @@ export const checkpoints = defineTool({
   label: "Get Checkpoints",
   description:
     "Get compact compaction and branch-summary checkpoints. Returns summary previews only.",
+  promptSnippet: "Compact compaction and branch-summary checkpoints",
+  promptGuidelines: [
+    "Call get_checkpoints before broad reads if the overview reports compactions.",
+  ],
   parameters: Type.Object({
     fromEnd: Type.Optional(
       Type.Boolean({
@@ -37,6 +41,10 @@ export const readCheckpoint = defineTool({
   label: "Read Checkpoint",
   description:
     "Read the full summary for one compaction or branch-summary entry by id.",
+  promptSnippet: "Read the full summary for one checkpoint by id",
+  promptGuidelines: [
+    "Use read_checkpoint to inspect a checkpoint summary before reading its underlying entries.",
+  ],
   parameters: Type.Object({
     id: Type.String({ description: "Checkpoint entry id" }),
   }),

@@ -11,6 +11,10 @@ export const treeOutline = defineTool({
   label: "Get Tree Outline",
   description:
     "Get a bounded flat outline of the session tree. Returns previews only.",
+  promptSnippet: "Bounded flat outline of the session tree",
+  promptGuidelines: [
+    "Avoid get_tree_outline for large sessions unless branch structure matters; set a small limit and maxDepth.",
+  ],
   parameters: Type.Object({
     rootId: Type.Optional(
       Type.String({ description: "Entry id to use as the outline root" }),

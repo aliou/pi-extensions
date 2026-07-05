@@ -44,6 +44,8 @@ export const sessionOverview = defineTool({
   label: "Get Session Overview",
   description:
     "Get compact metadata for a session. Does not return full message content.",
+  promptSnippet: "Compact session metadata and main leaf preview",
+  promptGuidelines: ["Always start with get_session_overview."],
   parameters: Type.Object({}),
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
     const targetSessionPath = await getTargetSessionPath(ctx);

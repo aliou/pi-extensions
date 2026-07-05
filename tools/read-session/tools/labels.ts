@@ -11,6 +11,10 @@ export const labels = defineTool({
   label: "Get Labels",
   description:
     "Get active labels as navigation anchors with compact target previews.",
+  promptSnippet: "Active labels as navigation anchors",
+  promptGuidelines: [
+    "Use get_labels when labels are relevant navigation anchors for the goal.",
+  ],
   parameters: Type.Object({}),
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
     const targetSessionPath = await getTargetSessionPath(ctx);
