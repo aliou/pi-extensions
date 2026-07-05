@@ -126,6 +126,13 @@ Returns the absolute local path. Use that path with ls, find, grep, and read to 
 The first checkout of a repo is slow (full clone). Subsequent calls reuse the cached copy and fast-forward the branch if possible. Fetches are throttled to once every 5 minutes unless forceUpdate is set.
 
 Do NOT edit files in the cached checkout.`,
+    promptSnippet:
+      "Clone or reuse a local cache of a remote repo; returns absolute path",
+    promptGuidelines: [
+      "Always call checkout_repo before exploring a remote repository; never assume a local path.",
+      "Pass the returned absolute path to ls/find/grep/read/git_log/git_show.",
+      "Do not edit, commit, push, or modify files in cached checkouts; they are read-only.",
+    ],
     parameters: Params,
     async execute(_id, params, signal) {
       const ref = parseRef(params.repository);

@@ -54,6 +54,10 @@ With includePatch=true (default), returns commit metadata + file stats + diff.
 With includePatch=false, returns only commit metadata + file stats (no diff).
 
 Use checkout_repo first if the repository is remote.`,
+    promptSnippet: "Inspect a commit/tag/branch in a checked-out remote repo",
+    promptGuidelines: [
+      "Use git_show only after git_log identifies a commit; pass the checkout_repo path.",
+    ],
     parameters: Params,
     async execute(_id, params, signal) {
       const includePatch = params.includePatch ?? true;

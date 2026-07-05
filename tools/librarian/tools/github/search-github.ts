@@ -55,6 +55,11 @@ export function createSearchGitHubTool(
     label: "Search GitHub",
     description:
       "Search for code patterns inside a single GitHub repository and return matches grouped by file, with surrounding context.",
+    promptSnippet:
+      "Search code patterns inside a GitHub repo (no clone needed)",
+    promptGuidelines: [
+      "Use search_github to find code in a remote repo without cloning; use list_repositories to discover repos first.",
+    ],
     parameters: Params,
     async execute(_id, params, signal) {
       const limit = params.limit ?? 30;

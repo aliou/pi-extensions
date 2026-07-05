@@ -62,6 +62,10 @@ export function createListRepositoriesTool(
     label: "List GitHub Repositories",
     description:
       "List repositories on GitHub, prioritizing repositories the user can already access.",
+    promptSnippet: "List accessible GitHub repositories",
+    promptGuidelines: [
+      "Use list_repositories to discover repos before checkout_repo when you don't know the exact name.",
+    ],
     parameters: Params,
     async execute(_id, params, signal) {
       const limit = params.limit ?? 30;
