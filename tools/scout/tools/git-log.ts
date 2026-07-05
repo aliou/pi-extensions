@@ -70,6 +70,12 @@ export function createScoutGitLogTool(
     description: `Search git commit history in a local repository.
 
 Returns a tab-separated table: short sha, date, author, subject.`,
+    promptSnippet:
+      "Search local git commit history (sha, date, author, subject)",
+    promptGuidelines: [
+      "Use git_log when commit history, evolution, regressions, or old implementations matter.",
+      "Prefer query/path filters over broad scans; use limit to bound results.",
+    ],
     parameters: Params,
     async execute(_id, params, signal) {
       const limit = params.limit ?? 50;

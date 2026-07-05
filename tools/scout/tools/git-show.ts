@@ -55,6 +55,10 @@ export function createScoutGitShowTool(
 
 With includePatch=true (default), returns commit metadata + file stats + diff.
 With includePatch=false, returns only commit metadata + file stats (no diff).`,
+    promptSnippet: "Inspect a local commit, tag, or branch (metadata + diff)",
+    promptGuidelines: [
+      "Use git_show only after git_log has identified a relevant commit; inspect one commit at a time.",
+    ],
     parameters: Params,
     async execute(_id, params, signal) {
       const includePatch = params.includePatch ?? true;
