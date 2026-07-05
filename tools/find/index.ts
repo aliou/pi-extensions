@@ -31,6 +31,7 @@ function createFindTool(pi: ExtensionAPI) {
     name: "find",
     label: "Find Files",
     description: `Find files by name using the \`fd\` command-line tool. Supports glob patterns and regex. Searches recursively from the specified path. Respects .gitignore. Results are truncated to ${DEFAULT_LIMIT} entries.`,
+    promptSnippet: "Find files by glob pattern or regex (respects .gitignore)",
     parameters: WrappedSchema,
     promptGuidelines: [
       "find: Use find instead of shell find or fd when locating files in the project.",
