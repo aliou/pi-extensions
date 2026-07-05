@@ -50,30 +50,22 @@ Always provide a clear objective describing what you want to learn from the imag
     ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],
+    // Primary: synthetic Kimi-K2.7-Code (vision). Fallback: neuralwatt
+    // kimi-k2.7-code -- same model on the other provider. Kimi-K2.7-Code is
+    // thinking-only: "off" clamps to "medium" (its sole level), so "low" is used
+    // to express the lowest available effort. ~9% bleed at weight 0.1.
     modelPreferences: [
       {
+        provider: "synthetic",
+        model: "hf:moonshotai/Kimi-K2.7-Code",
+        thinking: "low",
+        weight: 1,
+      },
+      {
         provider: "neuralwatt",
-        model: "qwen3.6-35b-fast",
-        thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "openai-codex",
-        model: "gpt-5.4-mini",
-        thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:small:vision",
-        thinking: "medium",
-        weight: 0.5,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:large:vision",
-        thinking: "medium",
-        weight: 0.5,
+        model: "kimi-k2.7-code",
+        thinking: "low",
+        weight: 0.1,
       },
     ],
     parameters: LookAtParams,
