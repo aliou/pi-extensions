@@ -16,36 +16,21 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: SYSTEM_PROMPT,
     tools,
+    // Primary: synthetic GLM-4.7-Flash (cheapest measured read_session model,
+    // 38/38). Fallback: neuralwatt glm-5.2-short-fast (reasoning disabled -> off
+    // only). Flash exposes off/medium; "low" clamps to "medium". ~9% bleed at 0.1.
     modelPreferences: [
       {
-        provider: "openai-codex",
-        model: "gpt-5.3-codex-spark",
-        thinking: "off",
+        provider: "synthetic",
+        model: "hf:zai-org/GLM-4.7-Flash",
+        thinking: "low",
         weight: 1,
       },
       {
         provider: "neuralwatt",
-        model: "qwen3.6-35b-fast",
+        model: "glm-5.2-short-fast",
         thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "neuralwatt",
-        model: "glm-5.2-short-fast-flex",
-        thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:small:vision",
-        thinking: "medium",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:small:text",
-        thinking: "medium",
-        weight: 1,
+        weight: 0.1,
       },
     ],
     parameters: ReadSessionParams,

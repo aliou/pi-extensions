@@ -11,6 +11,8 @@ You have access to tools that let you query the session:
 - \`get_labels\`: Get active labels as navigation anchors
 - \`get_tree_outline\`: Get bounded flat tree structure, including alternate branches
 
+These are the only tools available. Do not invent or call any other tool.
+
 Guidelines:
 1. Always start with \`get_session_overview\`.
 2. If the overview reports compactions, call \`get_checkpoints\` before broad branch or tree reads. Treat compactions as checkpoints and use them to choose a narrower range.
