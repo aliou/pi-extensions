@@ -15,13 +15,13 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     systemPrompt: SESSION_NAME_SYSTEM_PROMPT,
     tools: createSessionNameTools(pi),
     maxToolCalls: 1,
+    // Primary: synthetic GLM-4.7-Flash (cheapest; 147/149 in the window).
+    // Fallback: neuralwatt glm-5.2-short-fast (reasoning disabled -> off only).
+    // Both are low-cost non-reasoning tiers. ~9% bleed at weight 0.1.
+    // NOTE: GLM-4.7-Flash has been observed inventing tools (open, cd, execute)
+    // when not constrained; the session_name prompt must enumerate the single
+    // allowed tool explicitly.
     modelPreferences: [
-      {
-        provider: "openai-codex",
-        model: "gpt-5.3-codex-spark",
-        thinking: "off",
-        weight: 1,
-      },
       {
         provider: "synthetic",
         model: "hf:zai-org/GLM-4.7-Flash",
@@ -30,9 +30,9 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
       },
       {
         provider: "neuralwatt",
-        model: "glm-5.2-short-fast-flex",
+        model: "glm-5.2-short-fast",
         thinking: "off",
-        weight: 1,
+        weight: 0.1,
       },
     ],
     parameters: Type.Object({
