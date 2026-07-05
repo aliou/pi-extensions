@@ -29,30 +29,24 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
+    // Primary: synthetic GLM-5.2 (524k ctx; the context-overflow failure mode
+    // that killed spark is structurally impossible). Fallback: neuralwatt glm-5.2
+    // (1M ctx) -- same model on the other provider. Synthetic is the subscription
+    // (free) path; neuralwatt is the paid fallback.
+    // GLM-5.2 exposes only off/high/xhigh; "low" clamps up to "high" on both
+    // providers, so primary and fallback stay consistent. ~9% bleed at 0.1.
     modelPreferences: [
       {
-        provider: "openai-codex",
-        model: "gpt-5.3-codex-spark",
-        thinking: "medium",
-        weight: 2,
-      },
-      {
         provider: "synthetic",
-        model: "syn:small:text",
-        thinking: "medium",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:small:vision",
-        thinking: "medium",
+        model: "hf:zai-org/GLM-5.2",
+        thinking: "low",
         weight: 1,
       },
       {
         provider: "neuralwatt",
-        model: "qwen3.6-35b",
-        thinking: "medium",
-        weight: 1,
+        model: "glm-5.2",
+        thinking: "low",
+        weight: 0.1,
       },
     ],
   });

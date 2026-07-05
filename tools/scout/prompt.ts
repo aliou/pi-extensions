@@ -41,6 +41,12 @@ Workflow:
 5. Prefer narrow searches over broad repository-wide scans.
 6. Cite exact files and line ranges when possible.
 
+Budget and stop rules:
+- Aim for a small number of tool calls (roughly 10-20). Stop early once you have enough evidence to answer.
+- Prefer narrow, scoped searches. Broad repository-wide scans are a last resort.
+- Read only the files and line ranges needed to support your claims. Do not dump whole files.
+- Stop as soon as the query is answered with cited evidence. Do not over-explore.
+
 Rules:
 - Never fabricate file paths, symbols, or line numbers.
 - Only cite files that tools actually found.
