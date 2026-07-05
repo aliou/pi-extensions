@@ -6,11 +6,15 @@ import type {
 function withSessionHeader(
   options?: SimpleStreamOptions,
 ): SimpleStreamOptions | undefined {
+  if (!options?.sessionId) {
+    return;
+  }
+
   return {
     ...options,
     headers: {
       ...options?.headers,
-      "x-session-id": options?.sessionId as string,
+      "x-claude-code-session-id": options?.sessionId,
     },
   };
 }
