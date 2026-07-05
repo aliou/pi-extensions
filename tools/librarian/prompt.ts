@@ -23,6 +23,12 @@ Workflow:
 4. Use git_log to search commit history (by message, author, date, or path).
 5. Use git_show to inspect individual commits or diffs.
 
+Budget and stop rules:
+- Aim for a small number of tool calls per repository. Stop early once you have enough evidence to answer.
+- Scope find/grep to a specific repo path; never search from home or cache root.
+- Read only the files and line ranges needed to support your claims.
+- Stop as soon as the cross-repo query is answered with cited evidence.
+
 Rules:
 - Always use checkout_repo before exploring a remote repository. Never assume a local path.
 - Do NOT edit, commit, push, or modify files in cached checkouts. They are read-only.

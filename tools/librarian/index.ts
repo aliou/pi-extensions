@@ -24,30 +24,21 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     renderDetails: renderLibrarianDetails,
     buildPrompt,
     tools,
+    // Same model pair as scout: synthetic GLM-5.2 primary, neuralwatt glm-5.2
+    // fallback. "low" clamps to "high" on GLM-5.2 (only off/high/xhigh exposed).
+    // ~9% bleed at weight 0.1.
     modelPreferences: [
       {
-        provider: "openai-codex",
-        model: "gpt-5.3-codex-spark",
-        thinking: "off",
-        weight: 2,
+        provider: "synthetic",
+        model: "hf:zai-org/GLM-5.2",
+        thinking: "low",
+        weight: 1,
       },
       {
         provider: "neuralwatt",
-        model: "qwen3.6-35b-fast",
-        thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:small:text",
-        thinking: "medium",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:small:vision",
-        thinking: "medium",
-        weight: 1,
+        model: "glm-5.2",
+        thinking: "low",
+        weight: 0.1,
       },
     ],
   });
