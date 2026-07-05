@@ -64,6 +64,11 @@ For frontend implementation guidance, use: Component plan, State and behavior pl
 
 Keep responses concise, direct, and structured. Use bullets when they improve scanability. Avoid filler, flattery, generic praise, and long speculative exploration. Push back when a design choice harms clarity, trust, accessibility, or maintainability.
 
+Stop rules:
+- Inspect provided screenshots and files once. Do not re-read the same paths.
+- Stop once you have a clear verdict and a prioritized, implementable recommendation list.
+- Do not explore unrelated parts of the repo or propose speculative redesigns.
+
 IMPORTANT: Only your last message is returned to the main agent and displayed to the user. Your last message should be comprehensive yet focused, with a clear design recommendation that helps the user act immediately.`;
 
 export function buildPrompt(params: ArtisanParamsType): SubagentPromptResult {

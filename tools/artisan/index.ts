@@ -52,18 +52,24 @@ export default async function artisan(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
+    // Primary: gpt-5.5 at medium (vision-capable; sees screenshots natively).
+    // Fallback: synthetic Kimi-K2.7-Code (vision) so artisan keeps image input
+    // when openai-codex is down. GLM-5.2 is text-only and would blind artisan's
+    // screenshot analysis on fallback, so Kimi is used here instead of the
+    // GLM-5.2 fallback that oracle/reviewer use. Kimi-K2.7-Code is thinking-only:
+    // "low" clamps to "medium" (its sole level). ~9% bleed at weight 0.1.
     modelPreferences: [
-      {
-        provider: "anthropic",
-        model: "claude-opus-4-8",
-        thinking: "medium",
-        weight: 1.5,
-      },
       {
         provider: "openai-codex",
         model: "gpt-5.5",
         thinking: "medium",
         weight: 1,
+      },
+      {
+        provider: "synthetic",
+        model: "hf:moonshotai/Kimi-K2.7-Code",
+        thinking: "low",
+        weight: 0.1,
       },
     ],
   });
