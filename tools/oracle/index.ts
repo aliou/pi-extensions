@@ -52,18 +52,23 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     buildPrompt,
     tools,
     extensionPaths,
+    // Primary: gpt-5.5 at xhigh (oracle is quality-at-any-latency).
+    // Fallback: synthetic GLM-5.2 at xhigh -> the synthetic shim maps xhigh to
+    // "medium", which the GLM-5.2 chat template falls through to Max effort
+    // (neuralwatt would map xhigh -> "max" directly). Used when openai-codex is
+    // unavailable; ~9% bleed onto the fallback at weight 0.1.
     modelPreferences: [
       {
         provider: "openai-codex",
         model: "gpt-5.5",
-        thinking: "medium",
-        weight: 2,
+        thinking: "xhigh",
+        weight: 1,
       },
       {
-        provider: "anthropic",
-        model: "claude-opus-4-8",
-        thinking: "medium",
-        weight: 1,
+        provider: "synthetic",
+        model: "hf:zai-org/GLM-5.2",
+        thinking: "xhigh",
+        weight: 0.1,
       },
     ],
   });
