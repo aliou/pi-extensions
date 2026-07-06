@@ -73,6 +73,7 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   name: string;
   label: string;
   description: string;
+  promptSnippet?: string;
   promptGuidelines?: string[];
   systemPrompt: string;
   /**

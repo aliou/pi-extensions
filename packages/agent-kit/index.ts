@@ -69,6 +69,7 @@ export function createSubagent<Params extends TSchema>(
       name: config.name,
       label: config.label,
       description: config.description,
+      promptSnippet: config.promptSnippet,
       promptGuidelines: config.promptGuidelines,
       parameters: config.parameters,
       renderCall: (args, theme, ctx) =>
@@ -90,6 +91,11 @@ export function createSubagent<Params extends TSchema>(
       name: `resume_${config.name}`,
       label: `Resume ${config.label}`,
       description: `Resume a previous ${config.label} session using its sessionId`,
+      promptSnippet: `Resume a previous ${config.label} subagent session by sessionId.`,
+      promptGuidelines: [
+        `resume_${config.name}: Use only when continuing a known previous ${config.label} subagent session and you have its sessionId.`,
+        `resume_${config.name}: Provide the new task or question plus any new context; do not assume the parent conversation is visible unless you include the relevant details.`,
+      ],
       parameters: createResumeSubagentParamsSchema(config.parameters),
       renderCall: (args, theme, ctx) =>
         renderSubagentCall(config, args, theme, ctx),
