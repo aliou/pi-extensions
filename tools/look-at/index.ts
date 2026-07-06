@@ -26,9 +26,9 @@ export default function lookAt(pi: ExtensionAPI): void {
   const subagent = createSubagent(pi, {
     name: TOOL_NAME,
     label: "Look At",
-    description: `Analyze an image file using a vision-capable model. Returns a text description of the image content.
+    description: `Analyze an image file using a vision subagent. Returns a text description of the image content.
 
-Use this tool when you need to understand or extract information from an image file (PNG, JPG, GIF, WebP, BMP, etc.). The current model cannot see images directly -- this tool delegates to a vision model that can.
+Use this tool when you need to understand or extract information from an image file (PNG, JPG, GIF, WebP, BMP, etc.). If the current agent cannot see images directly, this tool delegates to a vision-capable subagent.
 
 Always provide a clear objective describing what you want to learn from the image.
 
@@ -45,13 +45,10 @@ Always provide a clear objective describing what you want to learn from the imag
     promptSnippet:
       "Vision subagent for extracting focused information from screenshots, diagrams, charts, photos, and other image files.",
     promptGuidelines: [
-      "look_at: Use when you need to understand or extract information from an image file.",
-      "look_at: Do not use for source code or plain text files -- use read instead.",
-      "look_at: Kimi K2.7 Code is a forced-thinking multimodal model. It performs best when the objective is explicit and grounded in visible evidence.",
-      "look_at: Always provide a specific objective: what to inspect, what to ignore, and the desired output format.",
-      "look_at: Use context to provide the product/code/error background, nearby files, expected UI state, or comparison target.",
-      "look_at: Ask for exact visible evidence for screenshots, diagrams, charts, and error images; do not ask it to infer hidden state beyond the image.",
-      "look_at: For UI screenshots, ask for concrete observations about hierarchy, spacing, affordances, accessibility, and visible text rather than generic design advice.",
+      "look_at: Use when you need to understand or extract information from an image file; do not use for source code or plain text files.",
+      "look_at: Provide a specific objective: what visible evidence to inspect, what to ignore, and the desired output format.",
+      "look_at: Use context to provide product/code/error background, nearby files, expected UI state, or comparison target.",
+      "look_at: Ask for exact visible evidence; for UI screenshots, ask about hierarchy, spacing, affordances, accessibility, and visible text.",
     ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],

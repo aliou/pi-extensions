@@ -67,10 +67,9 @@ Current subagent-based tools include `artisan`, `librarian`, `look-at`, `oracle`
 
 Subagents are zero-shot: only their final response is returned to the parent. Parent agents should make each subagent call self-contained.
 
-- GPT-5.5-backed advisors (`oracle`, `artisan`, `reviewer`) prefer outcome-first prompts: outcome, what good means, constraints, how to verify, available evidence, and desired final shape. Avoid process-heavy step lists unless the sequence is a hard requirement.
-- GPT-5.5 is literal. Give it a checkable target and say what evidence would make the answer useful. Avoid vague prompts like “look into this”; say whether the subagent should diagnose only, recommend options, or produce an implementation plan.
-- GLM-backed researchers (`scout`, `librarian`, `read-session`) prefer narrow scope, explicit constraints, concrete search targets, and requested evidence. Ask for files, line ranges, session evidence, or `not found` instead of allowing inference.
-- Kimi-backed vision/design paths (`look-at`, `artisan` fallback) prefer precise multimodal objectives: what visible evidence to inspect, what to ignore, and the desired output format.
+- Advisory and review subagents (`oracle`, `artisan`, `reviewer`) prefer outcome-first prompts: outcome, what good means, constraints, how to verify, available evidence, and desired final shape. Avoid process-heavy step lists unless the sequence is a hard requirement.
+- Research and extraction subagents (`scout`, `librarian`, `read-session`) prefer narrow scope, explicit constraints, concrete search targets, and requested evidence. Ask for files, line ranges, session evidence, or `not found` instead of allowing inference.
+- Vision and design subagents (`look-at`, screenshot-heavy `artisan` calls) prefer precise multimodal objectives: what visible evidence to inspect, what to ignore, and the desired output format.
 
 ## Commands
 

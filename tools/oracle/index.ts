@@ -44,11 +44,8 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     promptGuidelines: [
       "oracle: Use for senior-level technical guidance, architecture advice, planning, and second opinions on design/code-review decisions.",
       "oracle: Do not use for simple lookups or file reads -- use read/grep/find directly instead.",
-      "oracle: GPT-5.5 works best with outcome-first prompts. State the desired outcome, what good means, constraints, how success can be verified, evidence available, and final answer shape; do not prescribe a step-by-step process unless it is a hard requirement.",
-      "oracle: GPT-5.5 is literal. Give it a checkable target and say what evidence would make the answer useful; avoid vague prompts like 'look into this'.",
-      "oracle: Make the task self-contained: include the repo/project context, relevant paths, options considered, and whether you want diagnosis only, options/trade-offs, or a concrete plan.",
-      "oracle: Put background, prior findings, and acceptance criteria in context; pass concrete files in files so oracle can inspect them before giving file-specific advice.",
-      "oracle: Ask for one actionable recommendation with concise rationale, risks, and next steps; avoid vague prompts like 'thoughts?' or 'look into this'.",
+      "oracle: Make the task self-contained: include outcome, what good means, constraints, relevant paths/files, available evidence, verification signal, and desired final answer shape.",
+      "oracle: Give a checkable target and say whether you want diagnosis only, options/trade-offs, or one recommended plan; avoid vague prompts like 'thoughts?' or 'look into this'.",
     ],
     systemPrompt: ORACLE_SYSTEM_PROMPT,
     parameters: OracleParams,

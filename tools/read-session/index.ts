@@ -15,10 +15,8 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     promptGuidelines: [
       "read_session: Use to extract specific information from a past Pi coding session by session ID, UUID prefix, or session .jsonl file path.",
       "read_session: Do not use for the current session or general codebase search.",
-      "read_session: GLM extraction works best with a narrow target and explicit output shape. Provide a specific, self-contained goal describing what information to extract and how to format it.",
-      "read_session: Include known names, dates, projects, topics, files, decisions, or tool names in the goal so the subagent can search narrowly.",
+      "read_session: Provide a narrow, self-contained goal with known names, dates, projects, topics, files, decisions, or tool names plus the expected output shape.",
       "read_session: Ask for cited session evidence when you need exact decisions, commands, or implementation details; ask it to say 'not found' for missing facts rather than infer.",
-      "read_session: Avoid vague goals like 'summarize this'. Prefer requests like 'extract the final decision, files changed, commands run, and unresolved questions'.",
     ],
     systemPrompt: SYSTEM_PROMPT,
     tools,
