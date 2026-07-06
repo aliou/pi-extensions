@@ -42,11 +42,16 @@ Always provide a clear objective describing what you want to learn from the imag
 - For source code or plain text files where you need exact contents -- use read instead
 - When you need to edit the file afterward
 - For simple file reading where no interpretation is needed`,
+    promptSnippet:
+      "Vision subagent for extracting focused information from screenshots, diagrams, charts, photos, and other image files.",
     promptGuidelines: [
       "look_at: Use when you need to understand or extract information from an image file.",
       "look_at: Do not use for source code or plain text files -- use read instead.",
-      "look_at: Always provide a clear objective describing what you want to learn from the image.",
-      "look_at: Use context parameter to provide broader context about why you need the analysis.",
+      "look_at: Kimi K2.7 Code is a forced-thinking multimodal model. It performs best when the objective is explicit and grounded in visible evidence.",
+      "look_at: Always provide a specific objective: what to inspect, what to ignore, and the desired output format.",
+      "look_at: Use context to provide the product/code/error background, nearby files, expected UI state, or comparison target.",
+      "look_at: Ask for exact visible evidence for screenshots, diagrams, charts, and error images; do not ask it to infer hidden state beyond the image.",
+      "look_at: For UI screenshots, ask for concrete observations about hierarchy, spacing, affordances, accessibility, and visible text rather than generic design advice.",
     ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],
