@@ -1,7 +1,10 @@
-import type { streamSimpleAnthropic } from "@earendil-works/pi-ai";
+import type {
+  ApiStreamSimpleFunction,
+  Model,
+  SimpleStreamOptions,
+} from "@earendil-works/pi-ai";
 
-type AnthropicModel = Parameters<typeof streamSimpleAnthropic>[0];
-type AnthropicStreamOptions = Parameters<typeof streamSimpleAnthropic>[2];
+type AnthropicModel = Model<"anthropic-messages">;
 type AnthropicRequestPayload = Record<string, unknown> & { model?: unknown };
 
 /**
@@ -82,7 +85,8 @@ export function addAnthropicFastModePayload(
 }
 
 /**
- * Builds the stream options to pass to `streamSimpleAnthropic`.
+ * Builds the stream options to pass to a downstream `streamSimple`
+ * implementation.
  *
  * When Anthropic fast mode is enabled and the selected model supports it, the
  * returned options carry the `fast-mode` beta header and wrap `onPayload` so
@@ -92,8 +96,8 @@ export function addAnthropicFastModePayload(
 export function buildAnthropicStreamOptions(
   model: AnthropicModel,
   enabled: boolean,
-  options: AnthropicStreamOptions | undefined,
-): AnthropicStreamOptions | undefined {
+  options: SimpleStreamOptions | undefined,
+): SimpleStreamOptions | undefined {
   if (!enabled || !isAnthropicSupportedModel(model.id)) {
     return options;
   }
@@ -121,5 +125,29 @@ export function buildAnthropicStreamOptions(
       const nextPayload = await onPayload(fastPayload, payloadModel);
       return nextPayload === undefined ? fastPayload : nextPayload;
     },
+  };
+}
+
+/**
+ * Wraps a `streamSimple` implementation (the built-in one or one already
+ * registered by another extension, e.g. `anthropic-tweaks`) so that Anthropic
+ * fast mode is applied on top of whatever the wrapped implementation does.
+ *
+ * This mirrors the pattern in `hooks/anthropic-tweaks/provider.ts`: instead of
+ * importing `streamSimpleAnthropic` directly and clobbering any other
+ * extension's provider registration, we compose on top of whatever
+ * `getApiProvider("anthropic-messages")` currently returns.
+ */
+export function createAnthropicFastModeStreamSimple(
+  streamSimple: ApiStreamSimpleFunction,
+  isEnabled: () => boolean,
+): ApiStreamSimpleFunction {
+  return (model, context, options) => {
+    const streamOptions = buildAnthropicStreamOptions(
+      model as AnthropicModel,
+      isEnabled(),
+      options,
+    );
+    return streamSimple(model, context, streamOptions);
   };
 }

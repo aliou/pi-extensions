@@ -1,4 +1,4 @@
-import { streamSimpleAnthropic } from "@earendil-works/pi-ai";
+import { getApiProvider } from "@earendil-works/pi-ai";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -11,16 +11,13 @@ import {
 } from "@harness/events";
 
 import {
-  buildAnthropicStreamOptions,
+  createAnthropicFastModeStreamSimple,
   isAnthropicSupportedModel,
 } from "./anthropic";
 import {
-  type CodexRequestPayload,
-  injectCodexServiceTier,
+  createCodexFastModeStreamSimple,
   isCodexSupportedModel,
 } from "./codex";
-
-type AnthropicModel = Parameters<typeof streamSimpleAnthropic>[0];
 
 let codexEnabled = true;
 let anthropicEnabled = true;
@@ -72,21 +69,33 @@ export default function fastModeHook(pi: ExtensionAPI): void {
     },
   });
 
-  pi.registerProvider("anthropic", {
-    api: "anthropic-messages",
-    streamSimple(model, context, options) {
-      const streamOptions = buildAnthropicStreamOptions(
-        model as AnthropicModel,
-        anthropicEnabled,
-        options,
-      );
-      return streamSimpleAnthropic(
-        model as AnthropicModel,
-        context,
-        streamOptions,
-      );
-    },
-  });
+  // Wrap whatever is currently registered for these apis (the built-ins, or an
+  // earlier extension's wrapper such as `anthropic-tweaks`'s `X-Session-Affinity`
+  // injector) rather than calling the built-in `streamSimple*` directly. This
+  // composes instead of clobbering — see `hooks/anthropic-tweaks/provider.ts`
+  // and `hooks/anthropic-tweaks/index.ts` for the same pattern, and
+  // `extensions/aperture/{proxy,dedicated}/runtime.ts` in pi-ts-aperture.
+  const anthropicBuiltIn = getApiProvider("anthropic-messages");
+  if (anthropicBuiltIn?.streamSimple) {
+    pi.registerProvider("anthropic", {
+      api: "anthropic-messages",
+      streamSimple: createAnthropicFastModeStreamSimple(
+        anthropicBuiltIn.streamSimple,
+        () => anthropicEnabled,
+      ),
+    });
+  }
+
+  const codexBuiltIn = getApiProvider("openai-codex-responses");
+  if (codexBuiltIn?.streamSimple) {
+    pi.registerProvider("openai-codex", {
+      api: "openai-codex-responses",
+      streamSimple: createCodexFastModeStreamSimple(
+        codexBuiltIn.streamSimple,
+        () => codexEnabled,
+      ),
+    });
+  }
 
   pi.on("session_start", async (_event, ctx) => {
     emitCodexFastMode(pi, ctx);
@@ -96,14 +105,6 @@ export default function fastModeHook(pi: ExtensionAPI): void {
   pi.on("model_select", async (_event, ctx) => {
     emitCodexFastMode(pi, ctx);
     emitAnthropicFastMode(pi, ctx);
-  });
-
-  pi.on("before_provider_request", (event, ctx) => {
-    if (ctx.model?.provider !== "openai-codex") return;
-    return injectCodexServiceTier(
-      event.payload as CodexRequestPayload,
-      codexEnabled,
-    );
   });
 
   once(pi, AD_HEADER_COLLECT_EVENT, () => {
