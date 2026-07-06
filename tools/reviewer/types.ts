@@ -3,11 +3,12 @@ import { type Static, Type } from "typebox";
 export const ReviewerParams = Type.Object({
   diff_description: Type.String({
     description:
-      "Description of the diff or code change to review. Can be a git/bash command that generates the diff.",
+      "Exact diff description or command to review from the current cwd, e.g. 'git diff --staged' or 'git diff main...HEAD'.",
   }),
   instructions: Type.Optional(
     Type.String({
-      description: "Additional instructions for the review.",
+      description:
+        "Optional focused review criteria: risk areas, invariants, expected behavior, verification signal, severity threshold, or files to scrutinize.",
     }),
   ),
 });

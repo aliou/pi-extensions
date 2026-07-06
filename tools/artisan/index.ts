@@ -38,11 +38,19 @@ export default async function artisan(pi: ExtensionAPI): Promise<void> {
     name: "artisan",
     label: "Artisan",
     description:
-      "Design-focused subagent for UI/UX plans, product polish, visual hierarchy, interaction design, accessibility, design-system fit, and practical frontend implementation guidance.",
+      "Zero-shot product design and frontend craft advisor. Give the UI goal, users, constraints, files/screenshots, and the concrete design decision you need.",
+    promptSnippet:
+      "Design-focused advisor for UX critique, product polish, visual hierarchy, accessibility, design-system fit, and frontend craft.",
     promptGuidelines: [
       "artisan: Use for design-heavy plans, UI/UX critique, product polish, visual hierarchy, interaction states, design-system fit, accessibility, and frontend craft guidance.",
       "artisan: Use alongside oracle when the same task needs both product/interface judgment and engineering architecture review.",
       "artisan: Do not use for simple lookups, pure backend architecture, or file reads -- use read/grep/find or oracle instead.",
+      "artisan: GPT-5.5 works best with outcome-first prompts. State the product outcome, what good means for the user, constraints, how the result can be checked, available evidence, and desired deliverable; do not over-prescribe critique steps unless required.",
+      "artisan: GPT-5.5 is literal about product judgment. Give a checkable target and say what evidence would make the design advice useful; avoid vague prompts like 'make this better'.",
+      "artisan: Make the task self-contained: include the product goal, target users, current UI/problem, design-system constraints, device/responsive needs, and desired output.",
+      "artisan: Pass screenshots, mockups, and relevant component/style files in files; put product background, prior feedback, and acceptance criteria in context.",
+      "artisan: Ask for prioritized, implementable recommendations covering interaction states, accessibility, visual hierarchy, and frontend steps; avoid vague prompts like 'make it nicer'.",
+      "artisan: For screenshot-heavy work, give a precise visual objective and expected output; Kimi fallback is multimodal and performs best when told what visible evidence to inspect.",
     ],
     systemPrompt: ARTISAN_SYSTEM_PROMPT,
     parameters: ArtisanParams,

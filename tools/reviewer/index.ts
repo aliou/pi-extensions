@@ -31,11 +31,19 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     name: "reviewer",
     label: "Reviewer",
     description:
-      "Formal code review subagent for reviewing diffs without running checks.",
+      "Zero-shot formal code reviewer. Provide the exact diff command/description plus focused review criteria; it reviews statically and does not run checks.",
+    promptSnippet:
+      "Formal code review subagent for diffs and code changes; static analysis only, no test execution.",
     promptGuidelines: [
       "reviewer: Use for formal code review of diffs and code changes.",
       "reviewer: Does not run checks or tests -- only reviews code statically.",
       "reviewer: Do not use for general questions or file reads -- use oracle or read instead.",
+      "reviewer: GPT-5.5 works best with outcome-first prompts. State the review outcome, severity bar, invariants, risk areas, how correctness would be verified, and desired finding format; avoid process-heavy instructions beyond required review criteria.",
+      "reviewer: GPT-5.5 is literal. Give a checkable review target and say what evidence would make findings useful; avoid vague prompts like 'review this' without a diff scope or risk focus.",
+      "reviewer: Provide an exact diff description or command that works from the current cwd, such as 'git diff --staged' or 'git diff main...HEAD'.",
+      "reviewer: Put review focus in instructions: risk areas, expected behavior, backwards-compatibility, security/performance concerns, and whether to prioritize only blocking issues.",
+      "reviewer: Do not ask reviewer to fix code, run tests, approve PRs, or leave PR comments; ask for cited findings with severity and concrete remediation.",
+      "reviewer: If the diff is large, ask for the highest-impact findings first and explicit residual risks instead of exhaustive commentary.",
     ],
     systemPrompt: REVIEWER_SYSTEM_PROMPT,
     parameters: ReviewerParams,
