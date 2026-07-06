@@ -61,7 +61,16 @@ Tools that spawn a subagent follow a different layout:
 - `tools/` - Subagent tool definitions, visible only inside the subagent.
 - `lib/` - Supporting logic.
 
-Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-session`, `reviewer`, and `scout`.
+Current subagent-based tools include `artisan`, `librarian`, `look-at`, `oracle`, `read-session`, `reviewer`, and `scout`.
+
+### Parent prompts for subagents
+
+Subagents are zero-shot: only their final response is returned to the parent. Parent agents should make each subagent call self-contained.
+
+- GPT-5.5-backed advisors (`oracle`, `artisan`, `reviewer`) prefer outcome-first prompts: outcome, what good means, constraints, how to verify, available evidence, and desired final shape. Avoid process-heavy step lists unless the sequence is a hard requirement.
+- GPT-5.5 is literal. Give it a checkable target and say what evidence would make the answer useful. Avoid vague prompts like “look into this”; say whether the subagent should diagnose only, recommend options, or produce an implementation plan.
+- GLM-backed researchers (`scout`, `librarian`, `read-session`) prefer narrow scope, explicit constraints, concrete search targets, and requested evidence. Ask for files, line ranges, session evidence, or `not found` instead of allowing inference.
+- Kimi-backed vision/design paths (`look-at`, `artisan` fallback) prefer precise multimodal objectives: what visible evidence to inspect, what to ignore, and the desired output format.
 
 ## Commands
 
@@ -102,7 +111,7 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 
 | Directory | Tool name | Notes |
 |---|---|---|
-| `artisan/` | `artisan`, `resume_artisan` | Design-focused subagent |
+| `artisan/` | `artisan`, `resume_artisan` | Zero-shot product design and frontend craft advisor |
 | `ask-user/` | `ask_user` | Passthrough |
 | `bash/` | `bash` | Adds `cwd` param, spawn hooks, sanitization |
 | `edit/` | `edit` | Passthrough |
@@ -110,15 +119,15 @@ Current subagent-based tools include `artisan`, `librarian`, `oracle`, `read-ses
 | `find-sessions/` | `find_sessions` | Session keyword search via `@harness/session-store` |
 | `get-current-time/` | `get_current_time` | Passthrough |
 | `grep/` | `grep` | Adds `literal`, `context`, blocked paths, custom render |
-| `librarian/` | `librarian`, `resume_librarian` | Codebase-understanding subagent |
+| `librarian/` | `librarian`, `resume_librarian` | Zero-shot remote and cross-repo codebase researcher |
 | `list-sessions/` | `list_sessions` | Session directory listing via `@harness/session-store` |
-| `look-at/` | `look_at` | Image analysis; BMP files are converted to PNG before vision analysis |
-| `oracle/` | `oracle`, `resume_oracle` | Senior advisor subagent |
+| `look-at/` | `look_at` | Zero-shot vision subagent; BMP files are converted to PNG before vision analysis |
+| `oracle/` | `oracle`, `resume_oracle` | Zero-shot senior technical advisor |
 | `read/` | `read` | Passthrough; BMP images are converted to PNG before upstream handling |
-| `read-session/` | `read_session` | Subagent session reader |
+| `read-session/` | `read_session` | Zero-shot past-session extractor |
 | `read-url/` | `read_url` | URL fetch with handler chain and preview |
-| `reviewer/` | `reviewer`, `resume_reviewer` | Formal code-review subagent |
-| `scout/` | `scout`, `resume_scout` | Local codebase-understanding subagent |
+| `reviewer/` | `reviewer`, `resume_reviewer` | Zero-shot formal code-review subagent |
+| `scout/` | `scout`, `resume_scout` | Zero-shot local codebase researcher |
 
 ## Development
 
