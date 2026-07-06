@@ -71,6 +71,8 @@ Subagents are zero-shot: only their final response is returned to the parent. Pa
 - Research and extraction subagents (`scout`, `librarian`, `read-session`) prefer narrow scope, explicit constraints, concrete search targets, and requested evidence. Ask for files, line ranges, session evidence, or `not found` instead of allowing inference.
 - Vision and design subagents (`look-at`, screenshot-heavy `artisan` calls) prefer precise multimodal objectives: what visible evidence to inspect, what to ignore, and the desired output format.
 
+Model-specific research behind these caller-facing rules lives in `docs/prompting-*.md`. Keep model names out of parent-facing tool guidelines unless the caller must choose or configure a model directly.
+
 ## Commands
 
 | Directory | Commands | Notes |
