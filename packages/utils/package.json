@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./index.ts",
+    "./assert-never": "./assert-never.ts",
     "./formatters": "./formatters.ts",
     "./nil": "./nil.ts",
     "./path": "./path.ts",

@@ -1,4 +1,5 @@
 export * from "./array";
+export { assertNever } from "./assert-never";
 export {
   formatCurrency,
   formatRelativeTime,
