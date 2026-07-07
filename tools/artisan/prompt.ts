@@ -1,5 +1,7 @@
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { SubagentPromptResult } from "@harness/agent-kit/types";
-import { isNotNil } from "@harness/utils";
+import { knownModelFamily, type ModelIdentity } from "@harness/models";
+import { assertNever } from "@harness/utils";
 import type { ArtisanParamsType } from "./types";
 
 export const ARTISAN_SYSTEM_PROMPT = `You are the Artisan — a senior product design and frontend craft advisor.
@@ -71,16 +73,76 @@ Stop rules:
 
 IMPORTANT: Only your last message is returned to the main agent and displayed to the user. Your last message should be comprehensive yet focused, with a clear design recommendation that helps the user act immediately.`;
 
-export function buildPrompt(params: ArtisanParamsType): SubagentPromptResult {
-  const task = `Task:\n<task>\n${params.task}\n</task>`;
+export function buildPrompt(
+  params: ArtisanParamsType,
+  _ctx: ExtensionContext,
+  model: ModelIdentity,
+): SubagentPromptResult {
+  const family = knownModelFamily(model);
 
-  const context = params.context
-    ? `Context:\n<context>\n${params.context}\n</context>`
-    : undefined;
+  switch (family) {
+    case "gpt-5.5":
+      return { text: buildGptArtisanPrompt(params) };
+    case "kimi-k2.7-code":
+      return { text: buildKimiArtisanPrompt(params) };
+    case "glm-5.2":
+    case undefined:
+      return { text: buildGenericArtisanPrompt(params) };
+    default:
+      return assertNever(family);
+  }
+}
 
-  const files = params.files?.length
-    ? `Files or screenshots to inspect:\n<files>\n${params.files.map((file) => `- ${file}`).join("\n")}\n</files>\n\nIf files are provided, read them before giving file-specific design or implementation recommendations.`
-    : undefined;
+export function buildGptArtisanPrompt(params: ArtisanParamsType): string {
+  return [
+    `Use an outcome-first product/design advisory shape. Start from the user outcome, constraints, check signal, and decision needed. Give one clear design direction, then the smallest practical frontend path.`,
+    "",
+    ...inputLines(params),
+    "",
+    `Answer contract:`,
+    `- Lead with the strongest design judgment in 1-3 sentences.`,
+    `- Prioritize concrete changes over broad critique.`,
+    `- Include interaction, accessibility, and implementation checks when relevant.`,
+    `- State assumptions instead of asking follow-up questions unless truly blocked.`,
+  ].join("\n");
+}
 
-  return { text: [task, context, files].filter(isNotNil).join("\n\n") };
+export function buildKimiArtisanPrompt(params: ArtisanParamsType): string {
+  return [
+    `Use a precise multimodal critique shape. Inspect visible evidence carefully, separate what is visible from what is inferred, and keep recommendations buildable.`,
+    "",
+    ...inputLines(params),
+    "",
+    `Evidence contract:`,
+    `- If screenshots or mockups are provided, describe the visible hierarchy, spacing, affordances, text, and state evidence you used.`,
+    `- If files are provided, inspect them before making file-specific implementation claims.`,
+    `- Say what to ignore if the task scopes out parts of the image or UI.`,
+    `- Return concrete component, state, style, accessibility, and QA steps.`,
+  ].join("\n");
+}
+
+export function buildGenericArtisanPrompt(params: ArtisanParamsType): string {
+  return inputLines(params).join("\n");
+}
+
+function inputLines(params: ArtisanParamsType): string[] {
+  const lines = [`Task:`, `<task>`, params.task, `</task>`];
+
+  if (params.context) {
+    lines.push("", `Context:`, `<context>`, params.context, `</context>`);
+  }
+
+  if (params.files?.length) {
+    lines.push(
+      "",
+      `Files or screenshots to inspect:`,
+      `<files>`,
+      ...params.files.map((file) => `- ${file}`),
+      `</files>`,
+      "",
+      `If files are provided, read them before giving file-specific design or implementation recommendations.`,
+    );
+  }
+
+  return lines;
 }
