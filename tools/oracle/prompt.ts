@@ -1,5 +1,7 @@
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { SubagentPromptResult } from "@harness/agent-kit/types";
-import { isNotNil } from "@harness/utils";
+import { knownModelFamily, type ModelIdentity } from "@harness/models";
+import { assertNever } from "@harness/utils";
 import type { OracleParamsType } from "./types";
 
 export const ORACLE_SYSTEM_PROMPT = `You are the Oracle - an expert AI advisor with advanced reasoning capabilities.
@@ -51,27 +53,82 @@ Guidelines:
 
 IMPORTANT: Only your last message is returned to the main agent and displayed to the user. Your last message should be comprehensive yet focused, with a clear, simple recommendation that helps the user act immediately.`;
 
-export function buildPrompt(params: OracleParamsType): SubagentPromptResult {
-  const task = `Task:
-<task>
-${params.task}
-</task>`;
+export function buildPrompt(
+  params: OracleParamsType,
+  _ctx: ExtensionContext,
+  model: ModelIdentity,
+): SubagentPromptResult {
+  const family = knownModelFamily(model);
 
-  const context = params.context
-    ? `Context:
-<context>
-${params.context}
-</context>`
-    : undefined;
+  switch (family) {
+    case "glm-5.2":
+      return { text: buildGlmOraclePrompt(params) };
+    case "gpt-5.5":
+      return { text: buildGptOraclePrompt(params) };
+    case "kimi-k2.7-code":
+    case undefined:
+      return { text: buildGenericOraclePrompt(params) };
+    default:
+      return assertNever(family);
+  }
+}
 
-  const files = params.files?.length
-    ? `Files to inspect:
-<files>
-${params.files.map((file) => `- ${file}`).join("\n")}
-</files>
+export function buildGptOraclePrompt(params: OracleParamsType): string {
+  return [
+    `Use an outcome-first advisory shape. Start from the desired outcome, constraints, verification signal, and decision needed. Give one clear recommendation, then the smallest practical implementation path.`,
+    "",
+    ...inputLines(params),
+    "",
+    `Answer contract:`,
+    `- Lead with the recommended decision in 1-3 sentences.`,
+    `- Provide a checkable plan the main agent can execute.`,
+    `- Keep alternatives brief and only include one if the trade-off materially changes the decision.`,
+    `- State assumptions instead of asking follow-up questions unless truly blocked.`,
+  ].join("\n");
+}
 
-If files are provided, read them before giving file-specific recommendations.`
-    : undefined;
+export function buildGlmOraclePrompt(params: OracleParamsType): string {
+  return [
+    `Treat this as a bounded technical advisory task. Be explicit about scope, evidence, and verified gaps.`,
+    "",
+    ...inputLines(params),
+    "",
+    `Evidence contract:`,
+    `- If files are provided, inspect them before making file-specific claims.`,
+    `- Cite concrete files and line ranges for code-specific recommendations.`,
+    `- If a requested fact cannot be verified, say "not found" or list it under "Gaps" instead of inferring.`,
+    `- Keep the answer narrow: answer the requested decision or plan, then stop.`,
+    "",
+    `Desired output:`,
+    `1. Recommendation`,
+    `2. Evidence used`,
+    `3. Implementation steps`,
+    `4. Risks / gaps`,
+  ].join("\n");
+}
 
-  return { text: [task, context, files].filter(isNotNil).join("\n\n") };
+export function buildGenericOraclePrompt(params: OracleParamsType): string {
+  return inputLines(params).join("\n");
+}
+
+function inputLines(params: OracleParamsType): string[] {
+  const lines = [`Task:`, `<task>`, params.task, `</task>`];
+
+  if (params.context) {
+    lines.push("", `Context:`, `<context>`, params.context, `</context>`);
+  }
+
+  if (params.files?.length) {
+    lines.push(
+      "",
+      `Files to inspect:`,
+      `<files>`,
+      ...params.files.map((file) => `- ${file}`),
+      `</files>`,
+      "",
+      `If files are provided, read them before giving file-specific recommendations.`,
+    );
+  }
+
+  return lines;
 }
