@@ -28,11 +28,22 @@ export function isAnthropicModel(model: ModelLike): boolean {
   return model?.provider === "anthropic";
 }
 
-export type EditToolChoice = "apply_patch" | "edit";
+/** Kimi K2.7 Code is tuned for Moonshot's old_string/new_string edit shape. */
+export function isKimiCodeModel(model: ModelLike): boolean {
+  const id = model?.id?.toLowerCase();
+  return (
+    (model?.provider === "neuralwatt" && id === "kimi-k2.7-code") ||
+    (model?.provider === "synthetic" && id === "hf:moonshotai/kimi-k2.7-code")
+  );
+}
+
+export type EditToolChoice = "apply_patch" | "edit" | "kimi_edit";
 
 /** Which edit interface the active model should use. */
 export function pickEditTool(model: ModelLike): EditToolChoice {
-  return isCodexModel(model) ? "apply_patch" : "edit";
+  if (isCodexModel(model)) return "apply_patch";
+  if (isKimiCodeModel(model)) return "kimi_edit";
+  return "edit";
 }
 
 /**
@@ -41,8 +52,9 @@ export function pickEditTool(model: ModelLike): EditToolChoice {
  * - `apply_patch` (Codex): drop `edit` and `write` (apply_patch's Add File
  *   covers creation), add `apply_patch`. `removedByUs` records what was dropped
  *   so it can be restored on exit.
- * - `edit` (everyone else): drop `apply_patch`, restore previously-removed
- *   tools, and ensure `edit` is present.
+ * - `edit` / `kimi_edit`: drop `apply_patch`, restore previously-removed
+ *   tools, and ensure `edit` is present. The public tool name is still `edit`;
+ *   `index.ts` swaps the registered definition for Kimi.
  *
  * Pure: `index.ts` owns the `currentChoice` / `removedByUs` state and the
  * `pi.setActiveTools` side effect.

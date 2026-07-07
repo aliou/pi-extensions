@@ -1,5 +1,8 @@
 import { join } from "node:path";
-import { createToolContext } from "@harness/test-utils/pi-context";
+import {
+  createCommandContext,
+  createToolContext,
+} from "@harness/test-utils/pi-context";
 import { createPiTestHarness } from "@harness/test-utils/pi-test-harness";
 import { vol } from "memfs";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
@@ -203,8 +206,168 @@ describe("tool registration", () => {
   });
 });
 
+function toolProperties(pi: Awaited<ReturnType<typeof createPiTestHarness>>) {
+  return (
+    pi.tool("edit").registered.parameters as {
+      properties: Record<string, unknown>;
+    }
+  ).properties;
+}
+
+async function routeModel(
+  pi: Awaited<ReturnType<typeof createPiTestHarness>>,
+  model: { provider: string; id: string },
+  activeTools = ["read", "edit", "write", "bash"],
+) {
+  pi.runtime.getActiveTools = vi.fn(() => activeTools);
+  pi.runtime.setActiveTools = vi.fn();
+  const handler = pi.extension.handlers.get("model_select")?.[0];
+  assert(handler, "model_select handler should be registered");
+  await handler(
+    { type: "model_select", model },
+    createCommandContext({
+      model: model as NonNullable<
+        Parameters<typeof createCommandContext>[0]
+      >["model"],
+    }),
+  );
+}
+
+describe("kimi edit tool", () => {
+  async function kimiTool() {
+    const pi = await createPiTestHarness(editExtension);
+    await routeModel(pi, { provider: "neuralwatt", id: "kimi-k2.7-code" });
+    return pi.tool("edit").registered;
+  }
+
+  it("replaces a unique occurrence", async () => {
+    const tool = await kimiTool();
+    const cwd = "/tmp/kimi-edit-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
+    const absolutePath = join(cwd, "sample.txt");
+    vol.writeFileSync(absolutePath, "hello\nworld\n");
+
+    const result = await tool.execute(
+      "tc_1",
+      {
+        path: "sample.txt",
+        old_string: "world",
+        new_string: "kimi",
+      },
+      undefined,
+      undefined,
+      createToolContext({ cwd }),
+    );
+
+    expect(vol.readFileSync(absolutePath, "utf8")).toBe("hello\nkimi\n");
+    expect(result.content[0]).toMatchObject({
+      type: "text",
+      text: "Replaced 1 occurrence in sample.txt.",
+    });
+  });
+
+  it("rejects empty old_string and no-op edits", async () => {
+    const tool = await kimiTool();
+    const cwd = "/tmp/kimi-edit-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
+    vol.writeFileSync(join(cwd, "sample.txt"), "hello\n");
+
+    await expect(
+      tool.execute(
+        "tc_1",
+        { path: "sample.txt", old_string: "", new_string: "x" },
+        undefined,
+        undefined,
+        createToolContext({ cwd }),
+      ),
+    ).rejects.toThrow("old_string must not be empty");
+
+    await expect(
+      tool.execute(
+        "tc_2",
+        { path: "sample.txt", old_string: "hello", new_string: "hello" },
+        undefined,
+        undefined,
+        createToolContext({ cwd }),
+      ),
+    ).rejects.toThrow("No changes to make");
+  });
+
+  it("requires unique old_string unless replace_all is true", async () => {
+    const tool = await kimiTool();
+    const cwd = "/tmp/kimi-edit-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
+    const absolutePath = join(cwd, "sample.txt");
+    vol.writeFileSync(absolutePath, "same\nother\nsame\n");
+
+    await expect(
+      tool.execute(
+        "tc_1",
+        { path: "sample.txt", old_string: "same", new_string: "new" },
+        undefined,
+        undefined,
+        createToolContext({ cwd }),
+      ),
+    ).rejects.toThrow("old_string is not unique");
+
+    await tool.execute(
+      "tc_2",
+      {
+        path: "sample.txt",
+        old_string: "same",
+        new_string: "new",
+        replace_all: true,
+      },
+      undefined,
+      undefined,
+      createToolContext({ cwd }),
+    );
+
+    expect(vol.readFileSync(absolutePath, "utf8")).toBe("new\nother\nnew\n");
+  });
+
+  it("rejects relative paths that escape cwd", async () => {
+    const tool = await kimiTool();
+    const cwd = "/tmp/kimi-edit-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
+    vol.writeFileSync("/tmp/outside.txt", "secret\n");
+
+    await expect(
+      tool.execute(
+        "tc_1",
+        { path: "../outside.txt", old_string: "secret", new_string: "x" },
+        undefined,
+        undefined,
+        createToolContext({ cwd }),
+      ),
+    ).rejects.toThrow("escapes the working directory");
+  });
+
+  it("matches LF view and preserves pure CRLF files", async () => {
+    const tool = await kimiTool();
+    const cwd = "/tmp/kimi-edit-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
+    const absolutePath = join(cwd, "sample.txt");
+    vol.writeFileSync(absolutePath, "alpha\r\nbeta\r\n");
+
+    await tool.execute(
+      "tc_1",
+      {
+        path: "sample.txt",
+        old_string: "alpha\nbeta",
+        new_string: "one\ntwo",
+      },
+      undefined,
+      undefined,
+      createToolContext({ cwd }),
+    );
+
+    expect(vol.readFileSync(absolutePath, "utf8")).toBe("one\r\ntwo\r\n");
+  });
+});
+
 describe("routing", () => {
-  it("picks apply_patch for Codex/GPT models and edit otherwise", () => {
+  it("picks model-specific edit interfaces", () => {
     expect(pickEditTool({ provider: "openai-codex", id: "gpt-5.5" })).toBe(
       "apply_patch",
     );
@@ -216,8 +379,14 @@ describe("routing", () => {
       "edit",
     );
     expect(pickEditTool({ provider: "neuralwatt", id: "kimi-k2.7-code" })).toBe(
-      "edit",
+      "kimi_edit",
     );
+    expect(
+      pickEditTool({
+        provider: "synthetic",
+        id: "hf:moonshotai/Kimi-K2.7-Code",
+      }),
+    ).toBe("kimi_edit");
     expect(
       pickEditTool({ provider: "synthetic", id: "hf:zai-org/GLM-5.2" }),
     ).toBe("edit");
@@ -243,9 +412,51 @@ describe("routing", () => {
     expect(result.removedByUs).toEqual([]);
   });
 
+  it("entering kimi keeps edit/write and drops apply_patch", () => {
+    const result = resolveActiveTools(
+      ["read", "edit", "write", "bash", "apply_patch"],
+      "kimi_edit",
+      [],
+    );
+    expect(result.active).toEqual(["read", "edit", "write", "bash"]);
+    expect(result.removedByUs).toEqual([]);
+  });
+
+  it("entering kimi from codex restores edit/write", () => {
+    const result = resolveActiveTools(
+      ["read", "bash", "apply_patch"],
+      "kimi_edit",
+      ["edit", "write"],
+    );
+    expect(result.active).toEqual(["read", "bash", "edit", "write"]);
+    expect(result.removedByUs).toEqual([]);
+  });
+
   it("first route on a non-codex model ensures edit is active", () => {
     const result = resolveActiveTools(["read", "bash"], "edit", []);
     expect(result.active).toContain("edit");
     expect(result.active).not.toContain("apply_patch");
+  });
+
+  it("overloads edit with the kimi schema for kimi models", async () => {
+    const pi = await createPiTestHarness(editExtension);
+
+    await routeModel(pi, { provider: "neuralwatt", id: "kimi-k2.7-code" });
+
+    const properties = toolProperties(pi);
+    expect(properties.old_string).toBeDefined();
+    expect(properties.new_string).toBeDefined();
+    expect(properties.edits).toBeUndefined();
+  });
+
+  it("restores the default edit schema when leaving kimi", async () => {
+    const pi = await createPiTestHarness(editExtension);
+
+    await routeModel(pi, { provider: "neuralwatt", id: "kimi-k2.7-code" });
+    await routeModel(pi, { provider: "anthropic", id: "claude-opus-4-8" });
+
+    const properties = toolProperties(pi);
+    expect(properties.edits).toBeDefined();
+    expect(properties.old_string).toBeUndefined();
   });
 });

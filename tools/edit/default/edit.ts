@@ -6,9 +6,10 @@
  * schema validation before the native tool can run). Strips those entries in
  * `prepareArguments`, then delegates to the native edit tool unchanged.
  *
- * This is the edit interface used for non-Codex models (Anthropic, Kimi, GLM,
- * and the rest). For Anthropic models, strict tool-use validation is layered on
- * top via `strict.ts` + the `before_provider_request` hook in `index.ts`.
+ * This is the edit interface used for non-Codex, non-Kimi models (Anthropic,
+ * GLM, and the rest). For Anthropic models, strict tool-use validation is
+ * layered on top via `strict.ts` + the `before_provider_request` hook in
+ * `index.ts`.
  */
 
 import type { EditToolInput } from "@earendil-works/pi-coding-agent";

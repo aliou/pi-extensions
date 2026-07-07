@@ -117,7 +117,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `artisan/` | `artisan`, `resume_artisan` | Zero-shot product design and frontend craft advisor |
 | `ask-user/` | `ask_user` | Passthrough |
 | `bash/` | `bash` | Adds `cwd` param, spawn hooks, sanitization |
-| `edit/` | `edit`, `apply_patch` | Model-aware edit tool. Routes Codex/GPT models to a from-scratch `apply_patch` (V4A freeform patch, replacing `edit`+`write`) and everyone else to the native JSON `edit`; enables Anthropic strict tool-use validation on `edit` via `before_provider_request` |
+| `edit/` | `edit`, `apply_patch` | Model-aware edit tool. Routes Codex/GPT models to a from-scratch `apply_patch` (V4A freeform patch, replacing `edit`+`write`), Kimi K2.7 Code to an overloaded `edit` with `old_string`/`new_string`, and everyone else to the native JSON `edit`; enables Anthropic strict tool-use validation on default `edit` via `before_provider_request` |
 | `find/` | `find` | Adds `glob`, blocked paths |
 | `find-sessions/` | `find_sessions` | Session keyword search via `@harness/session-store` |
 | `get-current-time/` | `get_current_time` | Passthrough |

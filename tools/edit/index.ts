@@ -6,9 +6,10 @@
  *   - `apply_patch` (V4A freeform patch) for Codex / GPT-style models, which
  *     were post-trained on that format. It replaces `edit` and `write` for
  *     those models (apply_patch's Add File covers creation).
- *   - `edit` (native JSON old_string/new_string) for everyone else, including
- *     Anthropic, Kimi, and GLM. For Anthropic models, strict tool-use
- *     validation is enabled on the `edit` tool via `before_provider_request`.
+ *   - `edit` (Kimi old_string/new_string schema) for Kimi K2.7 Code.
+ *   - `edit` (native JSON edits[].oldText schema) for everyone else, including
+ *     Anthropic and GLM. For Anthropic models, strict tool-use validation is
+ *     enabled on the `edit` tool via `before_provider_request`.
  *
  * Routing runs on `session_start`, `model_select`, and `agent_start` (the last
  * is a backstop for startup-before-model-select). The active-tool set is swapped
@@ -22,6 +23,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { enableStrictOnEditTool } from "./anthropic/strict";
 import { createApplyPatchToolDefinition } from "./apply-patch/tool";
 import { createDefaultEditToolDefinition } from "./default/edit";
+import { createKimiEditToolDefinition } from "./kimi/edit";
 import {
   type EditToolChoice,
   isAnthropicModel,
@@ -34,11 +36,25 @@ export { prepareEditArguments, sanitizeArguments } from "./default/edit";
 let currentChoice: EditToolChoice | null = null;
 let removedByUs: string[] = [];
 
+function registerEditDefinition(
+  pi: ExtensionAPI,
+  desired: EditToolChoice,
+): void {
+  if (desired === "kimi_edit") {
+    pi.registerTool(createKimiEditToolDefinition(process.cwd()));
+    return;
+  }
+  if (desired === "edit") {
+    pi.registerTool(createDefaultEditToolDefinition(process.cwd()));
+  }
+}
+
 /** Swap the active edit interface to match the active model. */
 function routeEditTool(pi: ExtensionAPI, model: unknown): void {
   const desired = pickEditTool(model as Parameters<typeof pickEditTool>[0]);
   if (desired === currentChoice) return;
 
+  registerEditDefinition(pi, desired);
   const { active, removedByUs: nextRemoved } = resolveActiveTools(
     pi.getActiveTools(),
     desired,
@@ -50,8 +66,11 @@ function routeEditTool(pi: ExtensionAPI, model: unknown): void {
 }
 
 export default function editTool(pi: ExtensionAPI): void {
-  // Default `edit` (JSON) + Codex `apply_patch` (V4A). Both are registered up
-  // front; routing enables the right one per model.
+  currentChoice = null;
+  removedByUs = [];
+
+  // Register default `edit` (JSON) + Codex `apply_patch` (V4A). Routing can
+  // later overwrite `edit` with Kimi's old_string/new_string schema.
   pi.registerTool(createDefaultEditToolDefinition(process.cwd()));
   pi.registerTool(createApplyPatchToolDefinition(process.cwd()));
 
