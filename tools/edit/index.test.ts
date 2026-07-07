@@ -4,6 +4,7 @@ import { createPiTestHarness } from "@harness/test-utils/pi-test-harness";
 import { vol } from "memfs";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import editExtension, { prepareEditArguments } from "./index";
+import { pickEditTool, resolveActiveTools } from "./router";
 
 vi.mock("node:fs", async () => {
   const memfs = await vi.importActual<typeof import("memfs")>("memfs");
@@ -191,5 +192,60 @@ describe("defaults edit tool", () => {
     expect(result.details).toMatchObject({
       diff: expect.stringContaining("+2 pi"),
     });
+  });
+});
+
+describe("tool registration", () => {
+  it("registers both edit and apply_patch", async () => {
+    const pi = await createPiTestHarness(editExtension);
+    expect(pi).toHaveRegisteredTool("edit");
+    expect(pi).toHaveRegisteredTool("apply_patch");
+  });
+});
+
+describe("routing", () => {
+  it("picks apply_patch for Codex/GPT models and edit otherwise", () => {
+    expect(pickEditTool({ provider: "openai-codex", id: "gpt-5.5" })).toBe(
+      "apply_patch",
+    );
+    // A gpt-5* id under a non-Codex provider is NOT enough to route to
+    // apply_patch -- only the `openai-codex` provider is. This guards against
+    // silently stripping edit/write from a model that was not V4A-trained.
+    expect(pickEditTool({ provider: "synthetic", id: "gpt-5.4" })).toBe("edit");
+    expect(pickEditTool({ provider: "anthropic", id: "claude-opus-4-8" })).toBe(
+      "edit",
+    );
+    expect(pickEditTool({ provider: "neuralwatt", id: "kimi-k2.7-code" })).toBe(
+      "edit",
+    );
+    expect(
+      pickEditTool({ provider: "synthetic", id: "hf:zai-org/GLM-5.2" }),
+    ).toBe("edit");
+    expect(pickEditTool(undefined)).toBe("edit");
+  });
+
+  it("entering codex drops edit+write and adds apply_patch", () => {
+    const result = resolveActiveTools(
+      ["read", "edit", "write", "bash"],
+      "apply_patch",
+      [],
+    );
+    expect(result.active).toEqual(["read", "bash", "apply_patch"]);
+    expect(result.removedByUs).toEqual(["edit", "write"]);
+  });
+
+  it("leaving codex restores removed tools and drops apply_patch", () => {
+    const result = resolveActiveTools(["read", "bash", "apply_patch"], "edit", [
+      "edit",
+      "write",
+    ]);
+    expect(result.active).toEqual(["read", "bash", "edit", "write"]);
+    expect(result.removedByUs).toEqual([]);
+  });
+
+  it("first route on a non-codex model ensures edit is active", () => {
+    const result = resolveActiveTools(["read", "bash"], "edit", []);
+    expect(result.active).toContain("edit");
+    expect(result.active).not.toContain("apply_patch");
   });
 });

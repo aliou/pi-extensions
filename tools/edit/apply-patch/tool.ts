@@ -1,0 +1,146 @@
+/**
+ * `apply_patch` tool definition for Codex / GPT-style models.
+ *
+ * GPT coding models were post-trained on a freeform text-patch interface (the
+ * V4A format) rather than JSON `old_string/new_string` tools. This tool takes a
+ * single `input` string containing a raw V4A patch, parses it, and applies it.
+ *
+ * Adapted from openai/codex `codex-rs/tools/src/apply_patch_tool.rs`
+ * (`APPLY_PATCH_JSON_TOOL_DESCRIPTION`) and the `tool_apply_patch.lark`
+ * grammar.
+ */
+
+import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
+import { Type } from "typebox";
+
+import { applyHunks } from "./apply";
+import { ApplyPatchParseError, parsePatch } from "./parser";
+
+const APPLY_PATCH_DESCRIPTION = `Apply a file patch in the V4A format. Use this tool to create, update, delete, or rename files. The entire patch is passed as a single raw text string in the \`input\` field -- do NOT wrap it in JSON, do NOT use line numbers.
+
+The patch is an envelope of file operations:
+
+*** Begin Patch
+[ one or more file sections ]
+*** End Patch
+
+Each section starts with one of:
+*** Add File: <path>        -- create a file; every following line is a \`+\` line (the initial contents)
+*** Delete File: <path>     -- remove an existing file; nothing follows
+*** Update File: <path>     -- patch an existing file in place (optionally with a rename)
+
+An Update File section may be immediately followed by *** Move to: <new path> to rename the file.
+Then one or more hunks, each introduced by @@ (optionally followed by a hunk header that names the enclosing class or function).
+Within a hunk, every line starts with one of:
+  \` \` (space) -- context line (unchanged, used to locate the change)
+  \`-\`         -- removed line
+  \`+\`         -- added line
+*** End of File marks that the preceding change must occur at the end of the file.
+
+Context rules:
+- Show 3 lines of code immediately above and below each change. If a change is within 3 lines of a previous change, do NOT duplicate the previous change's trailing context as the next change's leading context.
+- If 3 lines of context cannot uniquely identify the snippet, use the @@ operator to name the enclosing class or function, e.g.:
+  @@ class BaseClass
+  [3 lines of pre-context]
+  - [old_code]
+  + [new_code]
+  [3 lines of post-context]
+- If a block repeats many times, stack multiple @@ statements to jump to the right context.
+
+Grammar:
+Patch       := Begin { FileOp } End
+Begin       := "*** Begin Patch" NEWLINE
+End         := "*** End Patch" NEWLINE
+FileOp      := AddFile | DeleteFile | UpdateFile
+AddFile     := "*** Add File: " path NEWLINE { "+" line NEWLINE }
+DeleteFile  := "*** Delete File: " path NEWLINE
+UpdateFile  := "*** Update File: " path NEWLINE [ MoveTo ] { Hunk }
+MoveTo      := "*** Move to: " newPath NEWLINE
+Hunk        := "@@" [ header ] NEWLINE { HunkLine } [ "*** End of File" NEWLINE ]
+HunkLine    := (" " | "-" | "+") text NEWLINE
+
+Rules:
+- You must include a header with your intended action (Add/Delete/Update).
+- Prefix new lines with \`+\` even when creating a new file.
+- File references must be relative to the working directory, NEVER absolute.
+- A single patch may combine several operations across multiple files.`;
+
+const APPLY_PATCH_GUIDELINES = [
+  "apply_patch: Use for any file edit, creation, deletion, or rename on GPT/Codex models. It is the in-distribution editing interface for this model family.",
+  "apply_patch: Pass the whole patch as a single raw text string in `input`. Do not wrap it in JSON and do not use line numbers.",
+  "apply_patch: Show 3 lines of context around each change and use @@ with the enclosing class/function name when context alone cannot uniquely locate the change.",
+];
+
+const APPLY_PATCH_SCHEMA = Type.Object({
+  input: Type.String({
+    description:
+      "The entire V4A patch text (*** Begin Patch ... *** End Patch).",
+  }),
+});
+
+export interface ApplyPatchDetails {
+  /** The original patch text that was applied. */
+  patch: string;
+  /** Git-style summary lines, e.g. "A path", "M path", "D path". */
+  summary: string[];
+}
+
+/** Extract *** file headers from a patch for compact display. */
+function extractFileOps(patch: string): string[] {
+  const ops: string[] = [];
+  const re = /^\*\*\* (Add|Delete|Update) File: (.+)$/gm;
+  let m = re.exec(patch);
+  while (m !== null) {
+    const verb = m[1] === "Add" ? "A" : m[1] === "Delete" ? "D" : "M";
+    ops.push(`${verb} ${m[2] ?? ""}`);
+    m = re.exec(patch);
+  }
+  return ops;
+}
+
+export function createApplyPatchToolDefinition(
+  cwd: string,
+): ToolDefinition<typeof APPLY_PATCH_SCHEMA, ApplyPatchDetails | undefined> {
+  return {
+    name: "apply_patch",
+    label: "Apply Patch",
+    description: APPLY_PATCH_DESCRIPTION,
+    promptSnippet:
+      "Apply a V4A text patch to create, update, delete, or rename files",
+    promptGuidelines: APPLY_PATCH_GUIDELINES,
+    parameters: APPLY_PATCH_SCHEMA,
+    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+      const workdir = ctx?.cwd ?? cwd;
+      const { hunks } = parsePatch(params.input);
+      const result = await applyHunks(hunks, workdir);
+      return {
+        content: [
+          {
+            type: "text",
+            text:
+              "Success. Updated the following files:\n" +
+              result.summary.join("\n"),
+          },
+        ],
+        details: {
+          patch: params.input,
+          summary: result.summary,
+        },
+      };
+    },
+    renderCall(args, theme) {
+      const ops = extractFileOps((args as { input?: string })?.input ?? "");
+      const detail = ops.length > 0 ? ops.join("  ") : "V4A patch";
+      return new Text(
+        `${theme.fg("toolTitle", theme.bold("Apply Patch"))} ${theme.fg("text", detail)}`,
+        0,
+        0,
+      );
+    },
+  };
+}
+
+// Re-export parse error type so callers (and tests) can distinguish parse
+// failures from apply failures.
+export { ApplyPatchParseError };
