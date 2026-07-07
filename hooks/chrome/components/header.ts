@@ -19,47 +19,73 @@ export interface HeaderData {
   completions: Array<{ trigger: string; description: string }>;
 }
 
+class HeaderComponent extends Container {
+  constructor(
+    private readonly theme: Theme,
+    private readonly data: HeaderData,
+    private expanded = false,
+  ) {
+    super();
+    this.rebuild();
+  }
+
+  setExpanded(expanded: boolean) {
+    if (this.expanded === expanded) return;
+    this.expanded = expanded;
+    this.rebuild();
+  }
+
+  private rebuild() {
+    const { logo, commands, shortcuts, completions } = this.data;
+
+    this.clear();
+    this.addChild(new Spacer(1));
+    this.addChild(new Text(this.theme.fg("accent", logo), 1, 0));
+    this.addChild(new Spacer(1));
+
+    if (!this.expanded) return;
+
+    if (commands.length > 0) {
+      this.addChild(new Text(this.theme.fg("muted", "Commands"), 1, 0));
+      for (const command of commands) {
+        this.addChild(
+          new Text(rawKeyHint(`/${command.name}`, command.description), 1, 0),
+        );
+      }
+      this.addChild(new Spacer(1));
+    }
+
+    if (shortcuts.length > 0) {
+      this.addChild(new Text(this.theme.fg("muted", "Shortcuts"), 1, 0));
+      for (const shortcut of shortcuts) {
+        this.addChild(
+          new Text(rawKeyHint(shortcut.key, shortcut.description), 1, 0),
+        );
+      }
+      this.addChild(new Spacer(1));
+    }
+
+    if (completions.length > 0) {
+      this.addChild(new Text(this.theme.fg("muted", "Completions"), 1, 0));
+      for (const completion of completions) {
+        this.addChild(
+          new Text(
+            rawKeyHint(completion.trigger, completion.description),
+            1,
+            0,
+          ),
+        );
+      }
+      this.addChild(new Spacer(1));
+    }
+  }
+}
+
 export function createHeaderComponent(
   theme: Theme,
-  { logo, commands, shortcuts, completions }: HeaderData,
-): Container {
-  const container = new Container();
-
-  container.addChild(new Spacer(1));
-  container.addChild(new Text(theme.fg("accent", logo), 1, 0));
-  container.addChild(new Spacer(1));
-
-  if (commands.length > 0) {
-    container.addChild(new Text(theme.fg("muted", "Commands"), 1, 0));
-    for (const command of commands) {
-      container.addChild(
-        new Text(rawKeyHint(`/${command.name}`, command.description), 1, 0),
-      );
-    }
-    container.addChild(new Spacer(1));
-  }
-
-  if (shortcuts.length > 0) {
-    container.addChild(new Text(theme.fg("muted", "Shortcuts"), 1, 0));
-    for (const shortcut of shortcuts) {
-      container.addChild(
-        new Text(rawKeyHint(shortcut.key, shortcut.description), 1, 0),
-      );
-    }
-    container.addChild(new Spacer(1));
-  }
-
-  if (completions.length > 0) {
-    container.addChild(new Text(theme.fg("muted", "Completions"), 1, 0));
-    for (const completion of completions) {
-      container.addChild(
-        new Text(rawKeyHint(completion.trigger, completion.description), 1, 0),
-      );
-    }
-    container.addChild(new Spacer(1));
-  }
-
-  return container;
+  data: HeaderData,
+): HeaderComponent {
+  return new HeaderComponent(theme, data);
 }
 
 export function createCustomHeader() {

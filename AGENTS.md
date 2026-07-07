@@ -161,7 +161,7 @@ Workspace packages:
 
 ## Custom header
 
-The startup header (`hooks/chrome/components/header.ts`) shows a curated list of harness commands, shortcuts, and completion providers. Extensions register these entries by listening to `AD_HEADER_COLLECT_EVENT` and emitting the matching `AD_HEADER_REGISTER_*` event from `@harness/events`. When adding a new `registerShortcut`, `registerCommand`, or autocomplete provider, ask whether it should be added to the header.
+The startup header (`hooks/chrome/components/header.ts`) shows the logo in collapsed mode and a curated list of harness commands, shortcuts, and completion providers when expanded. Extensions register these entries by listening to `AD_HEADER_COLLECT_EVENT` and emitting the matching `AD_HEADER_REGISTER_*` event from `@harness/events`. When adding a new `registerShortcut`, `registerCommand`, or autocomplete provider, ask whether it should be added to the header.
 
 ## Notes
 
