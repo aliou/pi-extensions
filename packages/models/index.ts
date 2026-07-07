@@ -1,3 +1,9 @@
+export {
+  type KnownModelFamily,
+  knownModelFamily,
+  type ModelIdentity,
+  modelKey,
+} from "./families";
 export { defaultModelRosters, groups, rosterFor } from "./groups";
 export { ModelBroker, type ModelBrokerDeps } from "./model-broker";
 export type {
