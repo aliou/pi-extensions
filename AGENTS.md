@@ -73,6 +73,8 @@ Subagents are zero-shot: only their final response is returned to the parent. Pa
 
 Model-specific research behind these caller-facing rules lives in `docs/prompting-*.md`. Keep model names out of parent-facing tool guidelines unless the caller must choose or configure a model directly.
 
+`buildPrompt` receives the resolved subagent model. Keep model selection in `modelPreferences`, model identity helpers in `@harness/models`, and model-specific prompt compilation inside the tool's `prompt.ts`.
+
 ## Commands
 
 | Directory | Commands | Notes |

@@ -38,7 +38,14 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
   ): Promise<AgentToolResult<SubagentDetails>> {
     try {
       this.signal?.throwIfAborted();
-      const promptResult = await this.config.buildPrompt(params, ctx);
+      const model = this.session.model;
+      if (!model) {
+        throw new Error(
+          `Subagent ${this.config.label} has no resolved model for prompt compilation`,
+        );
+      }
+
+      const promptResult = await this.config.buildPrompt(params, ctx, model);
       this.state.setPrompt(promptResult.text);
       this.state.setParams(params);
       this.unsubscribe = this.session.subscribe((event) => {

@@ -1,4 +1,4 @@
-import type { ImageContent } from "@earendil-works/pi-ai";
+import type { Api, ImageContent, Model } from "@earendil-works/pi-ai";
 import type {
   AgentSession,
   ExtensionContext,
@@ -99,6 +99,7 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   buildPrompt: (
     params: Static<Params>,
     ctx: ExtensionContext,
+    model: Model<Api>,
   ) => SubagentPromptResult | Promise<SubagentPromptResult>;
   resolveSkills?: (params: Static<Params>, ctx: ExtensionContext) => Skill[];
   beforeExecute?: (
