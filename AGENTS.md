@@ -61,17 +61,17 @@ Tools that spawn a subagent follow a different layout:
 - `tools/` - Subagent tool definitions, visible only inside the subagent.
 - `lib/` - Supporting logic.
 
-Current subagent-based tools include `artisan`, `librarian`, `look-at`, `oracle`, `read-session`, `reviewer`, and `scout`.
+Current subagent-based tools include `advisor`, `artisan`, `librarian`, `look-at`, `oracle`, `read-session`, `reviewer`, and `scout`.
 
 ### Parent prompts for subagents
 
 Subagents are zero-shot: only their final response is returned to the parent. Parent agents should make each subagent call self-contained.
 
-- Advisory and review subagents (`oracle`, `artisan`, `reviewer`) prefer outcome-first prompts: outcome, what good means, constraints, how to verify, available evidence, and desired final shape. Avoid process-heavy step lists unless the sequence is a hard requirement.
+- Advisory and review subagents (`advisor`, `oracle`, `artisan`, `reviewer`) prefer outcome-first prompts: outcome, what good means, constraints, how to verify, available evidence, and desired final shape. Avoid process-heavy step lists unless the sequence is a hard requirement.
 - Research and extraction subagents (`scout`, `librarian`, `read-session`) prefer narrow scope, explicit constraints, concrete search targets, and requested evidence. Ask for files, line ranges, session evidence, or `not found` instead of allowing inference.
 - Vision and design subagents (`look-at`, screenshot-heavy `artisan` calls) prefer precise multimodal objectives: what visible evidence to inspect, what to ignore, and the desired output format.
 
-Model-specific research behind these caller-facing rules lives in `docs/prompting-*.md`. Keep model names out of parent-facing tool guidelines unless the caller must choose or configure a model directly.
+Model-specific research behind these caller-facing rules lives in `docs/prompting-*.md`. Each prompting doc covers one model or model family. Keep model names out of parent-facing tool guidelines unless the caller must choose or configure a model directly.
 
 `buildPrompt` receives the resolved subagent model. Keep model selection in `modelPreferences`, model identity helpers in `@harness/models`, and model-specific prompt compilation inside the tool's `prompt.ts`.
 
@@ -114,6 +114,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 
 | Directory | Tool name | Notes |
 |---|---|---|
+| `advisor/` | `advisor`, `resume_advisor` | Zero-shot strategic advisor for hard decisions, stuck work, risk review, and pre-completion second opinions |
 | `artisan/` | `artisan`, `resume_artisan` | Zero-shot product design and frontend craft advisor |
 | `ask-user/` | `ask_user` | Passthrough |
 | `bash/` | `bash` | Adds `cwd` param, spawn hooks, sanitization |

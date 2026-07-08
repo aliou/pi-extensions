@@ -96,6 +96,69 @@ describe("pickModel", () => {
     expect(pickModel(registry, prefs)?.preference.model).toBe("b");
     vi.restoreAllMocks();
   });
+
+  it("does not randomly bleed onto a zero-weight fallback", () => {
+    const registry = mockRegistry({
+      known: new Set(["anthropic/claude-fable-5", "anthropic/claude-opus-4-8"]),
+      authed: new Set([
+        "anthropic/claude-fable-5",
+        "anthropic/claude-opus-4-8",
+      ]),
+    });
+    const prefs: SubagentModelPreference[] = [
+      {
+        provider: "anthropic",
+        model: "claude-fable-5",
+        thinking: "high",
+        weight: 1,
+      },
+      {
+        provider: "anthropic",
+        model: "claude-opus-4-8",
+        thinking: "xhigh",
+        weight: 0,
+      },
+    ];
+
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+    expect(pickModel(registry, prefs)?.preference.model).toBe("claude-fable-5");
+    vi.restoreAllMocks();
+  });
+
+  it("selects a zero-weight fallback when the primary is unusable", () => {
+    const registry = mockRegistry({
+      known: new Set(["anthropic/claude-fable-5", "anthropic/claude-opus-4-8"]),
+      authed: new Set(["anthropic/claude-opus-4-8"]),
+    });
+    const prefs: SubagentModelPreference[] = [
+      {
+        provider: "anthropic",
+        model: "claude-fable-5",
+        thinking: "high",
+        weight: 1,
+      },
+      {
+        provider: "anthropic",
+        model: "claude-opus-4-8",
+        thinking: "xhigh",
+        weight: 0,
+      },
+    ];
+
+    const choice = pickModel(registry, prefs);
+
+    expect(choice?.preference.model).toBe("claude-opus-4-8");
+    expect(choice?.skipped).toEqual([
+      {
+        preference: {
+          provider: "anthropic",
+          model: "claude-fable-5",
+          thinking: "high",
+        },
+        reason: "unauthed",
+      },
+    ]);
+  });
 });
 
 describe("resolveModel", () => {
