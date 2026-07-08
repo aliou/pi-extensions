@@ -240,6 +240,16 @@ describe("applyHunks", () => {
       "unrelated file\n",
     );
     expect(result.affected.overwritten).toContain("renamed/dir/name.txt");
+    expect(result.fileChanges).toContainEqual({
+      path: "old/name.txt",
+      before: "from\n",
+      after: "",
+    });
+    expect(result.fileChanges).toContainEqual({
+      path: "renamed/dir/name.txt",
+      before: "existing\n",
+      after: "new\n",
+    });
   });
 
   it("Add File on a genuinely new path does not report an overwrite", async () => {
@@ -365,6 +375,8 @@ describe("apply_patch tool", () => {
     );
     expect(result.content[0]).toMatchObject({ type: "text" });
     expect(result.details?.summary).toContain("M app.ts");
+    expect(result.details?.diff).toContain("-1 export const X = 1;");
+    expect(result.details?.diff).toContain("+1 export const X = 2;");
   });
 
   it("surfaces parse errors as thrown errors", async () => {

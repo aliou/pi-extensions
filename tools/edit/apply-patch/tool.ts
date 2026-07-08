@@ -10,12 +10,19 @@
  * grammar.
  */
 
-import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import {
+  generateDiffString,
+  type ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 import { applyHunks } from "./apply";
 import { ApplyPatchParseError, parsePatch } from "./parser";
+import {
+  type ApplyPatchRenderState,
+  renderApplyPatchCall,
+  renderApplyPatchResult,
+} from "./render";
 
 const APPLY_PATCH_DESCRIPTION = `Apply a file patch in the V4A format. Use this tool to create, update, delete, or rename files. The entire patch is passed as a single raw text string in the \`input\` field -- do NOT wrap it in JSON, do NOT use line numbers.
 
@@ -84,27 +91,28 @@ export interface ApplyPatchDetails {
   patch: string;
   /** Git-style summary lines, e.g. "A path", "M path", "D path". */
   summary: string[];
+  /** Per-file display diffs. */
+  fileDiffs?: ApplyPatchFileDiff[];
+  /** Display-oriented diff of the changes made. */
+  diff: string;
 }
 
-/** Extract *** file headers from a patch for compact display. */
-function extractFileOps(patch: string): string[] {
-  const ops: string[] = [];
-  const re = /^\*\*\* (Add|Delete|Update) File: (.+)$/gm;
-  let m = re.exec(patch);
-  while (m !== null) {
-    const verb = m[1] === "Add" ? "A" : m[1] === "Delete" ? "D" : "M";
-    ops.push(`${verb} ${m[2] ?? ""}`);
-    m = re.exec(patch);
-  }
-  return ops;
+export interface ApplyPatchFileDiff {
+  status: "A" | "M" | "D";
+  path: string;
+  diff: string;
 }
 
 export function createApplyPatchToolDefinition(
   cwd: string,
-): ToolDefinition<typeof APPLY_PATCH_SCHEMA, ApplyPatchDetails | undefined> {
+): ToolDefinition<
+  typeof APPLY_PATCH_SCHEMA,
+  ApplyPatchDetails | undefined,
+  ApplyPatchRenderState
+> {
   return {
     name: "apply_patch",
-    label: "Apply Patch",
+    label: "apply_patch",
     description: APPLY_PATCH_DESCRIPTION,
     promptSnippet:
       "Apply a V4A text patch to create, update, delete, or rename files",
@@ -114,6 +122,20 @@ export function createApplyPatchToolDefinition(
       const workdir = ctx?.cwd ?? cwd;
       const { hunks } = parsePatch(params.input);
       const result = await applyHunks(hunks, workdir);
+      const fileDiffs = result.fileChanges
+        .map((change): ApplyPatchFileDiff | undefined => {
+          const diff = generateDiffString(change.before, change.after).diff;
+          if (!diff) return undefined;
+          return {
+            status: getFileChangeStatus(change.before, change.after),
+            path: change.path,
+            diff,
+          };
+        })
+        .filter((change): change is ApplyPatchFileDiff => change !== undefined);
+      const diff = fileDiffs
+        .map((change) => `${change.path}\n${change.diff}`)
+        .join("\n\n");
       return {
         content: [
           {
@@ -126,19 +148,23 @@ export function createApplyPatchToolDefinition(
         details: {
           patch: params.input,
           summary: result.summary,
+          fileDiffs,
+          diff,
         },
       };
     },
-    renderCall(args, theme) {
-      const ops = extractFileOps((args as { input?: string })?.input ?? "");
-      const detail = ops.length > 0 ? ops.join("  ") : "V4A patch";
-      return new Text(
-        `${theme.fg("toolTitle", theme.bold("Apply Patch"))} ${theme.fg("text", detail)}`,
-        0,
-        0,
-      );
-    },
+    renderCall: renderApplyPatchCall,
+    renderResult: renderApplyPatchResult,
   };
+}
+
+function getFileChangeStatus(
+  before: string,
+  after: string,
+): ApplyPatchFileDiff["status"] {
+  if (!before) return "A";
+  if (!after) return "D";
+  return "M";
 }
 
 // Re-export parse error type so callers (and tests) can distinguish parse

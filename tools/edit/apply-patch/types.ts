@@ -58,4 +58,12 @@ export interface ApplyPatchResult {
   affected: AffectedPaths;
   /** Git-style summary lines, e.g. "A path", "M path", "D path". */
   summary: string[];
+  /** Per-file before/after contents for result diff rendering. */
+  fileChanges: FileChange[];
+}
+
+export interface FileChange {
+  path: string;
+  before: string;
+  after: string;
 }

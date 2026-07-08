@@ -27,6 +27,7 @@ import { seekSequence } from "./seek";
 import type {
   AffectedPaths,
   ApplyPatchResult,
+  FileChange,
   Hunk,
   UpdateFileChunk,
 } from "./types";
@@ -43,6 +44,7 @@ export async function applyHunks(
   const modified: string[] = [];
   const deleted: string[] = [];
   const overwritten: string[] = [];
+  const fileChanges: FileChange[] = [];
   // Paths already committed to disk before the current hunk. If a later hunk
   // fails, these are the files whose contents changed before the error, so the
   // caller (and the model) can tell the patch was partially applied rather
@@ -55,14 +57,18 @@ export async function applyHunks(
       if (hunk.type === "add") {
         const abs = resolve(cwd, hunk.path);
         const exists = await pathExists(abs);
+        const before = exists ? await readFileText(abs) : "";
         if (exists) overwritten.push(affectedPath);
         await writeFileWithDirs(abs, hunk.contents);
         added.push(affectedPath);
+        fileChanges.push({ path: affectedPath, before, after: hunk.contents });
       } else if (hunk.type === "delete") {
         const abs = resolve(cwd, hunk.path);
         await ensureNotDirectory(abs);
+        const before = await readFileText(abs);
         await rm(abs, { force: false });
         deleted.push(affectedPath);
+        fileChanges.push({ path: affectedPath, before, after: "" });
       } else {
         const abs = resolve(cwd, hunk.path);
         const original = await readFileText(abs);
@@ -79,14 +85,26 @@ export async function applyHunks(
             );
           }
           const destExists = await pathExists(dest);
+          const destBefore = destExists ? await readFileText(dest) : "";
           if (destExists) {
             overwritten.push(hunk.movePath);
           }
           await writeFileWithDirs(dest, next);
           await ensureNotDirectory(abs);
           await rm(abs, { force: false });
+          fileChanges.push({ path: hunk.path, before: original, after: "" });
+          fileChanges.push({
+            path: hunk.movePath,
+            before: destBefore,
+            after: next,
+          });
         } else {
           await writeFileWithDirs(abs, next);
+          fileChanges.push({
+            path: affectedPath,
+            before: original,
+            after: next,
+          });
         }
         modified.push(affectedPath);
       }
@@ -110,6 +128,7 @@ export async function applyHunks(
   return {
     affected,
     summary: formatSummary(affected),
+    fileChanges,
   };
 }
 
