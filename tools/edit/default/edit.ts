@@ -14,8 +14,7 @@
 
 import type { EditToolInput } from "@earendil-works/pi-coding-agent";
 import { createEditToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
-import { formatDisplayPath } from "@harness/utils";
+import { renderDefaultEditCall, renderDefaultEditResult } from "./render";
 export function sanitizeArguments(args: unknown): EditToolInput {
   if (!args || typeof args !== "object" || Array.isArray(args)) {
     return args as EditToolInput;
@@ -57,23 +56,14 @@ export function createDefaultEditToolDefinition(
   cwd: string,
 ): ReturnType<typeof createEditToolDefinition> {
   const nativeEdit = createEditToolDefinition(cwd);
-  const nativeRenderCall = nativeEdit.renderCall;
 
   return {
     ...nativeEdit,
+    renderShell: "default",
     prepareArguments(args: unknown) {
       return prepareEditArguments(args, nativeEdit.prepareArguments);
     },
-    renderCall(args, theme, ctx) {
-      const displayPath = formatDisplayPath(args.path, ctx.cwd);
-      if (nativeRenderCall) {
-        return nativeRenderCall({ ...args, path: displayPath }, theme, ctx);
-      }
-      return new Text(
-        `${theme.fg("toolTitle", theme.bold("Edit"))} ${theme.fg("text", displayPath)}`,
-        0,
-        0,
-      );
-    },
+    renderCall: renderDefaultEditCall,
+    renderResult: renderDefaultEditResult,
   };
 }
