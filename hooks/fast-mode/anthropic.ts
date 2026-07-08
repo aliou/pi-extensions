@@ -1,8 +1,9 @@
 import type {
-  ApiStreamSimpleFunction,
   Model,
+  ProviderHeaders,
   SimpleStreamOptions,
 } from "@earendil-works/pi-ai";
+import type { ApiStreamSimpleFunction } from "@earendil-works/pi-ai/compat";
 
 type AnthropicModel = Model<"anthropic-messages">;
 type AnthropicRequestPayload = Record<string, unknown> & { model?: unknown };
@@ -36,19 +37,20 @@ export function isOAuthToken(apiKey: string | undefined): boolean {
 }
 
 export function getHeader(
-  headers: Record<string, string> | undefined,
+  headers: ProviderHeaders | undefined,
   name: string,
 ): string | undefined {
   if (!headers) return undefined;
   const lower = name.toLowerCase();
   const key = Object.keys(headers).find((k) => k.toLowerCase() === lower);
-  return key ? headers[key] : undefined;
+  const value = key ? headers[key] : undefined;
+  return value === null ? undefined : value;
 }
 
 export function withoutHeader(
-  headers: Record<string, string> | undefined,
+  headers: ProviderHeaders | undefined,
   name: string,
-): Record<string, string> {
+): ProviderHeaders {
   if (!headers) return {};
   const lower = name.toLowerCase();
   return Object.fromEntries(

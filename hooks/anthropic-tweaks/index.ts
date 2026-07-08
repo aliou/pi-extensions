@@ -1,4 +1,4 @@
-import { getApiProvider } from "@earendil-works/pi-ai";
+import { getApiProvider } from "@earendil-works/pi-ai/compat";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createAnthropicStreamSimple } from "./provider";
 

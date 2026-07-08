@@ -1,4 +1,4 @@
-import { getApiProvider } from "@earendil-works/pi-ai";
+import { getApiProvider } from "@earendil-works/pi-ai/compat";
 import type {
   ExtensionAPI,
   ExtensionContext,

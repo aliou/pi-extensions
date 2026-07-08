@@ -12,7 +12,7 @@ import type {
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import { defineTool } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import { type Component, Loader, Text, type TUI } from "@earendil-works/pi-tui";
 import type { SessionResult } from "@harness/session-store";
 import { listSessions } from "@harness/session-store";
 import { Type } from "typebox";
@@ -47,6 +47,55 @@ interface ListSessionsDetails {
 }
 
 type ExecuteResult = AgentToolResult<ListSessionsDetails>;
+
+type LoadingRenderContext = {
+  invalidate: () => void;
+  lastComponent?: Component;
+};
+
+const loaderMessages = new WeakMap<Loader, string>();
+
+function createLoaderTui(context: LoadingRenderContext): TUI {
+  let queued = false;
+
+  return {
+    requestRender: () => {
+      if (queued) return;
+      queued = true;
+      setTimeout(() => {
+        queued = false;
+        context.invalidate();
+      }, 0);
+    },
+  } as unknown as TUI;
+}
+
+function renderLoadingResult(
+  message: string,
+  theme: Theme,
+  context: LoadingRenderContext,
+): Loader {
+  if (context.lastComponent instanceof Loader) {
+    if (loaderMessages.get(context.lastComponent) !== message) {
+      context.lastComponent.setMessage(message);
+      loaderMessages.set(context.lastComponent, message);
+    }
+    return context.lastComponent;
+  }
+
+  const loader = new Loader(
+    createLoaderTui(context),
+    (text) => theme.fg("accent", text),
+    (text) => theme.fg("muted", text),
+    message,
+  );
+  loaderMessages.set(loader, message);
+  return loader;
+}
+
+function stopLoadingResult(component: Component | undefined): void {
+  if (component instanceof Loader) component.stop();
+}
 
 export const LIST_SESSIONS_GUIDANCE = `
 ## list_sessions
@@ -179,7 +228,14 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
     result: AgentToolResult<ListSessionsDetails>,
     options: ToolRenderResultOptions,
     theme: Theme,
+    context,
   ) {
+    if (options.isPartial) {
+      return renderLoadingResult("loading...", theme, context);
+    }
+
+    stopLoadingResult(context.lastComponent);
+
     const { details } = result;
 
     if (!details) {

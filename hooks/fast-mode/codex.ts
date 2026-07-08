@@ -1,8 +1,5 @@
-import type {
-  ApiStreamSimpleFunction,
-  Model,
-  SimpleStreamOptions,
-} from "@earendil-works/pi-ai";
+import type { Model, SimpleStreamOptions } from "@earendil-works/pi-ai";
+import type { ApiStreamSimpleFunction } from "@earendil-works/pi-ai/compat";
 
 type CodexModel = Model<"openai-codex-responses">;
 type CodexRequestPayload = Record<string, unknown> & { model?: unknown };

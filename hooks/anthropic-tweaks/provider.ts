@@ -1,7 +1,5 @@
-import type {
-  ApiStreamSimpleFunction,
-  SimpleStreamOptions,
-} from "@earendil-works/pi-ai";
+import type { SimpleStreamOptions } from "@earendil-works/pi-ai";
+import type { ApiStreamSimpleFunction } from "@earendil-works/pi-ai/compat";
 
 function withSessionHeader(
   options?: SimpleStreamOptions,
