@@ -111,6 +111,7 @@ export function createApplyPatchToolDefinition(
       "Apply a V4A text patch to create, update, delete, or rename files",
     promptGuidelines: APPLY_PATCH_GUIDELINES,
     parameters: APPLY_PATCH_SCHEMA,
+    renderShell: "default",
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const workdir = ctx?.cwd ?? cwd;
       const { hunks } = parsePatch(params.input);

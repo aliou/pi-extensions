@@ -229,6 +229,7 @@ export function createKimiEditToolDefinition(
       "Perform exact replacements in existing files with old_string/new_string",
     promptGuidelines: KIMI_EDIT_GUIDELINES,
     parameters: KIMI_EDIT_SCHEMA,
+    renderShell: "default",
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const workdir = ctx?.cwd ?? cwd;
       const result = await applyKimiEdit(params as KimiEditInput, workdir);
