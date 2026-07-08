@@ -9,10 +9,16 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
-import { formatDisplayPath } from "@harness/utils";
+import {
+  generateDiffString,
+  type ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import {
+  type KimiEditRenderState,
+  renderKimiEditCall,
+  renderKimiEditResult,
+} from "./render";
 
 const KIMI_EDIT_DESCRIPTION = `Perform exact replacements in existing files.
 
@@ -67,6 +73,7 @@ export interface KimiEditInput {
 
 export interface KimiEditDetails {
   replacementCount: number;
+  diff: string;
 }
 
 type LineEndingStyle = "lf" | "crlf" | "mixed";
@@ -159,7 +166,11 @@ function replaceOnce(
 export async function applyKimiEdit(
   args: KimiEditInput,
   cwd: string,
-): Promise<{ content: string; replacementCount: number }> {
+): Promise<{
+  oldContent: string;
+  newContent: string;
+  replacementCount: number;
+}> {
   if (args.old_string.length === 0) {
     throw new Error("old_string must not be empty.");
   }
@@ -196,12 +207,20 @@ export async function applyKimiEdit(
     materializeModelText(next, modelView.lineEndingStyle),
     "utf8",
   );
-  return { content: next, replacementCount: replaceAll ? occurrences : 1 };
+  return {
+    oldContent: modelView.text,
+    newContent: next,
+    replacementCount: replaceAll ? occurrences : 1,
+  };
 }
 
 export function createKimiEditToolDefinition(
   cwd: string,
-): ToolDefinition<typeof KIMI_EDIT_SCHEMA, KimiEditDetails | undefined> {
+): ToolDefinition<
+  typeof KIMI_EDIT_SCHEMA,
+  KimiEditDetails | undefined,
+  KimiEditRenderState
+> {
   return {
     name: "edit",
     label: "edit",
@@ -213,6 +232,10 @@ export function createKimiEditToolDefinition(
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const workdir = ctx?.cwd ?? cwd;
       const result = await applyKimiEdit(params as KimiEditInput, workdir);
+      const diff = generateDiffString(
+        result.oldContent,
+        result.newContent,
+      ).diff;
       return {
         content: [
           {
@@ -220,16 +243,10 @@ export function createKimiEditToolDefinition(
             text: `Replaced ${result.replacementCount} occurrence${result.replacementCount === 1 ? "" : "s"} in ${(params as KimiEditInput).path}.`,
           },
         ],
-        details: { replacementCount: result.replacementCount },
+        details: { replacementCount: result.replacementCount, diff },
       };
     },
-    renderCall(args, theme, ctx) {
-      const displayPath = formatDisplayPath(args.path, ctx.cwd);
-      return new Text(
-        `${theme.fg("toolTitle", theme.bold("edit"))} ${theme.fg("text", displayPath)}`,
-        0,
-        0,
-      );
-    },
+    renderCall: renderKimiEditCall,
+    renderResult: renderKimiEditResult,
   };
 }

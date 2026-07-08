@@ -264,6 +264,9 @@ describe("kimi edit tool", () => {
       type: "text",
       text: "Replaced 1 occurrence in sample.txt.",
     });
+    expect(result.details).toMatchObject({
+      diff: expect.stringContaining("+2 kimi"),
+    });
   });
 
   it("rejects empty old_string and no-op edits", async () => {
