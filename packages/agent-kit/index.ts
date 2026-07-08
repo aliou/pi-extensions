@@ -163,3 +163,10 @@ export async function resolveTools<Params extends TSchema>(
 ): Promise<SubagentToolSpec[]> {
   return typeof tools === "function" ? await tools(params, ctx) : tools;
 }
+
+export type { SubagentResolvedModel } from "./models";
+export {
+  SUBAGENT_SESSION_CUSTOM_TYPE,
+  type SubagentSessionRecord,
+  SubagentSessionRecordStore,
+} from "./session-records";
