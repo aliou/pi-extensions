@@ -20,8 +20,13 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+  NVIM_UNDO_REGISTER_TOOL_EVENT,
+  NVIM_UNDO_REQUEST_TOOLS_EVENT,
+} from "@harness/events";
 import { enableStrictOnEditTool } from "./anthropic/strict";
 import { createApplyPatchToolDefinition } from "./apply-patch/tool";
+import { resolveApplyPatch } from "./apply-patch/undo";
 import { createDefaultEditToolDefinition } from "./default/edit";
 import { createKimiEditToolDefinition } from "./kimi/edit";
 import {
@@ -73,6 +78,18 @@ export default function editTool(pi: ExtensionAPI): void {
   // later overwrite `edit` with Kimi's old_string/new_string schema.
   pi.registerTool(createDefaultEditToolDefinition(process.cwd()));
   pi.registerTool(createApplyPatchToolDefinition(process.cwd()));
+
+  // Teach nvim-pi's undo extension how to resolve paths from ``apply_path`
+  const registerApplyPatchUndoHandle = () => {
+    pi.events.emit(NVIM_UNDO_REGISTER_TOOL_EVENT, {
+      toolName: "apply_patch",
+      resolvePaths: resolveApplyPatch,
+    });
+  };
+
+  // Dispatch our registration incase we're late + wait for the request, incase we're early.
+  registerApplyPatchUndoHandle();
+  pi.events.on(NVIM_UNDO_REQUEST_TOOLS_EVENT, registerApplyPatchUndoHandle);
 
   pi.on("session_start", (_event, ctx) => {
     routeEditTool(pi, ctx.model);

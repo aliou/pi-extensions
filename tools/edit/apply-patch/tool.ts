@@ -14,7 +14,6 @@ import {
   generateDiffString,
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import { Type } from "typebox";
 
 import { applyHunks } from "./apply";
 import { ApplyPatchParseError, parsePatch } from "./parser";
@@ -23,6 +22,7 @@ import {
   renderApplyPatchCall,
   renderApplyPatchResult,
 } from "./render";
+import { APPLY_PATCH_SCHEMA } from "./types";
 
 const APPLY_PATCH_DESCRIPTION = `Apply a file patch in the V4A format. Use this tool to create, update, delete, or rename files. The entire patch is passed as a single raw text string in the \`input\` field -- do NOT wrap it in JSON, do NOT use line numbers.
 
@@ -78,13 +78,6 @@ const APPLY_PATCH_GUIDELINES = [
   "apply_patch: Pass the whole patch as a single raw text string in `input`. Do not wrap it in JSON and do not use line numbers.",
   "apply_patch: Show 3 lines of context around each change and use @@ with the enclosing class/function name when context alone cannot uniquely locate the change.",
 ];
-
-const APPLY_PATCH_SCHEMA = Type.Object({
-  input: Type.String({
-    description:
-      "The entire V4A patch text (*** Begin Patch ... *** End Patch).",
-  }),
-});
 
 export interface ApplyPatchDetails {
   /** The original patch text that was applied. */

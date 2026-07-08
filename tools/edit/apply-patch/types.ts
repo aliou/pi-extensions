@@ -10,6 +10,16 @@
  * Ported from openai/codex `codex-rs/apply-patch` (parser.rs / streaming_parser.rs).
  */
 
+import Type, { type Static } from "typebox";
+
+export const APPLY_PATCH_SCHEMA = Type.Object({
+  input: Type.String({
+    description:
+      "The entire V4A patch text (*** Begin Patch ... *** End Patch).",
+  }),
+});
+export type ApplyPatchToolParams = Static<typeof APPLY_PATCH_SCHEMA>;
+
 export type Hunk =
   | { type: "add"; path: string; contents: string }
   | { type: "delete"; path: string }

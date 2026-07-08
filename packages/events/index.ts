@@ -111,3 +111,8 @@ export interface TpsTelemetry {
   cost: TpsCost | null;
   timestamp: number;
 }
+
+// nvim undo
+
+export const NVIM_UNDO_REGISTER_TOOL_EVENT = "neovim:undo:register-tool";
+export const NVIM_UNDO_REQUEST_TOOLS_EVENT = "neovim:undo:request-tools";
