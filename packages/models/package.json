@@ -7,8 +7,8 @@
     "./usage": "./usage/index.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-ai": "0.79.6",
-    "@earendil-works/pi-coding-agent": "0.79.6",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
     "@harness/provider-usage": "workspace:*"
   }
 }

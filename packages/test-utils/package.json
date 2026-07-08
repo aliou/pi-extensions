@@ -11,7 +11,7 @@
     "./tmpdir": "./tmpdir.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "0.79.6",
+    "@earendil-works/pi-coding-agent": "*",
     "vitest": "^4.0.18"
   }
 }

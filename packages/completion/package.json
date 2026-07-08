@@ -6,6 +6,6 @@
     ".": "./index.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-tui": "0.79.6"
+    "@earendil-works/pi-tui": "*"
   }
 }
