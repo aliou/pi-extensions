@@ -20,15 +20,10 @@ export default async function (pi: ExtensionAPI) {
       // Store original theme to restore on cancel
       const originalTheme = ctx.ui.theme;
 
-      // Find current theme index
-      let currentIndex = 0;
-      for (const [i, t] of allThemes.entries()) {
-        const loadedTheme = ctx.ui.getTheme(t.name);
-        if (loadedTheme === originalTheme) {
-          currentIndex = i;
-          break;
-        }
-      }
+      const currentIndex = Math.max(
+        0,
+        allThemes.findIndex((t) => t.name === originalTheme.name),
+      );
 
       const options: SelectItem[] = allThemes.map((t) => ({
         value: t.name,
@@ -38,8 +33,9 @@ export default async function (pi: ExtensionAPI) {
 
       let selected: string | null | undefined = await ctx.ui.custom<
         string | null
-      >((_tui, _theme, _keybindings, done) => {
+      >((_tui, theme, _keybindings, done) => {
         return new ThemeSelector(
+          theme,
           options,
           currentIndex,
           (value) => {
