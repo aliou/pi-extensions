@@ -31,7 +31,11 @@ const tools: SubagentToolSpec[] = [
   },
 ];
 
-const extensionPaths = ["./tools", "npm:@aliou/pi-synthetic"];
+const extensionPaths = [
+  "./tools",
+  "npm:@aliou/pi-synthetic",
+  "./hooks/anthropic-tweaks",
+];
 
 export default async function advisor(pi: ExtensionAPI): Promise<void> {
   const subagent = createSubagent(pi, {
