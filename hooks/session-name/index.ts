@@ -62,35 +62,45 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     const turns = getRecentTurns(entries);
     if (turns.length === 0) return;
 
+    if (!ctx.hasUI) return;
+
     const currentName = pi.getSessionName();
 
-    ctx.ui.notify(
+    // Notifications are best-effort: the context may go stale if the session
+    // is replaced or disposed while we are working.
+    const notify = (
+      message: string,
+      type: "info" | "error" | "warning",
+    ): void => {
+      try {
+        ctx.ui.notify(message, type);
+      } catch (_error) {
+        void _error;
+      }
+    };
+
+    notify(
       isInitial ? "Generating session name..." : "Refining session name...",
       "info",
     );
 
-    subagent
-      .runWithParams(
+    try {
+      await subagent.runWithParams(
         { turns, currentName },
         { callId: "session-name", signal: ctx.signal, ctx },
-      )
-      .then(() => {
-        const name = pi.getSessionName();
-        if (!isBlank(name)) {
-          if (isBlank(currentName) || name === currentName) {
-            ctx.ui.notify(`Session name: ${name}`, "info");
-          } else {
-            ctx.ui.notify(
-              `Session name: from "${currentName}" to "${name}"`,
-              "info",
-            );
-          }
+      );
+
+      const name = pi.getSessionName();
+      if (!isBlank(name)) {
+        if (isBlank(currentName) || name === currentName) {
+          notify(`Session name: ${name}`, "info");
+        } else {
+          notify(`Session name: from "${currentName}" to "${name}"`, "info");
         }
-      })
-      .catch((error: unknown) => {
-        const message =
-          error instanceof Error ? error.message : "Unknown error";
-        ctx.ui.notify(`Session name generation failed: ${message}`, "error");
-      });
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      notify(`Session name generation failed: ${message}`, "error");
+    }
   });
 }
