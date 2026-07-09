@@ -9,4 +9,4 @@ export const SKILL_TOKEN_RE = /(?:^|\s)\?([^\s?]*)$/;
  * This means the skill trigger was consumed and the user moved on —
  * completion should bail out rather than fall through to the default provider.
  */
-export const SKILL_TRIGGER_CONSUMED_RE = /(?:^|\s)\?\s/;
+export const SKILL_TRIGGER_CONSUMED_RE = /(?:^|\s)\?\s$/;

@@ -42,12 +42,13 @@ export function createSkillAutocompleteProvider(
       const token = extractSkillToken(textBeforeCursor);
 
       // `?` was at a token boundary but followed by a space — the trigger
-      // is consumed. Bail out instead of falling back to default completion.
+      // is consumed. Delegate so other providers (e.g. file `@`) still work
+      // instead of swallowing completion for the rest of the line.
       if (
         token === undefined &&
         SKILL_TRIGGER_CONSUMED_RE.test(textBeforeCursor)
       ) {
-        return null;
+        return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
       // Bare `?` with no filter text — don't show suggestions so
