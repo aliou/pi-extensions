@@ -10,8 +10,9 @@ import {
   type EditRenderState,
   extractTextOutput,
   getCallComponent,
+  summarizeDiff,
 } from "../shared/render";
-import type { ApplyPatchDetails } from "./tool";
+import type { ApplyPatchDetails, ApplyPatchFileDiff } from "./tool";
 
 export type ApplyPatchRenderState = EditRenderState;
 
@@ -72,7 +73,7 @@ export function renderApplyPatchResult(
     ? theme.fg("error", extractTextOutput(result))
     : options.expanded
       ? formatExpandedDiff(result.details, theme)
-      : formatApplyPatchSummary(result.details?.summary, theme);
+      : formatApplyPatchSummary(result.details?.summary, result.details, theme);
 
   if (!output) return component;
 
@@ -83,15 +84,45 @@ export function renderApplyPatchResult(
 
 function formatApplyPatchSummary(
   summary: string[] | undefined,
+  details: ApplyPatchDetails | undefined,
   theme: Theme,
 ): string | undefined {
   if (!summary || summary.length === 0) return undefined;
-  return summary.map((line) => formatSummaryLine(line, theme)).join("\n");
+  const fileDiffs = getFileDiffCounts(details);
+  return summary
+    .map((line) => {
+      const { status, path } = splitSummaryLine(line);
+      const stat = renderFileStat(fileDiffs.get(path), theme);
+      return `${formatStatus(status, theme)}  ${theme.fg("toolOutput", path)}${stat}`;
+    })
+    .join("\n");
 }
 
-function formatSummaryLine(line: string, theme: Theme): string {
-  const { status, path } = splitSummaryLine(line);
-  return `${formatStatus(status, theme)}  ${theme.fg("toolOutput", path)}`;
+function getFileDiffCounts(
+  details: ApplyPatchDetails | undefined,
+): Map<string, { additions: number; removals: number }> {
+  const map = new Map<string, { additions: number; removals: number }>();
+  if (!details?.fileDiffs) return map;
+  for (const fileDiff of details.fileDiffs) {
+    map.set(fileDiff.path, summarizeDiff(fileDiff.diff));
+  }
+  return map;
+}
+
+function renderFileStat(
+  counts: { additions: number; removals: number } | undefined,
+  theme: Theme,
+): string {
+  if (!counts) return "";
+  const parts: string[] = [];
+  if (counts.additions > 0) {
+    parts.push(theme.fg("success", `+${counts.additions}`));
+  }
+  if (counts.removals > 0) {
+    parts.push(theme.fg("error", `-${counts.removals}`));
+  }
+  if (parts.length === 0) return "";
+  return `  ${theme.fg("dim", "(")}${parts.join(theme.fg("dim", " "))}${theme.fg("dim", ")")}`;
 }
 
 function formatExpandedDiff(
@@ -109,19 +140,23 @@ function formatExpandedDiff(
   return fileDiffs
     .map(
       (fileDiff) =>
-        `${formatExpandedPath(fileDiff.path, theme)}\n${renderDiff(fileDiff.diff)}`,
+        `${formatExpandedPath(fileDiff, theme)}\n${renderDiff(fileDiff.diff)}`,
     )
     .join("\n\n");
 }
 
-function formatExpandedPath(path: string, theme: Theme): string {
-  return theme.fg("accent", theme.bold(path));
+function formatExpandedPath(
+  fileDiff: ApplyPatchFileDiff,
+  theme: Theme,
+): string {
+  const stat = renderFileStat(summarizeDiff(fileDiff.diff), theme);
+  return `${formatStatus(fileDiff.status, theme)}  ${theme.fg("accent", theme.bold(fileDiff.path))}${stat}`;
 }
 
 function parseFileDiffs(
   diff: string | undefined,
   summary: string[] | undefined,
-): Array<{ status: "A" | "M" | "D"; path: string; diff: string }> {
+): ApplyPatchFileDiff[] {
   if (!diff) return [];
   const statuses = new Map(
     (summary ?? []).map((line) => {
@@ -139,38 +174,55 @@ function parseFileDiffs(
         status: statuses.get(path) ?? "M",
         path,
         diff: lines.join("\n"),
-      };
+      } satisfies ApplyPatchFileDiff;
     })
-    .filter((fileDiff) => fileDiff !== undefined);
+    .filter(
+      (fileDiff): fileDiff is ApplyPatchFileDiff => fileDiff !== undefined,
+    );
 }
 
 function formatCallSummary(ops: FileOpSummary[], theme: Theme): string {
   if (ops.length === 0) return theme.fg("dim", "V4A patch");
 
-  const visible = ops.slice(0, 3).map((op) => formatCallOp(op, theme));
-  const hidden = ops.slice(3);
-  if (hidden.length === 0) return visible.join("  ");
-
-  return `${visible.join("  ")} ${theme.fg("dim", `(${formatHiddenCounts(hidden).join(", ")})`)}`;
-}
-
-function formatCallOp(op: FileOpSummary, theme: Theme): string {
-  return `${formatStatus(op.status, theme)} ${theme.fg("accent", op.path)}`;
-}
-
-function formatHiddenCounts(ops: FileOpSummary[]): string[] {
-  const updated = ops.filter((op) => op.status === "M").length;
-  const created = ops.filter((op) => op.status === "A").length;
-  const deleted = ops.filter((op) => op.status === "D").length;
+  const counts = countByStatus(ops);
   const parts: string[] = [];
-  if (updated > 0) parts.push(formatHiddenCount(updated, "updated"));
-  if (created > 0) parts.push(formatHiddenCount(created, "created"));
-  if (deleted > 0) parts.push(formatHiddenCount(deleted, "deleted"));
-  return parts;
+  if (counts.updated > 0)
+    parts.push(formatCallCount(counts.updated, "updated", "M", theme));
+  if (counts.created > 0)
+    parts.push(formatCallCount(counts.created, "created", "A", theme));
+  if (counts.deleted > 0)
+    parts.push(formatCallCount(counts.deleted, "deleted", "D", theme));
+  if (parts.length === 0)
+    return theme.fg("dim", `${ops.length} file${ops.length === 1 ? "" : "s"}`);
+  return parts.join(theme.fg("dim", ", "));
 }
 
-function formatHiddenCount(count: number, label: string): string {
-  return `+ ${count} ${label}`;
+function countByStatus(ops: FileOpSummary[]): {
+  updated: number;
+  created: number;
+  deleted: number;
+} {
+  let updated = 0;
+  let created = 0;
+  let deleted = 0;
+  for (const op of ops) {
+    if (op.status === "A") created++;
+    else if (op.status === "D") deleted++;
+    else updated++;
+  }
+  return { updated, created, deleted };
+}
+
+function formatCallCount(
+  count: number,
+  label: string,
+  status: FileOpSummary["status"],
+  theme: Theme,
+): string {
+  const text = `+${count} ${label}`;
+  if (status === "A") return theme.fg("success", text);
+  if (status === "D") return theme.fg("error", text);
+  return theme.fg("warning", text);
 }
 
 function splitSummaryLine(line: string): { status: string; path: string } {

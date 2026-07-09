@@ -30,7 +30,7 @@ describe("apply_patch result rendering", () => {
     },
   };
 
-  it("shows file summary when collapsed", () => {
+  it("shows file summary with per-file stat when collapsed", () => {
     const component = renderApplyPatchResult(
       result,
       { expanded: false },
@@ -40,11 +40,13 @@ describe("apply_patch result rendering", () => {
     const output = component.render(120).join("\n");
 
     expect(output).toContain("M  app.ts");
+    expect(output).toContain("(+1");
+    expect(output).toContain("-1");
     expect(output).not.toContain("old line");
     expect(output).not.toContain("new line");
   });
 
-  it("shows diff when expanded", () => {
+  it("shows diff with status and stat on path line when expanded", () => {
     const component = renderApplyPatchResult(
       result,
       { expanded: true },
@@ -53,14 +55,14 @@ describe("apply_patch result rendering", () => {
     );
     const output = component.render(120).join("\n");
 
-    expect(output).toContain("app.ts");
+    expect(output).toContain("M  app.ts");
     expect(output).toContain("old line");
     expect(output).toContain("new line");
   });
 });
 
 describe("apply_patch call rendering", () => {
-  it("shows the first three files and hidden counts", () => {
+  it("shows status counts instead of file list in header", () => {
     const component = renderApplyPatchCall(
       {
         input:
@@ -83,12 +85,13 @@ describe("apply_patch call rendering", () => {
     );
     const output = component.render(120).join("\n");
 
-    expect(output).toContain("M one.ts");
-    expect(output).toContain("M two.ts");
-    expect(output).toContain("A three.ts");
+    // Counts replace the file list.
+    expect(output).toContain("+3 updated");
+    expect(output).toContain("+2 created");
+    expect(output).not.toContain("one.ts");
+    expect(output).not.toContain("two.ts");
+    expect(output).not.toContain("three.ts");
     expect(output).not.toContain("four.ts");
     expect(output).not.toContain("five.ts");
-    expect(output).toContain("+ 1 updated");
-    expect(output).toContain("+ 1 created");
   });
 });
