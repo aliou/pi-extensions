@@ -6,6 +6,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import {
   type Component,
+  Image,
   Input,
   Key,
   Markdown,
@@ -17,7 +18,7 @@ import {
 } from "@earendil-works/pi-tui";
 import { sortFeedbackItems } from "./collect";
 import { buildClearRecord, buildFeedbackRecord } from "./persistence";
-import type { Transcript } from "./transcript";
+import type { Transcript, TranscriptImage } from "./transcript";
 import {
   type FeedbackItem,
   type FeedbackRating,
@@ -80,6 +81,7 @@ export class FeedbackOverlayComponent implements Component {
   private pendingRating: FeedbackRating | null = null;
   private readonly commentInput = new Input();
   private readonly transcriptCache = new Map<string, Transcript | undefined>();
+  private readonly imageCache = new Map<string, Image>();
   private readonly markdownTheme: MarkdownTheme;
   private disposed = false;
 
@@ -524,7 +526,10 @@ export class FeedbackOverlayComponent implements Component {
     const t = this.opts.theme;
     if (
       !transcript ||
-      (!transcript.input && !transcript.output && !transcript.toolResult)
+      (!transcript.input &&
+        !transcript.output &&
+        !transcript.toolResult &&
+        !transcript.image)
     ) {
       return centeredLines(
         width,
@@ -551,6 +556,13 @@ export class FeedbackOverlayComponent implements Component {
       if (transcript.output) all.push("");
     }
 
+    if (transcript.image) {
+      const sessionId = item?.sessionId ?? "";
+      all.push(t.fg("dim", "image"));
+      all.push(...this.renderImageBlock(sessionId, transcript.image, width));
+      all.push("");
+    }
+
     if (transcript.output) {
       all.push(t.fg("dim", "output"));
       all.push(...this.renderMarkdownBlock(transcript.output, width));
@@ -575,6 +587,30 @@ export class FeedbackOverlayComponent implements Component {
     } catch {
       return wrapAndTruncate(text, Math.max(8, width - 2));
     }
+  }
+
+  /**
+   * Render an attached image inline. Reuses the Image component per session so
+   * the Kitty image id and rendered-line cache survive re-renders. When the
+   * terminal has no image protocol the component emits a text fallback.
+   */
+  private renderImageBlock(
+    sessionId: string,
+    image: TranscriptImage,
+    width: number,
+  ): string[] {
+    const t = this.opts.theme;
+    let component = this.imageCache.get(sessionId);
+    if (!component) {
+      component = new Image(
+        image.data,
+        image.mimeType,
+        { fallbackColor: (s: string) => t.fg("dim", s) },
+        { maxWidthCells: Math.max(8, width - 2) },
+      );
+      this.imageCache.set(sessionId, component);
+    }
+    return component.render(Math.max(8, width)).slice(0, MAX_TRANSCRIPT_LINES);
   }
 
   private availableDetailLines(): number {

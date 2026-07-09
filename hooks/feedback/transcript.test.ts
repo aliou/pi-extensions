@@ -17,6 +17,27 @@ const userEntry = (id: string, text: string) =>
     },
   });
 
+const userEntryWithImage = (
+  id: string,
+  text: string,
+  data: string,
+  mimeType = "image/png",
+) =>
+  JSON.stringify({
+    type: "message",
+    id,
+    parentId: null,
+    timestamp: "2026-01-01T00:00:01.000Z",
+    message: {
+      role: "user",
+      content: [
+        { type: "text", text },
+        { type: "image", data, mimeType },
+      ],
+      timestamp: 0,
+    },
+  });
+
 const assistantEntry = (
   id: string,
   text: string,
@@ -161,5 +182,27 @@ describe("parseSubagentTranscript", () => {
     );
     expect(transcript?.toolResult).toBe("my session name");
     expect(transcript?.toolCalls).toBe(1);
+  });
+
+  it("extracts the image attached to the first user message", () => {
+    const transcript = parseSubagentTranscript(
+      jsonl(
+        header,
+        userEntryWithImage("u1", "describe this", "BASE64DATA"),
+        assistantEntry("a1", "a screenshot"),
+      ),
+    );
+    expect(transcript?.input).toBe("describe this");
+    expect(transcript?.image).toEqual({
+      data: "BASE64DATA",
+      mimeType: "image/png",
+    });
+  });
+
+  it("returns undefined image when no image block is present", () => {
+    const transcript = parseSubagentTranscript(
+      jsonl(header, userEntry("u1", "plain"), assistantEntry("a1", "ans")),
+    );
+    expect(transcript?.image).toBeUndefined();
   });
 });

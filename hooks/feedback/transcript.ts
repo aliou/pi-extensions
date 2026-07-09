@@ -22,6 +22,15 @@ export interface Transcript {
   toolCalls?: number;
   /** Session duration in milliseconds (first to last message). */
   durationMs?: number;
+  /** First image attached to the initial user prompt, if any (e.g. look_at). */
+  image?: TranscriptImage;
+}
+
+export interface TranscriptImage {
+  /** Base64-encoded image data. */
+  data: string;
+  /** MIME type, e.g. `image/png`. */
+  mimeType: string;
 }
 
 /**
@@ -67,6 +76,7 @@ export function parseSubagentTranscript(
   let input: string | undefined;
   let output: string | undefined;
   let toolResult: string | undefined;
+  let image_: TranscriptImage | undefined;
   let outputTokens: number | undefined;
   let inputTokens: number | undefined;
   let cost: number | undefined;
@@ -87,6 +97,8 @@ export function parseSubagentTranscript(
     if (message.role === "user" && input === undefined) {
       const text = messageToText(entry);
       if (text) input = text;
+      const image = messageToImage(entry);
+      if (image) image_ = image;
     }
 
     if (message.role === "assistant") {
@@ -123,6 +135,7 @@ export function parseSubagentTranscript(
     cost,
     toolCalls,
     durationMs,
+    image: image_,
   };
 }
 
@@ -149,6 +162,29 @@ function messageToText(entry: SessionMessageEntry): string | undefined {
   }
   const joined = parts.join("\n").trim();
   return joined.length > 0 ? joined : undefined;
+}
+
+/** Extract the first image content block from a user/assistant message. */
+function messageToImage(
+  entry: SessionMessageEntry,
+): TranscriptImage | undefined {
+  const message = entry.message;
+  if (!(message.role === "user" || message.role === "assistant"))
+    return undefined;
+  if (!("content" in message)) return undefined;
+  const content = message.content;
+  if (!Array.isArray(content)) return undefined;
+  for (const block of content) {
+    if (!block || typeof block !== "object") continue;
+    if (
+      block.type === "image" &&
+      typeof block.data === "string" &&
+      typeof block.mimeType === "string"
+    ) {
+      return { data: block.data, mimeType: block.mimeType };
+    }
+  }
+  return undefined;
 }
 
 function toolResultToText(

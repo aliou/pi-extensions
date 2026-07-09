@@ -1,5 +1,9 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
-import type { TUI } from "@earendil-works/pi-tui";
+import {
+  resetCapabilitiesCache,
+  setCapabilities,
+  type TUI,
+} from "@earendil-works/pi-tui";
 import { NOOP_THEME } from "@harness/test-utils/theme";
 import { describe, expect, it, vi } from "vitest";
 import { FeedbackOverlayComponent } from "./overlay-component";
@@ -7,6 +11,9 @@ import type { FeedbackItem, FeedbackRating, FeedbackSnapshot } from "./types";
 
 const ESC = "\x1b";
 const ENTER = "\r";
+
+const PNG_1x1 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
 const fakeTui = (): TUI =>
   ({
@@ -45,6 +52,7 @@ const makeOverlay = (opts: {
             output?: string;
             toolResult?: string;
             outputTokens?: number;
+            image?: { data: string; mimeType: string };
           }
         | undefined)
     | undefined;
@@ -324,6 +332,28 @@ describe("FeedbackOverlayComponent", () => {
     expect(overlay.render(100).join("\n")).toContain("prompt s2");
     overlay.handleInput("h"); // previous session
     expect(overlay.render(100).join("\n")).toContain("prompt s1");
+  });
+
+  it("renders an image section when the transcript has an image", () => {
+    setCapabilities({ images: null, trueColor: false, hyperlinks: false });
+    const overlay = makeOverlay({
+      snapshot: snapshot([item("look_at", "s1")]),
+      readTranscript: () => ({
+        input: "describe this",
+        output: "a screenshot",
+        image: { data: PNG_1x1, mimeType: "image/png" },
+      }),
+    });
+
+    try {
+      overlay.handleInput(ENTER);
+      const text = overlay.render(100).join("\n");
+      expect(text).toContain("image");
+      // No image protocol forced -> the Image component emits a text fallback.
+      expect(text).toContain("[Image:");
+    } finally {
+      resetCapabilitiesCache();
+    }
   });
 
   it("renders without exceeding the requested width", () => {
