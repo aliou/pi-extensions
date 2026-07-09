@@ -55,6 +55,11 @@ Context rules:
   [3 lines of post-context]
 - If a block repeats many times, stack multiple @@ statements to jump to the right context.
 
+Hunk contiguity rules:
+- Each hunk must match one contiguous block of lines from the file. Do not end a hunk in the middle of an expression, object literal, function body, or statement.
+- When a change spans an entire block (for example, renaming a function call and the object literal passed to it), include the whole block in a single hunk rather than splitting it across hunks.
+- When using Update File with Move to, prefer a single hunk for that file. If multiple hunks are required, each hunk must resume immediately after the previous hunk's last matched line; do not skip over unchanged lines between hunks.
+
 Grammar:
 Patch       := Begin { FileOp } End
 Begin       := "*** Begin Patch" NEWLINE
@@ -77,6 +82,8 @@ const APPLY_PATCH_GUIDELINES = [
   "apply_patch: Use for any file edit, creation, deletion, or rename on GPT/Codex models. It is the in-distribution editing interface for this model family.",
   "apply_patch: Pass the whole patch as a single raw text string in `input`. Do not wrap it in JSON and do not use line numbers.",
   "apply_patch: Show 3 lines of context around each change and use @@ with the enclosing class/function name when context alone cannot uniquely locate the change.",
+  "apply_patch: Each hunk must be one contiguous block of lines from the file. Do not split an expression, object literal, or block across hunks; include the whole construct in one hunk.",
+  "apply_patch: Do not re-read files after calling apply_patch. The tool result will report success or failure, and on failure it will include any partial changes that were already applied.",
 ];
 
 export interface ApplyPatchDetails {
