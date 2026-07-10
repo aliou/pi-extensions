@@ -1,5 +1,7 @@
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { SubagentPromptResult } from "@harness/agent-kit/types";
-import { isNotNil } from "@harness/utils";
+import { knownModelFamily, type ModelIdentity } from "@harness/models";
+import { assertNever, isNotNil } from "@harness/utils";
 import type { ScoutParamsType } from "./types";
 
 export const SCOUT_SYSTEM_PROMPT = `You are Scout, a local codebase understanding agent.
@@ -43,6 +45,7 @@ Rules:
 - Never fabricate file paths, symbols, or line numbers.
 - Only cite files that tools actually found.
 - Verify important claims with read before reporting them.
+- Distinguish direct file or history evidence from inference. If a requested fact cannot be verified, say "not found" rather than guessing.
 - Keep output concise and evidence-based.
 - If the query is ambiguous, make a reasonable search plan and proceed. Ask for clarification only if blocked.
 
@@ -52,7 +55,39 @@ Response format:
 3. Notes: important architecture/history details, if any.
 4. Gaps: only include if something could not be verified.`;
 
-export function buildPrompt(params: ScoutParamsType): SubagentPromptResult {
+export function buildPrompt(
+  params: ScoutParamsType,
+  _ctx: ExtensionContext,
+  model: ModelIdentity,
+): SubagentPromptResult {
+  const family = knownModelFamily(model);
+
+  switch (family) {
+    case "glm-5.2":
+      return { text: buildGlmScoutPrompt(params) };
+    case "glm-4.7-flash":
+    case "gpt-5.5":
+    case "kimi-k2.7-code":
+    case undefined:
+      return { text: buildGenericScoutPrompt(params) };
+    default:
+      return assertNever(family);
+  }
+}
+
+export function buildGlmScoutPrompt(params: ScoutParamsType): string {
+  return [
+    `Treat this as a bounded local codebase research task. Use the stated root, behavior, and evidence standard; do not broaden it into a general repository survey. Return only verified findings and explicit gaps.`,
+    "",
+    ...inputLines(params),
+  ].join("\n");
+}
+
+export function buildGenericScoutPrompt(params: ScoutParamsType): string {
+  return inputLines(params).join("\n");
+}
+
+function inputLines(params: ScoutParamsType): string[] {
   const root = params.cwd?.trim() || "current working directory";
   const prompt = `Answer this local codebase query:
 <query>
@@ -71,5 +106,5 @@ ${params.context}
 </context>`
     : undefined;
 
-  return { text: [prompt, context].filter(isNotNil).join("\n\n") };
+  return [prompt, context].filter(isNotNil);
 }

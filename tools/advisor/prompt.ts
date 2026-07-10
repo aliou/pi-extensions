@@ -60,7 +60,7 @@ export function buildPrompt(
 
 export function buildFableAdvisorPrompt(params: AdvisorParamsType): string {
   return [
-    `Use Claude Fable 5's strengths for long-horizon judgment: infer intent from context, navigate ambiguity, and catch design holes the main agent may miss.`,
+    `Use Claude Fable 5's strengths for long-horizon judgment: apply the supplied outcome and constraints, resolve bounded ambiguity, and catch design holes the main agent may miss. Do not invent unstated product requirements.`,
     `Do not overplan. When you have enough information to advise, give the recommendation rather than re-litigating established facts or surveying options you will not choose.`,
     `Ground every progress or correctness claim in provided evidence or tool results. If something is unverified, say so plainly.`,
     `Do not include internal reasoning or chain-of-thought. Give the answer, the evidence, and the next checks.`,

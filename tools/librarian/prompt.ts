@@ -1,5 +1,7 @@
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { SubagentPromptResult } from "@harness/agent-kit/types";
-import { isNotNil } from "@harness/utils";
+import { knownModelFamily, type ModelIdentity } from "@harness/models";
+import { assertNever, isNotNil } from "@harness/utils";
 import type { LibrarianParamsType } from "./types";
 
 export const LIBRAIAN_SYSTEM_PROMPT = `You are the Librarian, a specialized codebase understanding agent that helps users answer questions about large, complex codebases across repositories.
@@ -35,9 +37,54 @@ Rules:
 - Avoid broad searches from home or cache root directories. Always scope find/grep to a specific repo path.
 - Start with targeted searches. Use find to locate files, grep to search content, read to inspect files.
 - When a result is too large, narrow your search by path or use more specific patterns.
-- For commit history, prefer git_log with a query or path filter. Use git_show only for commits you need to inspect in detail.`;
+- For commit history, prefer git_log with a query or path filter. Use git_show only for commits you need to inspect in detail.
 
-export function buildPrompt(params: LibrarianParamsType): SubagentPromptResult {
+Evidence:
+- Cite repository paths and line ranges for code-specific claims.
+- Distinguish direct repository or history evidence from inference.
+- If a requested fact cannot be verified, say "not found" rather than guessing.
+
+Response format:
+1. Short answer: the direct answer to the query.
+2. Evidence: cited repository paths and line ranges.
+3. Cross-repository map: responsibilities, data flow, and constraints when relevant.
+4. Gaps: only facts that could not be verified.`;
+
+export function buildPrompt(
+  params: LibrarianParamsType,
+  _ctx: ExtensionContext,
+  model: ModelIdentity,
+): SubagentPromptResult {
+  const family = knownModelFamily(model);
+
+  switch (family) {
+    case "glm-5.2":
+      return { text: buildGlmLibrarianPrompt(params) };
+    case "glm-4.7-flash":
+    case "gpt-5.5":
+    case "kimi-k2.7-code":
+    case undefined:
+      return { text: buildGenericLibrarianPrompt(params) };
+    default:
+      return assertNever(family);
+  }
+}
+
+export function buildGlmLibrarianPrompt(params: LibrarianParamsType): string {
+  return [
+    `Treat this as a bounded cross-repository research task. Use the stated repositories, versions, behavior, and evidence standard. Return verified findings with explicit gaps; do not broaden the investigation into a general ecosystem survey.`,
+    "",
+    ...inputLines(params),
+  ].join("\n");
+}
+
+export function buildGenericLibrarianPrompt(
+  params: LibrarianParamsType,
+): string {
+  return inputLines(params).join("\n");
+}
+
+function inputLines(params: LibrarianParamsType): string[] {
   const prompt = `Answer this codebase query:
 <query>
 ${params.query}
@@ -50,5 +97,5 @@ ${params.context}
 </context>`
     : undefined;
 
-  return { text: [prompt, context].filter(isNotNil).join("\n\n") };
+  return [prompt, context].filter(isNotNil);
 }

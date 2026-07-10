@@ -20,6 +20,13 @@ describe("model family helpers", () => {
   });
 
   it.each([
+    model("synthetic", "hf:zai-org/GLM-4.7-Flash"),
+    model("zai", "glm-4.7-flash-fast"),
+  ])("recognizes GLM-4.7-Flash variants: $provider/$id", (candidate) => {
+    expect(knownModelFamily(candidate)).toBe("glm-4.7-flash");
+  });
+
+  it.each([
     model("neuralwatt", "glm-5.2"),
     model("neuralwatt", "glm-5.2-fast"),
     model("neuralwatt", "glm-5.2-short-fast"),
@@ -39,6 +46,7 @@ describe("model family helpers", () => {
     expect(knownModelFamily(model("anthropic", "claude-opus-4-8"))).toBe(
       undefined,
     );
+    expect(knownModelFamily(model("zai", "glm-4.7"))).toBe(undefined);
     expect(knownModelFamily(model("openai-codex", "gpt-5.4-mini"))).toBe(
       undefined,
     );

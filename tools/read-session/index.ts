@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
-import { SYSTEM_PROMPT } from "./prompt";
+import { buildPrompt, SYSTEM_PROMPT } from "./prompt";
 import { renderReadSessionHeader, tools } from "./tools";
 import { ReadSessionParams } from "./types";
 
@@ -39,15 +39,7 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     ],
     parameters: ReadSessionParams,
     renderHeader: renderReadSessionHeader,
-    buildPrompt({ targetSessionId: sessionId, goal }) {
-      // Log
-      return {
-        text: [
-          `<target_session_id>${sessionId}</target_session_id>`,
-          `<goal>${goal}</goal>`,
-        ].join("\n"),
-      };
-    },
+    buildPrompt,
 
     // Store a custom entry with the target session id.
     beforeExecute: async (params, session, _ctx) => {

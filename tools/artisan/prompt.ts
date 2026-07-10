@@ -85,6 +85,7 @@ export function buildPrompt(
       return { text: buildGptArtisanPrompt(params) };
     case "kimi-k2.7-code":
       return { text: buildKimiArtisanPrompt(params) };
+    case "glm-4.7-flash":
     case "glm-5.2":
     case undefined:
       return { text: buildGenericArtisanPrompt(params) };

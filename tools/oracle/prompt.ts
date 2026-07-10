@@ -65,6 +65,7 @@ export function buildPrompt(
       return { text: buildGlmOraclePrompt(params) };
     case "gpt-5.5":
       return { text: buildGptOraclePrompt(params) };
+    case "glm-4.7-flash":
     case "kimi-k2.7-code":
     case undefined:
       return { text: buildGenericOraclePrompt(params) };
