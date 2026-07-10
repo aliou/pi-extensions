@@ -1,0 +1,31 @@
+diff --git a/dist/api/openai-codex-responses.js b/dist/api/openai-codex-responses.js
+index 803c76af791714b0a9a8246c5aaa1837585db7a3..73d272164d246bed2dda177ab4a18a3150ff217c 100644
+--- a/dist/api/openai-codex-responses.js
++++ b/dist/api/openai-codex-responses.js
+@@ -112,19 +112,13 @@ function loadNodeZlib() {
+ // unavailable (browser/Vite builds). Callers fall back to sending the
+ // uncompressed JSON when this returns null.
+ function compressRequestBodyZstd(bodyJson) {
+-    const zlib = loadNodeZlib();
+-    if (!zlib || typeof zlib.zstdCompressSync !== "function") {
+-        return null;
+-    }
+-    try {
+-        const compressed = zlib.zstdCompressSync(bodyJson, {
+-            params: { [zlib.constants.ZSTD_c_compressionLevel]: REQUEST_COMPRESSION_ZSTD_LEVEL },
+-        });
+-        return new Uint8Array(compressed.buffer, compressed.byteOffset, compressed.byteLength);
+-    }
+-    catch {
+-        return null;
+-    }
++    // PATCHED (@aliou/pi-harness): request body compression disabled.
++    // The Codex SSE endpoint accepts zstd-compressed bodies, but most
++    // monitoring/credential-injection proxies do not. Returning null makes the
++    // caller fall back to sending the uncompressed JSON and skip the
++    // `content-encoding: zstd` header. See
++    // https://github.com/earendil-works/pi/issues/6483
++    return null;
+ }
+ // ============================================================================
+ // Main Stream Function
