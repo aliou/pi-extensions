@@ -39,9 +39,17 @@ try {
     input: ["text", "image"],
   };
   const context = { systemPrompt: "test", messages: [], tools: [] };
+  // Fake JWT-shaped dummy key. Not a real OpenAI/ChatGPT key: alg is "none",
+  // the account id is the placeholder "acct_test123", and the signature
+  // segment is the literal ".sig". It only needs to satisfy extractAccountId(),
+  // which decodes the JWT payload and reads the chatgpt_account_id claim — it
+  // never validates the signature. Hardcoded because the test drives the SSE
+  // path up to the fetch call (which is mocked), so no real credential is used
+  // or sent anywhere; without a JWT-shaped key the stream throws before fetch.
+  const apiKey =
+    "eyJhbGciOiJub25lIIsidHlwIjoiSldUIn0.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsiY2hhdGdwdF9hY2NvdW50X2lkIjoiYWNjdF90ZXN0MTIzIn19.sig";
   const ev = stream(model, context, {
-    apiKey:
-      "eyJhbGciOiJub25lIIsidHlwIjoiSldUIn0.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsiY2hhdGdwdF9hY2NvdW50X2lkIjoiYWNjdF90ZXN0MTIzIn19.sig",
+    apiKey,
     transport: "sse",
     maxRetries: 0,
   });
