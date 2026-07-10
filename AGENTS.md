@@ -82,6 +82,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 |---|---|---|
 | Directory | Commands | Notes |
 |---|---|---|
+| `compact-fast/` | `/compact:fast` | Compact with a fast model, then restore the previous model |
 | `continue/` | `/continue` | Continue from a linked parent session |
 | `copy-session-id/` | `/copy:session-id` | Copy session ID to clipboard |
 | `copy-session-path/` | `/copy:session-path` | Copy session file path to clipboard |
