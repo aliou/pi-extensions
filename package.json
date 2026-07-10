@@ -21,6 +21,7 @@
     "format": "biome check --write .",
     "typecheck": "tsc --build",
     "test": "vitest run",
+    "test:patches": "node scripts/run-patch-tests.mjs",
     "test:watch": "vitest",
     "build:native": "./scripts/build-native-tools.sh",
     "postinstall": "./scripts/build-native-tools.sh"

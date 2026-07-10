@@ -1,0 +1,13 @@
+{
+  "name": "@aliou/pi-harness-patches",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@earendil-works/pi-tui": "0.80.6"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@earendil-works/pi-tui@0.80.6": "./pi-tui--markdown-code-block/patch.diff"
+    }
+  }
+}

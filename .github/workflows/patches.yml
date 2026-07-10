@@ -1,0 +1,72 @@
+name: Patches
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "patches/**"
+      - "scripts/run-patch-tests.mjs"
+      - "scripts/bump-pi-version.mjs"
+      - ".github/workflows/patches.yml"
+  pull_request:
+    paths:
+      - "patches/**"
+      - "scripts/run-patch-tests.mjs"
+      - "scripts/bump-pi-version.mjs"
+      - ".github/workflows/patches.yml"
+  schedule:
+    # Nightly at 04:00 UTC: test patches against the latest published pi release.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    # Manual run. Inputs drive the test-patches-latest job.
+    inputs:
+      pi-version:
+        description: "pi version to test against (empty = each package's latest published)"
+        required: false
+        default: ""
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Test patches against the pi versions pinned in patches/package.json.
+  # `pnpm install` in patches/ applies the patches via pnpm.patchedDependencies;
+  # the tests import the patched packages by name.
+  test-patches:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: general-dexterity/actions/pnpm-install@main
+
+      - name: Install patches project
+        run: pnpm -C patches install --frozen-lockfile
+
+      - name: Run patch tests
+        run: pnpm test:patches
+
+  # Test patches against the latest published pi release (nightly), or against a
+  # specific version via workflow_dispatch input. Bumps patches/package.json
+  # (ephemeral, not committed), reinstalls, then runs the patch tests. If a patch
+  # no longer applies to the new version, `pnpm install` fails and the job goes
+  # red — the signal to rebase the patch.
+  test-patches-latest:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: general-dexterity/actions/pnpm-install@main
+
+      - name: Bump pi to target version
+        env:
+          PI_VERSION: ${{ github.event.inputs.pi-version }}
+        run: node scripts/bump-pi-version.mjs
+
+      - name: Install patches project at bumped version
+        run: pnpm -C patches install --no-frozen-lockfile
+
+      - name: Run patch tests
+        run: pnpm test:patches

@@ -1,0 +1,44 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+patchedDependencies:
+  '@earendil-works/pi-tui@0.80.6':
+    hash: c1e48e46356c1e50b17ec1caeeab66b4707fb775b9cc3df16f6c14672da5ee7f
+    path: pi-tui--markdown-code-block/patch.diff
+
+importers:
+
+  .:
+    dependencies:
+      '@earendil-works/pi-tui':
+        specifier: 0.80.6
+        version: 0.80.6(patch_hash=c1e48e46356c1e50b17ec1caeeab66b4707fb775b9cc3df16f6c14672da5ee7f)
+
+packages:
+
+  '@earendil-works/pi-tui@0.80.6':
+    resolution: {integrity: sha512-bSuzS4EVSqEPj/Qr/p9eqCESfKsGuDNbl77EGci8Iaqqt/C/XCBZL1MjXaxSWW1NsT5afjp/Cb0NTPzOLv/aPA==}
+    engines: {node: '>=22.19.0'}
+
+  get-east-asian-width@1.6.0:
+    resolution: {integrity: sha512-QRbvDIbx6YklUe6RxeTeleMR0yv3cYH6PsPZHcnVn7xv7zO1BHN8r0XETu8n6Ye3Q+ahtSarc3WgtNWmehIBfA==}
+    engines: {node: '>=18'}
+
+  marked@18.0.5:
+    resolution: {integrity: sha512-S6GcvALHg6K4ohtu4E7x0a1AqhAjp6cV8KhLSyN9qVapnzJkusVBxZRcIU9AeYsbe6P1hKDusSbEOzGyyuce6w==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
+snapshots:
+
+  '@earendil-works/pi-tui@0.80.6(patch_hash=c1e48e46356c1e50b17ec1caeeab66b4707fb775b9cc3df16f6c14672da5ee7f)':
+    dependencies:
+      get-east-asian-width: 1.6.0
+      marked: 18.0.5
+
+  get-east-asian-width@1.6.0: {}
+
+  marked@18.0.5: {}
