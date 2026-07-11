@@ -15,7 +15,8 @@ import {
   isAnthropicSupportedModel,
 } from "./anthropic";
 import {
-  createCodexFastModeStreamSimple,
+  type CodexRequestPayload,
+  injectCodexServiceTier,
   isCodexSupportedModel,
 } from "./codex";
 
@@ -69,12 +70,9 @@ export default function fastModeHook(pi: ExtensionAPI): void {
     },
   });
 
-  // Wrap whatever is currently registered for these apis (the built-ins, or an
-  // earlier extension's wrapper such as `provider-tweaks`'s `X-Session-Affinity`
-  // injector) rather than calling the built-in `streamSimple*` directly. This
-  // composes instead of clobbering — see `hooks/provider-tweaks/anthropic.ts`
-  // and `hooks/provider-tweaks/index.ts` for the same pattern, and
-  // `extensions/aperture/{proxy,dedicated}/runtime.ts` in pi-ts-aperture.
+  // Anthropic fast mode needs to add request headers, which the current Pi
+  // extension API cannot mutate directly. Wrap its stream implementation for
+  // that header; request-payload changes use before_provider_request below.
   const anthropicBuiltIn = getApiProvider("anthropic-messages");
   if (anthropicBuiltIn?.streamSimple) {
     pi.registerProvider("anthropic", {
@@ -86,16 +84,14 @@ export default function fastModeHook(pi: ExtensionAPI): void {
     });
   }
 
-  const codexBuiltIn = getApiProvider("openai-codex-responses");
-  if (codexBuiltIn?.streamSimple) {
-    pi.registerProvider("openai-codex", {
-      api: "openai-codex-responses",
-      streamSimple: createCodexFastModeStreamSimple(
-        codexBuiltIn.streamSimple,
-        () => codexEnabled,
-      ),
-    });
-  }
+  pi.on("before_provider_request", (event, ctx) => {
+    if (ctx.model?.provider !== "openai-codex") return;
+
+    return injectCodexServiceTier(
+      event.payload as CodexRequestPayload,
+      codexEnabled,
+    );
+  });
 
   pi.on("session_start", async (_event, ctx) => {
     emitCodexFastMode(pi, ctx);
