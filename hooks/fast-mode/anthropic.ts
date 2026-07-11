@@ -55,6 +55,13 @@ export function addAnthropicFastModeHeader(
 ): void {
   const incoming = getHeader(headers, "anthropic-beta");
   const base = usesOAuth ? CLAUDE_CODE_BETAS.join(",") : undefined;
+
+  for (const name of Object.keys(headers)) {
+    if (name.toLowerCase() === "anthropic-beta") {
+      delete headers[name];
+    }
+  }
+
   headers["anthropic-beta"] = appendBetas(base, incoming);
 }
 
