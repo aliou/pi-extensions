@@ -1,11 +1,5 @@
-import type {
-  Model,
-  ProviderHeaders,
-  SimpleStreamOptions,
-} from "@earendil-works/pi-ai";
-import type { ApiStreamSimpleFunction } from "@earendil-works/pi-ai/compat";
+import type { ProviderHeaders } from "@earendil-works/pi-ai";
 
-type AnthropicModel = Model<"anthropic-messages">;
 type AnthropicRequestPayload = Record<string, unknown> & { model?: unknown };
 
 /**
@@ -32,10 +26,6 @@ export function isAnthropicSupportedModel(model: string): boolean {
   return ANTHROPIC_FAST_MODELS.has(model);
 }
 
-export function isOAuthToken(apiKey: string | undefined): boolean {
-  return apiKey?.includes("sk-ant-oat") === true;
-}
-
 export function getHeader(
   headers: ProviderHeaders | undefined,
   name: string,
@@ -45,17 +35,6 @@ export function getHeader(
   const key = Object.keys(headers).find((k) => k.toLowerCase() === lower);
   const value = key ? headers[key] : undefined;
   return value === null ? undefined : value;
-}
-
-export function withoutHeader(
-  headers: ProviderHeaders | undefined,
-  name: string,
-): ProviderHeaders {
-  if (!headers) return {};
-  const lower = name.toLowerCase();
-  return Object.fromEntries(
-    Object.entries(headers).filter(([k]) => k.toLowerCase() !== lower),
-  );
 }
 
 export function appendBetas(...values: Array<string | undefined>): string {
@@ -68,6 +47,15 @@ export function appendBetas(...values: Array<string | undefined>): string {
   }
   betas.add(FAST_MODE_BETA);
   return [...betas].join(",");
+}
+
+export function addAnthropicFastModeHeader(
+  headers: ProviderHeaders,
+  usesOAuth: boolean,
+): void {
+  const incoming = getHeader(headers, "anthropic-beta");
+  const base = usesOAuth ? CLAUDE_CODE_BETAS.join(",") : undefined;
+  headers["anthropic-beta"] = appendBetas(base, incoming);
 }
 
 /**
@@ -84,72 +72,4 @@ export function addAnthropicFastModePayload(
   if (Object.hasOwn(payload, "speed")) return payload;
 
   return { ...payload, speed: "fast" };
-}
-
-/**
- * Builds the stream options to pass to a downstream `streamSimple`
- * implementation.
- *
- * When Anthropic fast mode is enabled and the selected model supports it, the
- * returned options carry the `fast-mode` beta header and wrap `onPayload` so
- * that each outgoing payload gets `speed: "fast"` injected. When fast mode is
- * not applicable, the original options are returned unchanged.
- */
-export function buildAnthropicStreamOptions(
-  model: AnthropicModel,
-  enabled: boolean,
-  options: SimpleStreamOptions | undefined,
-): SimpleStreamOptions | undefined {
-  if (!enabled || !isAnthropicSupportedModel(model.id)) {
-    return options;
-  }
-
-  const incoming = getHeader(options?.headers, "anthropic-beta");
-  const base = isOAuthToken(options?.apiKey)
-    ? CLAUDE_CODE_BETAS.join(",")
-    : undefined;
-  const headers = {
-    ...withoutHeader(options?.headers, "anthropic-beta"),
-    "anthropic-beta": appendBetas(base, incoming),
-  };
-
-  const onPayload = options?.onPayload;
-
-  return {
-    ...options,
-    headers,
-    async onPayload(payload, payloadModel) {
-      const fastPayload = addAnthropicFastModePayload(
-        payload as AnthropicRequestPayload,
-      );
-      if (!onPayload) return fastPayload;
-
-      const nextPayload = await onPayload(fastPayload, payloadModel);
-      return nextPayload === undefined ? fastPayload : nextPayload;
-    },
-  };
-}
-
-/**
- * Wraps a `streamSimple` implementation (the built-in one or one already
- * registered by another extension, e.g. `provider-tweaks`) so that Anthropic
- * fast mode is applied on top of whatever the wrapped implementation does.
- *
- * This mirrors the pattern in `hooks/provider-tweaks/anthropic.ts`: instead of
- * importing `streamSimpleAnthropic` directly and clobbering any other
- * extension's provider registration, we compose on top of whatever
- * `getApiProvider("anthropic-messages")` currently returns.
- */
-export function createAnthropicFastModeStreamSimple(
-  streamSimple: ApiStreamSimpleFunction,
-  isEnabled: () => boolean,
-): ApiStreamSimpleFunction {
-  return (model, context, options) => {
-    const streamOptions = buildAnthropicStreamOptions(
-      model as AnthropicModel,
-      isEnabled(),
-      options,
-    );
-    return streamSimple(model, context, streamOptions);
-  };
 }

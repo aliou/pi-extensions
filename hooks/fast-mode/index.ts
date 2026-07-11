@@ -1,4 +1,3 @@
-import { getApiProvider } from "@earendil-works/pi-ai/compat";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -11,7 +10,8 @@ import {
 } from "@harness/events";
 
 import {
-  createAnthropicFastModeStreamSimple,
+  addAnthropicFastModeHeader,
+  addAnthropicFastModePayload,
   isAnthropicSupportedModel,
 } from "./anthropic";
 import {
@@ -70,19 +70,34 @@ export default function fastModeHook(pi: ExtensionAPI): void {
     },
   });
 
-  // Anthropic fast mode needs to add request headers, which the current Pi
-  // extension API cannot mutate directly. Wrap its stream implementation for
-  // that header; request-payload changes use before_provider_request below.
-  const anthropicBuiltIn = getApiProvider("anthropic-messages");
-  if (anthropicBuiltIn?.streamSimple) {
-    pi.registerProvider("anthropic", {
-      api: "anthropic-messages",
-      streamSimple: createAnthropicFastModeStreamSimple(
-        anthropicBuiltIn.streamSimple,
-        () => anthropicEnabled,
-      ),
-    });
-  }
+  pi.on("before_provider_headers", (event, ctx) => {
+    if (
+      !anthropicEnabled ||
+      ctx.model?.provider !== "anthropic" ||
+      !isAnthropicSupportedModel(ctx.model.id)
+    ) {
+      return;
+    }
+
+    addAnthropicFastModeHeader(
+      event.headers,
+      ctx.modelRegistry.isUsingOAuth(ctx.model),
+    );
+  });
+
+  pi.on("before_provider_request", (event, ctx) => {
+    if (
+      !anthropicEnabled ||
+      ctx.model?.provider !== "anthropic" ||
+      !isAnthropicSupportedModel(ctx.model.id)
+    ) {
+      return;
+    }
+
+    return addAnthropicFastModePayload(
+      event.payload as Record<string, unknown>,
+    );
+  });
 
   pi.on("before_provider_request", (event, ctx) => {
     if (ctx.model?.provider !== "openai-codex") return;
