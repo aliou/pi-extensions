@@ -1,6 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { getAnthropicProvider } from "./anthropic";
-import { getOpenAICodexProvider } from "./openai-codex";
+import {
+  type CodexResponsesPayload,
+  injectDetailedReasoningSummary,
+} from "./openai-codex";
 
 export default function (pi: ExtensionAPI): void {
   const anthropicProvider = getAnthropicProvider();
@@ -8,8 +11,11 @@ export default function (pi: ExtensionAPI): void {
     pi.registerProvider("anthropic", anthropicProvider);
   }
 
-  const openAICodexProvider = getOpenAICodexProvider();
-  if (openAICodexProvider) {
-    pi.registerProvider("openai-codex", openAICodexProvider);
-  }
+  pi.on("before_provider_request", (event, ctx) => {
+    if (ctx.model?.provider !== "openai-codex") return;
+
+    return injectDetailedReasoningSummary(
+      event.payload as CodexResponsesPayload,
+    );
+  });
 }
