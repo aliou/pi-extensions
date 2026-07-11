@@ -70,10 +70,10 @@ export default function fastModeHook(pi: ExtensionAPI): void {
   });
 
   // Wrap whatever is currently registered for these apis (the built-ins, or an
-  // earlier extension's wrapper such as `anthropic-tweaks`'s `X-Session-Affinity`
+  // earlier extension's wrapper such as `provider-tweaks`'s `X-Session-Affinity`
   // injector) rather than calling the built-in `streamSimple*` directly. This
-  // composes instead of clobbering — see `hooks/anthropic-tweaks/provider.ts`
-  // and `hooks/anthropic-tweaks/index.ts` for the same pattern, and
+  // composes instead of clobbering — see `hooks/provider-tweaks/anthropic.ts`
+  // and `hooks/provider-tweaks/index.ts` for the same pattern, and
   // `extensions/aperture/{proxy,dedicated}/runtime.ts` in pi-ts-aperture.
   const anthropicBuiltIn = getApiProvider("anthropic-messages");
   if (anthropicBuiltIn?.streamSimple) {

@@ -132,10 +132,10 @@ export function buildAnthropicStreamOptions(
 
 /**
  * Wraps a `streamSimple` implementation (the built-in one or one already
- * registered by another extension, e.g. `anthropic-tweaks`) so that Anthropic
+ * registered by another extension, e.g. `provider-tweaks`) so that Anthropic
  * fast mode is applied on top of whatever the wrapped implementation does.
  *
- * This mirrors the pattern in `hooks/anthropic-tweaks/provider.ts`: instead of
+ * This mirrors the pattern in `hooks/provider-tweaks/anthropic.ts`: instead of
  * importing `streamSimpleAnthropic` directly and clobbering any other
  * extension's provider registration, we compose on top of whatever
  * `getApiProvider("anthropic-messages")` currently returns.

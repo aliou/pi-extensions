@@ -98,7 +98,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 
 | Directory | Purpose | Key files |
 |---|---|---|
-| `anthropic-tweaks/` | Anthropic-only provider tweaks; currently injects `x-session-id` on Anthropic requests for session-level gateway tracing | `index.ts` |
+| `provider-tweaks/` | Provider-specific tweaks; currently injects `x-session-id` on Anthropic requests for session-level gateway tracing | `index.ts`, `anthropic.ts` |
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, latest TPS telemetry, cache hit rate, and resume cache freshness | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
