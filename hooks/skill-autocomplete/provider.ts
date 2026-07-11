@@ -7,6 +7,7 @@
  *   submits the editor naturally.
  * - `?<token>` (at least one filter character): shows filtered skills;
  *   pressing Enter replaces `?<token>` with the skill path.
+ * - `??`: shows every skill without requiring filter text.
  * - `? ` (space after `?`): bails out entirely.
  */
 
@@ -19,9 +20,18 @@ import { replaceAutocompletePrefix } from "@harness/completion";
 import { listSkills } from "./skills";
 import { SKILL_TOKEN_RE, SKILL_TRIGGER_CONSUMED_RE } from "./types";
 
-function extractSkillToken(textBeforeCursor: string): string | undefined {
+interface SkillToken {
+  trigger: string;
+  token: string;
+}
+
+export function extractSkillToken(
+  textBeforeCursor: string,
+): SkillToken | undefined {
   const match = textBeforeCursor.match(SKILL_TOKEN_RE);
-  return match ? (match[1] ?? "") : undefined;
+  if (!match) return undefined;
+
+  return { trigger: match[1] ?? "?", token: match[2] ?? "" };
 }
 
 export function createSkillAutocompleteProvider(
@@ -39,13 +49,13 @@ export function createSkillAutocompleteProvider(
     ): Promise<AutocompleteSuggestions | null> {
       const currentLine = lines[cursorLine] ?? "";
       const textBeforeCursor = currentLine.slice(0, cursorCol);
-      const token = extractSkillToken(textBeforeCursor);
+      const skillToken = extractSkillToken(textBeforeCursor);
 
       // `?` was at a token boundary but followed by a space — the trigger
       // is consumed. Delegate so other providers (e.g. file `@`) still work
       // instead of swallowing completion for the rest of the line.
       if (
-        token === undefined &&
+        skillToken === undefined &&
         SKILL_TRIGGER_CONSUMED_RE.test(textBeforeCursor)
       ) {
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
@@ -53,16 +63,16 @@ export function createSkillAutocompleteProvider(
 
       // Bare `?` with no filter text — don't show suggestions so
       // Enter submits the editor naturally.
-      if (token === "") {
+      if (skillToken?.trigger === "?" && skillToken.token === "") {
         return null;
       }
 
-      if (token === undefined) {
+      if (skillToken === undefined) {
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
       try {
-        const tokenLower = token.toLowerCase();
+        const tokenLower = skillToken.token.toLowerCase();
         const allSkills = listSkills(skillsRoots);
         const byName = allSkills.filter((s) =>
           s.name.toLowerCase().includes(tokenLower),
@@ -90,7 +100,7 @@ export function createSkillAutocompleteProvider(
 
         return {
           items,
-          prefix: `?${token}`,
+          prefix: `${skillToken.trigger}${skillToken.token}`,
         };
       } catch (_error) {
         void _error;

@@ -1,10 +1,10 @@
 /**
  * `?` skill directory autocomplete provider.
  *
- * On `?<token>` in the input editor (at a token boundary), suggests
- * skill directories from configurable root paths. Accepting a
- * completion replaces the `?<token>` prefix with the absolute path
- * to SKILL.md.
+ * On `?<token>` or `??` in the input editor (at a token boundary),
+ * suggests skill directories from configurable root paths. `??` forces
+ * the full list without a filter. Accepting a completion replaces the
+ * trigger prefix with the absolute path to SKILL.md.
  *
  * The root paths are configured in `~/.pi/agent/settings/completion.json`:
  * ```json
@@ -23,6 +23,7 @@ import {
   once,
 } from "@harness/events";
 import { resolveSkillsRoots } from "./config";
+import { createSkillAutocompleteEditor } from "./editor";
 import { createSkillAutocompleteProvider } from "./provider";
 
 export default async function (pi: ExtensionAPI) {
@@ -52,6 +53,12 @@ export default async function (pi: ExtensionAPI) {
     }
 
     if (valid.length === 0) return;
+
+    // Pi only invokes a single-character autocomplete trigger at a token
+    // boundary. Preserve the default editor when another extension owns it.
+    if (!ctx.ui.getEditorComponent()) {
+      ctx.ui.setEditorComponent(createSkillAutocompleteEditor);
+    }
 
     ctx.ui.addAutocompleteProvider((current) =>
       createSkillAutocompleteProvider(current, valid),
