@@ -30,6 +30,7 @@ type ReadonlySessionManager = Pick<
   | "getEntry"
   | "getLabel"
   | "getBranch"
+  | "buildContextEntries"
   | "getHeader"
   | "getEntries"
   | "getTree"
@@ -181,6 +182,7 @@ function stubSessionManager(): ReadonlySessionManager {
     getEntry: vi.fn(() => undefined),
     getLabel: vi.fn(() => undefined),
     getBranch: vi.fn(() => []),
+    buildContextEntries: vi.fn(() => []),
     getHeader: vi.fn(() => undefined),
     getEntries: vi.fn(() => []),
     getTree: vi.fn(() => []),
