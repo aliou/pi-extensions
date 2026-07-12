@@ -4,8 +4,8 @@
  * On `?<token>` or `??` in the input editor (at a token boundary),
  * suggests skill directories from configurable root paths. `??` forces
  * the full list without a filter. Accepting a completion leaves a compact
- * inline reference. On submission, every known reference is expanded to a
- * skill XML block while the skill name remains in the user's prose.
+ * inline reference. On submission, every known reference becomes a separate
+ * skill context message while the skill name remains in the user's prose.
  *
  * The root paths are configured in `~/.pi/agent/settings/completion.json`:
  * ```json
@@ -27,10 +27,16 @@ import { resolveSkillsRoots } from "./config";
 import { createSkillAutocompleteEditor } from "./editor";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider } from "./provider";
+import { renderSkillInvocation, SKILL_INVOCATION_MESSAGE_TYPE } from "./render";
 import { listSkills } from "./skills";
 
 export default async function (pi: ExtensionAPI) {
   let skillsRoots: string[] = [];
+
+  pi.registerMessageRenderer(
+    SKILL_INVOCATION_MESSAGE_TYPE,
+    renderSkillInvocation,
+  );
 
   once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_COMPLETION_EVENT, {
@@ -44,8 +50,24 @@ export default async function (pi: ExtensionAPI) {
 
     try {
       const result = expandSkillReferences(event.text, listSkills(skillsRoots));
-      if (result.expandedSkills.length === 0) return { action: "continue" };
-      return { action: "transform", text: result.text };
+      if (result.skills.length === 0) return { action: "continue" };
+
+      const deliveryOptions = event.streamingBehavior
+        ? { deliverAs: event.streamingBehavior }
+        : undefined;
+      for (const skill of result.skills) {
+        pi.sendMessage(
+          {
+            customType: SKILL_INVOCATION_MESSAGE_TYPE,
+            content: skill.xml,
+            display: true,
+            details: { name: skill.name, path: skill.path },
+          },
+          deliveryOptions,
+        );
+      }
+
+      return { action: "transform", text: result.prose };
     } catch (error) {
       ctx.ui.notify(
         `Skill expansion failed: ${error instanceof Error ? error.message : String(error)}`,

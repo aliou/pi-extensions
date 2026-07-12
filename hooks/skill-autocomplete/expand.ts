@@ -8,8 +8,14 @@ function formatSkillBlock(skill: SkillInfo): string {
 }
 
 export interface SkillExpansionResult {
-  text: string;
-  expandedSkills: string[];
+  prose: string;
+  skills: ExpandedSkillInvocation[];
+}
+
+export interface ExpandedSkillInvocation {
+  name: string;
+  path: string;
+  xml: string;
 }
 
 /** Expand known inline skill references while retaining their names in prose. */
@@ -18,7 +24,7 @@ export function expandSkillReferences(
   skills: SkillInfo[],
 ): SkillExpansionResult {
   const skillsByName = new Map(skills.map((skill) => [skill.name, skill]));
-  if (skillsByName.size === 0) return { text, expandedSkills: [] };
+  if (skillsByName.size === 0) return { prose: text, skills: [] };
 
   const names = [...skillsByName.keys()]
     .sort((a, b) => b.length - a.length)
@@ -39,11 +45,14 @@ export function expandSkillReferences(
     },
   );
 
-  if (selected.size === 0) return { text, expandedSkills: [] };
+  if (selected.size === 0) return { prose: text, skills: [] };
 
-  const blocks = [...selected.values()].map(formatSkillBlock);
   return {
-    text: `${blocks.join("\n\n")}\n\n${prose}`,
-    expandedSkills: [...selected.keys()],
+    prose,
+    skills: [...selected.values()].map((skill) => ({
+      name: skill.name,
+      path: skill.fullPath,
+      xml: formatSkillBlock(skill),
+    })),
   };
 }

@@ -109,7 +109,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
 | `session-autocomplete/` | `@@` autocomplete for session references | `index.ts`, `provider.ts` |
 | `session-name/` | Auto-name sessions | `index.ts` |
-| `skill-autocomplete/` | `?` skill autocomplete; expands multiple inline references to XML while retaining skill names in prose | `index.ts`, `expand.ts` |
+| `skill-autocomplete/` | `?` skill autocomplete; sends each inline skill as a rendered context message and retains skill names in user prose | `index.ts`, `expand.ts`, `render.ts` |
 | `tmux-autocomplete/` | `@tmux:` tmux session/window autocomplete | `index.ts`, `provider.ts`, `tmux.ts`, `types.ts` |
 | `tps/` | Per-turn tokens-per-second telemetry emitted as `ad:tps:telemetry` for footer display and other consumers | `index.ts`, `utils.ts`, `types.ts` |
 | `zoxide-autocomplete/` | `@z:` project path autocomplete | `index.ts` |

@@ -59,12 +59,17 @@ test("expands multiple skills and retains their names in prose", () => {
       listSkills([root]),
     );
 
-    expect(result.expandedSkills).toEqual(["documentation", "ark-ui"]);
-    expect(result.text).toContain('<skill name="documentation" location="');
-    expect(result.text).toContain('<skill name="ark-ui" location="');
-    expect(
-      result.text.endsWith("read the documentation skill and the ark-ui skill"),
-    ).toBe(true);
+    expect(result.skills.map((skill) => skill.name)).toEqual([
+      "documentation",
+      "ark-ui",
+    ]);
+    expect(result.skills[0]?.xml).toContain(
+      '<skill name="documentation" location="',
+    );
+    expect(result.skills[1]?.xml).toContain('<skill name="ark-ui" location="');
+    expect(result.prose).toBe(
+      "read the documentation skill and the ark-ui skill",
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -81,8 +86,8 @@ test("does not partially expand a longer unknown reference", () => {
   ];
 
   expect(expandSkillReferences("use ?foo_bar", skills)).toEqual({
-    text: "use ?foo_bar",
-    expandedSkills: [],
+    prose: "use ?foo_bar",
+    skills: [],
   });
 });
 
