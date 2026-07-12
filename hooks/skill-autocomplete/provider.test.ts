@@ -1,10 +1,12 @@
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AutocompleteProvider } from "@earendil-works/pi-tui";
 import { expect, test } from "vitest";
 import { createSkillAutocompleteEditor } from "./editor";
+import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider, extractSkillToken } from "./provider";
+import { listSkills } from "./skills";
 
 const current = {
   getSuggestions: async () => null,
@@ -20,6 +22,8 @@ test("shows all skills for ??", async () => {
   const root = mkdtempSync(join(tmpdir(), "skill-autocomplete-"));
   mkdirSync(join(root, "alpha"));
   mkdirSync(join(root, "beta"));
+  writeFileSync(join(root, "alpha", "SKILL.md"), "alpha instructions");
+  writeFileSync(join(root, "beta", "SKILL.md"), "beta instructions");
 
   try {
     const provider = createSkillAutocompleteProvider(current, [root]);
@@ -34,6 +38,52 @@ test("shows all skills for ??", async () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("expands multiple skills and retains their names in prose", () => {
+  const root = mkdtempSync(join(tmpdir(), "skill-autocomplete-"));
+  mkdirSync(join(root, "documentation"));
+  mkdirSync(join(root, "ark-ui"));
+  writeFileSync(
+    join(root, "documentation", "SKILL.md"),
+    "---\nname: documentation\ndescription: Write docs\n---\n\nDocumentation instructions.",
+  );
+  writeFileSync(
+    join(root, "ark-ui", "SKILL.md"),
+    "---\nname: ark-ui\ndescription: Use Ark UI\n---\n\nArk UI instructions.",
+  );
+
+  try {
+    const result = expandSkillReferences(
+      "read the ??documentation skill and the ??ark-ui skill",
+      listSkills([root]),
+    );
+
+    expect(result.expandedSkills).toEqual(["documentation", "ark-ui"]);
+    expect(result.text).toContain('<skill name="documentation" location="');
+    expect(result.text).toContain('<skill name="ark-ui" location="');
+    expect(
+      result.text.endsWith("read the documentation skill and the ark-ui skill"),
+    ).toBe(true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("does not partially expand a longer unknown reference", () => {
+  const skills = [
+    {
+      name: "foo",
+      fullPath: "/tmp/foo/SKILL.md",
+      baseDir: "/tmp/foo",
+      directory: "/tmp/foo",
+    },
+  ];
+
+  expect(expandSkillReferences("use ?foo_bar", skills)).toEqual({
+    text: "use ?foo_bar",
+    expandedSkills: [],
+  });
 });
 
 test("requests completion when the second ? is typed", async () => {

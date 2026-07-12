@@ -6,7 +6,7 @@
  * - Bare `?` (no filter text): does not show suggestions, so Enter
  *   submits the editor naturally.
  * - `?<token>` (at least one filter character): shows filtered skills;
- *   pressing Enter replaces `?<token>` with the skill path.
+ *   pressing Enter replaces `?<token>` with a stable inline skill reference.
  * - `??`: shows every skill without requiring filter text.
  * - `? ` (space after `?`): bails out entirely.
  */
@@ -93,7 +93,7 @@ export function createSkillAutocompleteProvider(
         }
 
         const items: AutocompleteItem[] = skills.map((skill) => ({
-          value: skill.path,
+          value: skill.name,
           label: skill.name,
           description: skill.directory,
         }));
@@ -121,7 +121,7 @@ export function createSkillAutocompleteProvider(
           cursorLine,
           cursorCol,
           prefix,
-          `${item.value} `,
+          `?${item.value} `,
         );
       }
 

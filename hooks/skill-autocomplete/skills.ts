@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { collapseHomePath } from "@harness/utils/path";
 
 export interface SkillInfo {
@@ -6,8 +6,8 @@ export interface SkillInfo {
   name: string;
   /** Absolute path to SKILL.md, e.g. "/home/user/skills/vitest/SKILL.md". */
   fullPath: string;
-  /** Tilde path to SKILL.md for insertion, e.g. "~/skills/vitest/SKILL.md". */
-  path: string;
+  /** Absolute skill directory used to resolve relative references. */
+  baseDir: string;
   /** Tilde path to directory, e.g. "~/skills/vitest". */
   directory: string;
 }
@@ -18,6 +18,7 @@ export interface SkillInfo {
  */
 export function listSkills(skillsRoots: string[]): SkillInfo[] {
   const skills: SkillInfo[] = [];
+  const seenNames = new Set<string>();
 
   for (const root of skillsRoots) {
     let entries: string[];
@@ -29,13 +30,17 @@ export function listSkills(skillsRoots: string[]): SkillInfo[] {
     }
 
     for (const name of entries) {
+      if (seenNames.has(name)) continue;
+
       const absolutePath = `${root}/${name}`;
+      const fullPath = `${absolutePath}/SKILL.md`;
       try {
-        if (statSync(absolutePath).isDirectory()) {
+        if (statSync(absolutePath).isDirectory() && existsSync(fullPath)) {
+          seenNames.add(name);
           skills.push({
             name,
-            fullPath: `${absolutePath}/SKILL.md`,
-            path: collapseHomePath(`${absolutePath}/SKILL.md`),
+            fullPath,
+            baseDir: absolutePath,
             directory: collapseHomePath(absolutePath),
           });
         }
