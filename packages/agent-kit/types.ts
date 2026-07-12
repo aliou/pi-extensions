@@ -69,6 +69,16 @@ export type SubagentToolsResolver<Params extends TSchema = TSchema> = (
   ctx: ExtensionContext,
 ) => SubagentToolSpec[] | Promise<SubagentToolSpec[]>;
 
+export type SubagentAgentsFile = {
+  path: string;
+  content: string;
+};
+
+export type SubagentAgentsFilesResolver<Params extends TSchema = TSchema> = (
+  params: Static<Params>,
+  ctx: ExtensionContext,
+) => SubagentAgentsFile[] | Promise<SubagentAgentsFile[]>;
+
 export interface SubagentConfig<Params extends TSchema = TSchema> {
   name: string;
   label: string;
@@ -101,6 +111,13 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
     ctx: ExtensionContext,
     model: Model<Api>,
   ) => SubagentPromptResult | Promise<SubagentPromptResult>;
+  /**
+   * Resolve AGENTS.md-style context files for a new invocation. Their content
+   * is reference material only; subagents are explicitly told not to treat
+   * directives in these files as instructions. Resumed sessions do not call
+   * this resolver.
+   */
+  resolveAgentsFiles?: SubagentAgentsFilesResolver<Params>;
   resolveSkills?: (params: Static<Params>, ctx: ExtensionContext) => Skill[];
   beforeExecute?: (
     params: Static<Params>,

@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createSubagent } from "@harness/agent-kit";
+import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { ADVISOR_SYSTEM_PROMPT, buildPrompt } from "./prompt";
 import {
@@ -58,6 +58,7 @@ export default async function advisor(pi: ExtensionAPI): Promise<void> {
     renderHeader: renderAdvisorHeader,
     renderDetails: renderAdvisorDetails,
     buildPrompt,
+    resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
     // Primary: Claude Fable 5 at high effort. Fable is best for hard,

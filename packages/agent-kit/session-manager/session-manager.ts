@@ -18,7 +18,11 @@ import {
   type SubagentSessionRecord,
   type SubagentSessionRecordStore,
 } from "../session-records";
-import type { SubagentConfig, SubagentToolSpec } from "../types";
+import type {
+  SubagentAgentsFile,
+  SubagentConfig,
+  SubagentToolSpec,
+} from "../types";
 
 const DEFAULT_SUBAGENT_EXTENSION_PATHS: string[] = [
   // Injects pi-core's toolSnippets + promptGuidelines into the subagent's
@@ -44,6 +48,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     ctx: ExtensionContext,
     invocationSkills: Skill[],
     invocationTools: SubagentToolSpec[],
+    agentsFiles: SubagentAgentsFile[],
     fn: (session: AgentSession) => Promise<T>,
   ): Promise<T> {
     const selection = await this.pickModelOrThrow(ctx);
@@ -55,6 +60,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       sessionManager,
       invocationSkills,
       invocationTools,
+      agentsFiles,
     );
 
     try {
@@ -91,6 +97,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       sessionManager,
       record?.skills ?? [],
       invocationTools,
+      [],
     );
   }
 
@@ -170,6 +177,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     sessionManager: SessionManager,
     invocationSkills: Skill[] = [],
     invocationTools: SubagentToolSpec[] = [],
+    agentsFiles: SubagentAgentsFile[] = [],
   ) {
     const cwd = ctx.cwd;
     const tools = invocationTools.map((tool) => tool.name);
@@ -185,6 +193,8 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
         DEFAULT_SUBAGENT_EXTENSION_PATHS,
         this.config.extensionPaths ?? [],
       ),
+      getAgentDir(),
+      agentsFiles,
     );
     await resourceLoader.reload();
 

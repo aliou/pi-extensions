@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createSubagent } from "@harness/agent-kit";
+import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { buildPrompt, ORACLE_SYSTEM_PROMPT } from "./prompt";
 import {
@@ -53,6 +53,7 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     renderHeader: renderOracleHeader,
     renderDetails: renderOracleDetails,
     buildPrompt,
+    resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
     // Primary: gpt-5.5 at xhigh (oracle is quality-at-any-latency).

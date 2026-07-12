@@ -21,6 +21,8 @@ import type {
   SubagentToolsResolver,
 } from "./types";
 
+export { loadAgentsFilesFromCwd } from "./agents-files";
+
 export type SubagentRunOptions<Params extends TSchema> = {
   callId?: string;
   signal?: AbortSignal;
@@ -44,6 +46,9 @@ export function createSubagent<Params extends TSchema>(
     options: SubagentRunOptions<Params>,
   ) => {
     const invocationSkills = config.resolveSkills?.(params, options.ctx) ?? [];
+    const agentsFiles = config.resolveAgentsFiles
+      ? await config.resolveAgentsFiles(params, options.ctx)
+      : [];
     const invocationTools = await resolveTools(
       config.tools,
       params,
@@ -53,6 +58,7 @@ export function createSubagent<Params extends TSchema>(
       options.ctx,
       invocationSkills,
       invocationTools,
+      agentsFiles,
       async (session) => {
         return new SubagentRuntime(config, session, options.signal).execute(
           options.callId ?? config.name,
@@ -170,3 +176,7 @@ export {
   type SubagentSessionRecord,
   SubagentSessionRecordStore,
 } from "./session-records";
+export type {
+  SubagentAgentsFile,
+  SubagentAgentsFilesResolver,
+} from "./types";

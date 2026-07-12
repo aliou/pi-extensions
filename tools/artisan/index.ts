@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createSubagent } from "@harness/agent-kit";
+import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { ARTISAN_SYSTEM_PROMPT, buildPrompt } from "./prompt";
 import {
@@ -54,6 +54,7 @@ export default async function artisan(pi: ExtensionAPI): Promise<void> {
     renderHeader: renderArtisanHeader,
     renderDetails: renderArtisanDetails,
     buildPrompt,
+    resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
     // Primary: gpt-5.5 at medium (vision-capable; sees screenshots natively).

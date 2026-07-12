@@ -72,6 +72,8 @@ Subagents are zero-shot: only their final response is returned to the parent. Pa
 - Research and extraction subagents (`scout`, `librarian`, `read-session`) prefer narrow scope, explicit constraints, concrete search targets, and requested evidence. Ask for files, line ranges, session evidence, or `not found` instead of allowing inference.
 - Vision and design subagents (`look-at`, screenshot-heavy `artisan` calls) prefer precise multimodal objectives: what visible evidence to inspect, what to ignore, and the desired output format.
 
+Code-reading subagents can opt into project context through `resolveAgentsFiles`. The resolver runs only for new invocations and returns the exact AGENTS.md-style files exposed to the subagent. Agent-kit marks those files as factual reference context rather than authoritative instructions, so their implementation and workflow directives do not override the subagent's assigned role. `advisor`, `artisan`, `oracle`, `reviewer`, and `scout` opt in; Scout resolves context from its requested `cwd`, while the others use the parent session cwd.
+
 Model-specific research behind these caller-facing rules lives in `docs/prompting-*.md`. Each prompting doc covers one model or model family. Keep model names out of parent-facing tool guidelines unless the caller must choose or configure a model directly.
 
 `buildPrompt` receives the resolved subagent model. Keep model selection in `modelPreferences`, model identity helpers in `@harness/models`, and model-specific prompt compilation inside the tool's `prompt.ts`.

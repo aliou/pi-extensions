@@ -1,5 +1,6 @@
+import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createSubagent } from "@harness/agent-kit";
+import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import { buildPrompt, SCOUT_SYSTEM_PROMPT } from "./prompt";
 import { renderScoutDetails, renderScoutHeader } from "./render";
 import { createScoutTools } from "./tools";
@@ -30,6 +31,8 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
     renderHeader: renderScoutHeader,
     renderDetails: renderScoutDetails,
     buildPrompt,
+    resolveAgentsFiles: (params, ctx) =>
+      loadAgentsFilesFromCwd(path.resolve(ctx.cwd, params.cwd?.trim() || ".")),
     tools,
     extensionPaths,
     // Primary: synthetic GLM-5.2 (524k ctx; the context-overflow failure mode

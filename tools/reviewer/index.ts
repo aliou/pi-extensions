@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createSubagent } from "@harness/agent-kit";
+import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
 import { buildPrompt, REVIEWER_SYSTEM_PROMPT } from "./prompt";
 import {
@@ -47,6 +47,7 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     renderHeader: renderReviewerHeader,
     renderDetails: renderReviewerDetails,
     buildPrompt,
+    resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
     // Primary: gpt-5.5 at medium (balanced default per OpenAI guidance).
