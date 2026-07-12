@@ -102,37 +102,6 @@ function getKnownTtlMs(
   return undefined;
 }
 
-/**
- * Format how long ago a cache expired as a compact, rounded relative string.
- *
- * Granularity coarsens with magnitude:
- *   < 1m   -> "45s"
- *   < 1h   -> "10m"
- *   < 24h  -> "23h"
- *   >= 24h -> "1d12h", "2d", ...
- *
- * For multi-day values the hour remainder is rounded to the nearest hour and
- * shown alongside the day count, except when it is within an hour of the
- * next day (>= 23h), in which case it rolls up to the next whole day. This
- * keeps "1d12h" readable while turning "1d23h" into "2d".
- */
-export function formatExpiredSince(sinceMs: number): string {
-  const totalSeconds = Math.max(0, Math.round(sinceMs / SECOND_MS));
-  if (totalSeconds < 60) return `${totalSeconds}s`;
-
-  const totalMinutes = Math.round(totalSeconds / 60);
-  if (totalMinutes < 60) return `${totalMinutes}m`;
-
-  const totalHours = Math.round(totalMinutes / 60);
-  if (totalHours < 24) return `${totalHours}h`;
-
-  const days = Math.floor(totalHours / 24);
-  const remHours = totalHours - days * 24;
-  if (remHours >= 23) return `${days + 1}d`;
-  if (remHours === 0) return `${days}d`;
-  return `${days}d${remHours}h`;
-}
-
 export function getCacheFreshness(
   entries: readonly SessionEntry[],
   nowMs = Date.now(),

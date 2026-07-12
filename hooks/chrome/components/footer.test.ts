@@ -180,24 +180,26 @@ describe("custom footer width safety", () => {
     }
   });
 
-  it("shows empty set with since when cache is stale, dropping hit rate", () => {
+  it("shows only empty set when cache is stale, dropping hit rate", () => {
     fixture = createFixture({ showResumeCacheFreshness: true });
     const lines = fixture.component.render(120);
 
     expect(lines[1]).toContain("∅");
+    expect(lines[1]).not.toMatch(/∅ \d+[smhd]/);
     expect(lines[1]).not.toContain("≡");
     expect(lines[1]).not.toContain("0%");
     expect(lines[1]).not.toContain("?");
   });
 
-  it("shows empty set with unknown marker after compaction", () => {
+  it("shows only empty set after compaction", () => {
     fixture = createFixture({
       showResumeCacheFreshness: true,
       compactedAfterAssistant: true,
     });
     const lines = fixture.component.render(120);
 
-    expect(lines[1]).toContain("∅ ?");
+    expect(lines[1]).toContain("∅");
+    expect(lines[1]).not.toContain("∅ ?");
     expect(lines[1]).not.toContain("≡");
     expect(lines[1]).not.toContain("0%");
   });

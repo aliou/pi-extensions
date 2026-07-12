@@ -48,6 +48,7 @@ export function getCumulativeUsage(ctx: ExtensionContext): CumulativeUsage {
   let totalCost = 0;
   let branchCost = 0;
   let latestCacheHitRate: number | undefined;
+  let hasReportedCacheActivity = false;
 
   for (const entry of ctx.sessionManager.getEntries()) {
     if (entry.type === "message" && entry.message.role === "assistant") {
@@ -57,9 +58,12 @@ export function getCumulativeUsage(ctx: ExtensionContext): CumulativeUsage {
       // assistant message's usage so a cold start or context reset is
       // reflected promptly.
       const usage = entry.message.usage;
+      hasReportedCacheActivity ||= usage.cacheRead + usage.cacheWrite > 0;
       const promptTokens = usage.input + usage.cacheRead + usage.cacheWrite;
       latestCacheHitRate =
-        promptTokens > 0 ? (usage.cacheRead / promptTokens) * 100 : undefined;
+        hasReportedCacheActivity && promptTokens > 0
+          ? (usage.cacheRead / promptTokens) * 100
+          : undefined;
     }
   }
 

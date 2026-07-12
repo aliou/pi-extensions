@@ -1,5 +1,5 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
-import { type CacheFreshness, formatExpiredSince } from "./cache-status";
+import type { CacheFreshness } from "./cache-status";
 
 const FAST_SYMBOL = "\u26A1";
 
@@ -87,16 +87,8 @@ function buildCachePart(
     cacheFreshness?.state === "stale" ||
     cacheFreshness?.state === "unknown"
   ) {
-    const sinceMs =
-      cacheFreshness.state === "stale" &&
-      cacheFreshness.ageMs !== undefined &&
-      cacheFreshness.ttlMs !== undefined
-        ? Math.max(0, cacheFreshness.ageMs - cacheFreshness.ttlMs)
-        : undefined;
     const color = cacheFreshness.state === "stale" ? "error" : "warning";
-    const text =
-      sinceMs === undefined ? "∅ ? " : `∅ ${formatExpiredSince(sinceMs)} `;
-    return theme.fg(color, text);
+    return theme.fg(color, "∅ ");
   }
 
   const remainingMs =
