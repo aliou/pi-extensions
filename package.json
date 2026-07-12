@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@aliou/pi-utils-ui": "^0.4.1",
-    "@aliou/sesame": "^0.8.0",
+    "@aliou/sesame": "^0.10.0",
     "@aliou/sh": "^0.2.0",
     "@harness/agent-kit": "workspace:*",
     "@harness/completion": "workspace:*",
@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@aliou/biome-plugins": "^0.8.1",
-    "@biomejs/biome": "^2.4.14",
+    "@biomejs/biome": "^2.5.3",
     "@earendil-works/pi-agent-core": "0.80.6",
     "@earendil-works/pi-ai": "0.80.6",
     "@earendil-works/pi-coding-agent": "0.80.6",
@@ -50,10 +50,10 @@
     "@harness/test-utils": "workspace:*",
     "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
-    "memfs": "^4.57.2",
+    "memfs": "^4.64.0",
     "typebox": "*",
     "typescript": "^5.7.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.10"
   },
   "pnpm": {
     "overrides": {
@@ -64,6 +64,12 @@
     },
     "onlyBuiltDependencies": [
       "@aliou/sh"
+    ],
+    "ignoredBuiltDependencies": [
+      "@google/genai",
+      "esbuild",
+      "koffi",
+      "protobufjs"
     ]
   },
   "packageManager": "pnpm@10.26.1"
