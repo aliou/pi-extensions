@@ -171,6 +171,10 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.9.0)
+    devDependencies:
+      '@vitest/expect':
+        specifier: ^4.0.18
+        version: 4.1.10
 
   packages/ui:
     dependencies:
@@ -3591,7 +3595,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 26.1.1
+      '@types/node': 22.19.17
     optional: true
 
   '@vitest/expect@4.0.18':

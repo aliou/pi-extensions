@@ -5,6 +5,8 @@
  * harness, not proxy-based mock state.
  */
 
+/// <reference types="@vitest/expect" />
+import "@vitest/expect";
 import { expect } from "vitest";
 import type { PiTestHarness } from "./pi-test-harness";
 
@@ -41,7 +43,7 @@ expect.extend({
   },
 });
 
-declare module "vitest" {
+declare module "@vitest/expect" {
   interface Assertion<T> {
     toHaveRegisteredTool(name: string): T;
     toHaveRegisteredCommand(name: string): T;
