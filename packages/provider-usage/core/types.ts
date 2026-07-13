@@ -58,7 +58,10 @@ export interface ProviderUsageSnapshot {
 
 export interface ProviderUsageObservation {
   provider: ProviderId;
+  displayName?: string;
   observedAt: Date;
+  status?: ProviderStatus;
+  account?: ProviderAccount;
   quotas: UsageQuota[];
   source: UsageSource;
 }

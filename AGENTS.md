@@ -100,7 +100,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 
 | Directory | Purpose | Key files |
 |---|---|---|
-| `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests for session-level gateway tracing and requests detailed reasoning summaries from GPT-5.6 Codex models | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
+| `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests, requests detailed reasoning summaries from GPT-5.6 Codex models, and stores live Codex quota headers | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, latest TPS telemetry, cache hit rate, and resume cache freshness | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
@@ -159,8 +159,8 @@ Workspace packages:
 | `packages/completion/` | `@harness/completion` | Completion logic |
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
 | `packages/image-formats/` | `@harness/image-formats` | Image MIME detection and format conversion |
-| `packages/models/` | `@harness/models` | Model groups, model usability, quota-aware broker, usage cache, history, and projections (used by the usage dashboard; subagents no longer use the broker) |
-| `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients and normalized usage abstractions |
+| `packages/models/` | `@harness/models` | Model groups, model usability, quota-aware broker, usage cache, history, and projections; response-header observations merge into the usage cache |
+| `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients, live response-header parsers, and normalized usage abstractions |
 | `packages/session-store/` | `@harness/session-store` | Session directory access, Sesame search, and listing |
 | `packages/session-tools/` | `@harness/session-tools` | Pi-agnostic session entry indexing, branch/tree traversal, and bounded read-session helpers |
 | `packages/test-utils/` | `@harness/test-utils` | Shared Vitest/Pi extension test harness utilities |

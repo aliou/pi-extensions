@@ -3,10 +3,11 @@ import {
   getProviderApiKey,
   type ProviderUsageClient,
 } from "../core/index";
+import { parseOpenAiCodexResponseHeaders } from "./headers";
 import { normalizeOpenAiCodexUsage } from "./normalize";
 import type { OpenAiCodexUsageResponse } from "./raw-types";
 
-const ENDPOINT = "https://chatgpt.com/backend-api/wham/usage";
+const USAGE_ENDPOINT = "https://chatgpt.com/backend-api/wham/usage";
 
 export const openAiCodexUsageClient: ProviderUsageClient = {
   id: "openai-codex",
@@ -15,14 +16,14 @@ export const openAiCodexUsageClient: ProviderUsageClient = {
     api: true,
     oauth: true,
     apiKey: false,
-    responseHeaders: false,
+    responseHeaders: true,
     status: true,
   },
   async fetchUsage(ctx) {
     const token = await getProviderApiKey("openai-codex", ctx);
     const accountId = chatGptAccountId(token);
     const fetchedAt = ctx?.now ?? new Date();
-    const raw = await fetchJson<OpenAiCodexUsageResponse>(ENDPOINT, ctx, {
+    const raw = await fetchJson<OpenAiCodexUsageResponse>(USAGE_ENDPOINT, ctx, {
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${token}`,
@@ -31,7 +32,10 @@ export const openAiCodexUsageClient: ProviderUsageClient = {
         "User-Agent": "pi-harness-provider-usage",
       },
     });
-    return normalizeOpenAiCodexUsage(raw, fetchedAt);
+    return normalizeOpenAiCodexUsage(raw, fetchedAt, USAGE_ENDPOINT);
+  },
+  parseResponseHeaders(headers, ctx) {
+    return parseOpenAiCodexResponseHeaders(headers, ctx?.now);
   },
 };
 

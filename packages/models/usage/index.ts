@@ -1,4 +1,6 @@
 export {
+  applyUsageObservationToCache,
+  mergeUsageObservation,
   readUsageCache,
   type UsageCacheResult,
   writeUsageCache,

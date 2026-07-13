@@ -6,13 +6,14 @@ import type {
 import type { OpenAiCodexUsageResponse, OpenAiWindow } from "./raw-types";
 
 const PROVIDER = "openai-codex" as const;
-const ENDPOINT = "https://chatgpt.com/backend-api/wham/usage";
+const DEFAULT_ENDPOINT = "https://chatgpt.com/backend-api/wham/usage";
 
 export function normalizeOpenAiCodexUsage(
   raw: OpenAiCodexUsageResponse,
   fetchedAt: Date,
+  endpoint = DEFAULT_ENDPOINT,
 ): ProviderUsageSnapshot {
-  const source: UsageSource = { kind: "api", endpoint: ENDPOINT, fetchedAt };
+  const source: UsageSource = { kind: "api", endpoint, fetchedAt };
   const quotas: UsageQuota[] = [];
   addWindow(
     quotas,
