@@ -27,14 +27,14 @@ const makeCtx = (hasUI = true) =>
   }) as unknown as ExtensionContext;
 
 describe("renderFeedbackLine", () => {
-  it("renders `feedback: <unrated>/<total>`", () => {
+  it("renders `feedback: <unrated> pending`", () => {
     const line = renderFeedbackLine(
       snapshot({ unrated: 2, total: 5 }),
       60,
       NOOP_THEME,
     );
     expect(line).toHaveLength(1);
-    expect(line[0]?.trim()).toBe("feedback: 2/5");
+    expect(line[0]?.trim()).toBe("feedback: 2 pending");
   });
 
   it("right-aligns the label within the given width", () => {
@@ -46,8 +46,8 @@ describe("renderFeedbackLine", () => {
     );
     const line = lines[0] ?? "";
     expect(line.length).toBe(width);
-    expect(line.startsWith("feedback: 2/5")).toBe(false);
-    expect(line.endsWith("feedback: 2/5")).toBe(true);
+    expect(line.startsWith("feedback: 2 pending")).toBe(false);
+    expect(line.endsWith("feedback: 2 pending")).toBe(true);
   });
 
   it("does not exceed the width when the label is longer than width", () => {
@@ -81,7 +81,7 @@ describe("setFeedbackWidget", () => {
       render: (w: number) => string[];
       invalidate: () => void;
     };
-    expect(component.render(60)[0]?.trim()).toBe("feedback: 1/3");
+    expect(component.render(60)[0]?.trim()).toBe("feedback: 1 pending");
   });
 
   it("clears the widget when there are no subagent runs", () => {

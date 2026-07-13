@@ -5,7 +5,7 @@ import type { FeedbackSnapshot } from "./types";
 export const FEEDBACK_WIDGET_ID = "feedback";
 
 /**
- * Render the single widget line: `feedback: <unrated>/<total>`, right-aligned.
+ * Render the single widget line: `feedback: <unrated> pending`, right-aligned.
  *
  * Padding is applied to the plain (unstyled) string BEFORE the theme color is
  * applied, because ANSI escape codes break naive `padStart`/`visibleWidth`.
@@ -15,7 +15,7 @@ export function renderFeedbackLine(
   width: number,
   theme: Theme,
 ): string[] {
-  const label = `feedback: ${snapshot.unrated}/${snapshot.total}`;
+  const label = `feedback: ${snapshot.unrated} pending`;
   const pad = Math.max(0, width - label.length);
   const styled = theme.fg("muted", `${" ".repeat(pad)}${label}`);
   return [
