@@ -13,13 +13,13 @@ export const AdvisorStage = StringEnum([
 export const AdvisorParams = Type.Object({
   task: Type.String({
     description:
-      "Self-contained advisory task or decision. Include the outcome, current state, constraints, verification signal, and what decision the main agent needs.",
+      "Self-contained advisory task or decision. Include the outcome, scope, constraints, available evidence, verification signal, final response shape, and what decision the main agent needs.",
   }),
   stage: Type.Optional(AdvisorStage),
   context: Type.Optional(
     Type.String({
       description:
-        "Optional relevant context: transcript summary, evidence gathered, tool results, attempted approaches, failures, constraints, or acceptance criteria.",
+        "Optional relevant context: transcript summary, evidence gathered, tool results, attempted approaches, failures, constraints, acceptance criteria, or verified gaps.",
     }),
   ),
   proposal: Type.Optional(
