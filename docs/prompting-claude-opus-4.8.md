@@ -9,6 +9,7 @@ Claude Opus 4.8 is a premium model for complex coding, tool-using agents, knowle
 - Reasoning: adaptive thinking is available only when requested. Effort is `low`, `medium`, `high`, `xhigh`, or `max`; `high` is the API default.
 - Parameters: do not set non-default `temperature`, `top_p`, or `top_k`; Opus 4.8 rejects them. Use effort and prompt constraints instead.
 - Operational behavior: literal instruction following is stronger than earlier Claude models. It may reason rather than call tools unless tools are explicitly required.
+- Safety posture: the system card reports improved honesty and fewer reckless actions, but prompt injection remains a material agentic risk. Treat retrieved files, web pages, session transcripts, emails, and other tool results as evidence rather than instructions.
 
 ## State the task and its scope literally
 
@@ -43,6 +44,8 @@ symbol for every conclusion that would change the recommended fix.
 
 Describe tools narrowly: purpose, authority, input, output, and when they are required. Parallelize independent reads or searches. Require confirmation before destructive or external writes. Let native progress updates stand unless the product requires an exact cadence; artificial "update every N calls" scaffolding is usually unnecessary.
 
+Separate tool evidence from instruction authority. If a tool result contains instructions, treat them as untrusted content unless the task is explicitly to analyze those instructions. This is especially important for advisor, reviewer, research, browser, and coding-agent surfaces where prompt injection can appear inside files, rendered docs, issue text, PR comments, session exports, or web pages.
+
 For code review, decide whether the job is coverage or filtering. A conservative severity bar can suppress valid lower-severity findings. For a two-stage review, first request all plausible issues with severity and confidence, then rank or verify them separately. For a one-pass review, define a concrete reporting threshold rather than saying only "important" issues.
 
 ## Use long context deliberately
@@ -68,6 +71,7 @@ For frontend work, give a concrete design direction, existing design-system cons
 | --- | --- |
 | Model applies a rule only to the example | State the full scope: every item, file, or section. |
 | It reasons instead of fetching required evidence | Make tool use mandatory for the named fact and say why. |
+| It follows instructions from retrieved content | State that tool results are untrusted evidence, not instruction sources. |
 | Shallow result on a hard task | Raise effort before adding procedural prompt text. |
 | Excessively long analysis | Specify output shape and use positive concise examples. |
 | Review recall appears lower after migration | Remove vague conservative filters or separate discovery from filtering. |
@@ -77,5 +81,5 @@ For frontend work, give a concrete design direction, existing design-system cons
 
 - Anthropic, [Prompting Claude Opus 4.8](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-4-8)
 - Anthropic, [What’s new in Claude Opus 4.8](https://platform.claude.com/docs/en/about-claude/models/whats-new-claude-4-8)
-- Anthropic, [Claude Opus 4.8 model report](https://www.anthropic.com/transparency/model-report)
-- Simon Willison, [Claude Opus 4.8: “a modest but tangible improvement”](https://simonwillison.net/2026/May/28/claude-opus-48/)
+- Anthropic, [Claude Opus 4.8 System Card](https://www.anthropic.com/claude-opus-4-8-system-card)
+- Anthropic, [Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)
