@@ -22,7 +22,7 @@ import {
   renderApplyPatchCall,
   renderApplyPatchResult,
 } from "./render";
-import { APPLY_PATCH_SCHEMA } from "./types";
+import { APPLY_PATCH_SCHEMA, type ApplyPatchResult } from "./types";
 
 const APPLY_PATCH_DESCRIPTION = `Apply a file patch in the V4A format. Use this tool to create, update, delete, or rename files. The entire patch is passed as a single raw text string in the \`input\` field -- do NOT wrap it in JSON, do NOT use line numbers.
 
@@ -119,24 +119,18 @@ export function createApplyPatchToolDefinition(
     promptGuidelines: APPLY_PATCH_GUIDELINES,
     parameters: APPLY_PATCH_SCHEMA,
     renderShell: "default",
-    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+    async execute(_toolCallId, params, _signal, onUpdate, ctx) {
       const workdir = ctx?.cwd ?? cwd;
       const { hunks } = parsePatch(params.input);
-      const result = await applyHunks(hunks, workdir);
-      const fileDiffs = result.fileChanges
-        .map((change): ApplyPatchFileDiff | undefined => {
-          const diff = generateDiffString(change.before, change.after).diff;
-          if (!diff) return undefined;
-          return {
-            status: getFileChangeStatus(change.before, change.after),
-            path: change.path,
-            diff,
-          };
-        })
-        .filter((change): change is ApplyPatchFileDiff => change !== undefined);
-      const diff = fileDiffs
-        .map((change) => `${change.path}\n${change.diff}`)
-        .join("\n\n");
+      // Stream a partial result per committed hunk so the UI renders files as
+      // they are edited/created, instead of only after the whole patch lands.
+      const result = await applyHunks(hunks, workdir, (partial) => {
+        onUpdate?.({
+          content: [],
+          details: buildApplyPatchDetails(params.input, partial),
+        });
+      });
+      const details = buildApplyPatchDetails(params.input, result);
       return {
         content: [
           {
@@ -146,12 +140,7 @@ export function createApplyPatchToolDefinition(
               result.summary.join("\n"),
           },
         ],
-        details: {
-          patch: params.input,
-          summary: result.summary,
-          fileDiffs,
-          diff,
-        },
+        details,
       };
     },
     renderCall: renderApplyPatchCall,
@@ -166,6 +155,37 @@ function getFileChangeStatus(
   if (!before) return "A";
   if (!after) return "D";
   return "M";
+}
+
+/**
+ * Build the renderable `ApplyPatchDetails` (summary + per-file diffs) from a
+ * (possibly partial) apply result. Shared by the final return and the
+ * per-hunk `onUpdate` stream so the live view matches the settled view.
+ */
+function buildApplyPatchDetails(
+  patch: string,
+  result: ApplyPatchResult,
+): ApplyPatchDetails {
+  const fileDiffs = result.fileChanges
+    .map((change): ApplyPatchFileDiff | undefined => {
+      const diff = generateDiffString(change.before, change.after).diff;
+      if (!diff) return undefined;
+      return {
+        status: getFileChangeStatus(change.before, change.after),
+        path: change.path,
+        diff,
+      };
+    })
+    .filter((change): change is ApplyPatchFileDiff => change !== undefined);
+  const diff = fileDiffs
+    .map((change) => `${change.path}\n${change.diff}`)
+    .join("\n\n");
+  return {
+    patch,
+    summary: result.summary,
+    fileDiffs,
+    diff,
+  };
 }
 
 // Re-export parse error type so callers (and tests) can distinguish parse

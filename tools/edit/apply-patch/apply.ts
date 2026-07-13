@@ -35,6 +35,7 @@ import type {
 export async function applyHunks(
   hunks: Hunk[],
   cwd: string,
+  onProgress?: (partial: ApplyPatchResult) => void,
 ): Promise<ApplyPatchResult> {
   if (hunks.length === 0) {
     throw new Error("No files were modified.");
@@ -122,6 +123,20 @@ export async function applyHunks(
       throw error;
     }
     appliedBefore.push(affectedPath);
+    // Stream a partial result after each committed hunk so the UI can render
+    // files as they are edited/created instead of waiting for the full patch.
+    // Snapshot the accumulated arrays: they keep mutating as later hunks run,
+    // and a consumer may hold a partial past the next tick.
+    onProgress?.({
+      affected: {
+        added: [...added],
+        modified: [...modified],
+        deleted: [...deleted],
+        overwritten: [...overwritten],
+      },
+      summary: formatSummary({ added, modified, deleted, overwritten }),
+      fileChanges: [...fileChanges],
+    });
   }
 
   const affected: AffectedPaths = { added, modified, deleted, overwritten };

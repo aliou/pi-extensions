@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { applyHunks, deriveNewContents } from "./apply";
 import { ApplyPatchParseError, parsePatch } from "./parser";
 import { createApplyPatchToolDefinition } from "./tool";
+import type { ApplyPatchResult } from "./types";
 
 vi.mock("node:fs", async () => {
   const memfs = await vi.importActual<typeof import("memfs")>("memfs");
@@ -260,6 +261,32 @@ describe("applyHunks", () => {
     expect(result.affected.overwritten).toEqual([]);
     expect(result.summary).not.toContain("overwrote existing");
   });
+
+  it("streams a partial result after each committed hunk", async () => {
+    vol.writeFileSync(join(cwd, "a.txt"), "a\n");
+    vol.writeFileSync(join(cwd, "b.txt"), "b\n");
+    const { hunks } = parsePatch(
+      "*** Begin Patch\n" +
+        "*** Add File: new.txt\n+hi\n" +
+        "*** Update File: a.txt\n@@\n-a\n+A2\n" +
+        "*** Delete File: b.txt\n" +
+        "*** End Patch",
+    );
+    const ticks: ApplyPatchResult[] = [];
+    await applyHunks(hunks, cwd, (partial) => ticks.push(partial));
+
+    // One tick per committed hunk, in commit order.
+    expect(ticks).toHaveLength(3);
+    expect(ticks.at(0)?.summary).toEqual(["A new.txt"]);
+    expect(ticks.at(1)?.summary).toEqual(["A new.txt", "M a.txt"]);
+    expect(ticks.at(2)?.summary).toEqual(["A new.txt", "M a.txt", "D b.txt"]);
+    // Each tick only includes file changes committed so far.
+    expect(ticks.at(0)?.fileChanges.map((c) => c.path)).toEqual(["new.txt"]);
+    expect(ticks.at(1)?.fileChanges.map((c) => c.path)).toEqual([
+      "new.txt",
+      "a.txt",
+    ]);
+  });
 });
 
 // Ports of openai/codex `codex-rs/apply-patch/tests/fixtures/scenarios` and
@@ -390,5 +417,44 @@ describe("apply_patch tool", () => {
         createToolContext({ cwd }),
       ),
     ).rejects.toThrow(ApplyPatchParseError);
+  });
+
+  it("streams partial details via onUpdate as each file is applied", async () => {
+    vol.writeFileSync(join(cwd, "a.ts"), "export const A = 1;\n");
+    const tool = createApplyPatchToolDefinition(cwd);
+    const updates: unknown[] = [];
+    await tool.execute(
+      "tc1",
+      {
+        input:
+          "*** Begin Patch\n" +
+          "*** Add File: b.ts\n+export const B = 2;\n" +
+          "*** Update File: a.ts\n@@\n-export const A = 1;\n+export const A = 3;\n" +
+          "*** End Patch",
+      },
+      undefined,
+      (partial) => updates.push(partial),
+      createToolContext({ cwd }),
+    );
+
+    // One partial per committed hunk. Each carries the renderable details
+    // (summary + fileDiffs) accumulated so far, with empty content.
+    expect(updates).toHaveLength(2);
+    expect(updates[0]).toMatchObject({
+      content: [],
+      details: { summary: ["A b.ts"] },
+    });
+    expect(updates[1]).toMatchObject({
+      content: [],
+      details: { summary: ["A b.ts", "M a.ts"] },
+    });
+    // The second partial already carries the diff for the first file.
+    const secondDetails = updates.at(1) as {
+      details: { fileDiffs: { path: string }[] };
+    };
+    expect(secondDetails.details.fileDiffs.map((f) => f.path)).toEqual([
+      "b.ts",
+      "a.ts",
+    ]);
   });
 });
