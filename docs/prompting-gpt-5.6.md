@@ -11,9 +11,11 @@ GPT-5.6 is a newer GPT-5 family with a Sol, Terra, and Luna size range. Tune the
 
 The public model family was in limited preview at publication time. Reconfirm model IDs, availability, supported parameters, and safety behavior against OpenAI documentation before production changes.
 
-## Use a compact, testable task contract
+## Use a compact, outcome-first task contract
 
-Give the model a direct target rather than an open-ended request. Include the outcome, constraints, available evidence, verification condition, autonomy boundary, and final answer shape.
+State the result needed before prescribing a routine process. Include the goal, relevant context, ready-to-use output, one or two material boundaries, verification condition, autonomy boundary, and final answer shape. Name the audience or intended use when it changes the structure, detail, or tone.
+
+For each supplied or connected source, say what it should contribute. Require retrieval for current information and ask for source anchors when the result must be checked. Do not add irrelevant context or enumerate every search the model should perform.
 
 ```text
 Find the cause of the desktop startup regression after workspace indexing changed.
@@ -22,7 +24,7 @@ Report evidence, smallest safe fix, and validation. Implement only if the change
 localized; otherwise stop after the diagnosis and plan.
 ```
 
-Keep system and user instructions minimal but complete. Accumulated rules, redundant examples, and generic boilerplate can dilute the important requirements. Add examples only when evaluation exposes a specific failure.
+Keep system and user instructions minimal but complete. Accumulated rules, redundant examples, and generic boilerplate can dilute the important requirements. Add examples only when evaluation exposes a specific failure. Specify a process only when it is part of the product contract or protects a material invariant; otherwise leave the model room to choose its approach.
 
 Do not counter its naturally concise answers with generic "be brief" instructions. Instead prioritize: lead with the conclusion; retain evidence, required caveats, and decision-relevant detail; remove repetition and optional background first.
 
@@ -32,7 +34,7 @@ GPT-5.6 can continue work proactively. Say whether it should give advice only, p
 
 For sensitive dual-use work, describe the legitimate context, authorization, allowed boundaries, and safe intended outcome. Do not use ambiguous wording that makes a defensive task resemble offensive misuse.
 
-When the task is underspecified, state whether it should make the simplest valid assumption, provide labeled interpretations, or ask a small number of targeted questions. Do not leave this policy implicit.
+When the task is underspecified, state whether it should make the simplest valid assumption, provide labeled interpretations, or ask a small number of targeted questions. Do not leave this policy implicit. For important outputs, request a final check tailored to the task, such as confirming required fields, reconciling related deliverables, or flagging unverified information.
 
 ## Reasoning, tools, and long runs
 
@@ -57,5 +59,6 @@ Require fresh evidence for current, repository-specific, and user-specific claim
 - OpenAI, [Using GPT-5.6](https://developers.openai.com/api/docs/guides/latest-model)
 - OpenAI, [Reasoning best practices](https://developers.openai.com/api/docs/guides/reasoning-best-practices)
 - OpenAI, [Programmatic tool calling](https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling)
+- OpenAI, [Prompting overview](https://learn.chatgpt.com/docs/prompting)
 - OpenAI, [Previewing GPT-5.6 Sol](https://openai.com/index/gpt-5-6/)
 - Simon Willison, [The new GPT-5.6 family: Luna, Terra, Sol](https://simonwillison.net/2026/Jul/9/gpt-5-6/)
