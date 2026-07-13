@@ -1,16 +1,8 @@
 import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import type { SubagentDetails } from "../types";
 
-export type ToolRenderContext<TState = unknown> = Parameters<
+export type ToolRenderContext = Parameters<
   NonNullable<
-    ToolDefinition<
-      Record<string, unknown>,
-      SubagentDetails,
-      TState
-    >["renderCall"]
+    ToolDefinition<Record<string, unknown>, SubagentDetails>["renderCall"]
   >
 >[2];
-
-export type SubagentRenderState = {
-  interval?: NodeJS.Timeout;
-};

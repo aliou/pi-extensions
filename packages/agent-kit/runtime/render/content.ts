@@ -9,7 +9,7 @@ import type { SubagentDetails, SubagentToolCall } from "../types";
 import { renderThinking, renderToolCall } from "./activity";
 import { formatCollapsedHint } from "./footer";
 import { Separator } from "./separator";
-import type { SubagentRenderState, ToolRenderContext } from "./types";
+import type { ToolRenderContext } from "./types";
 import { extractParagraphs } from "./utils";
 
 /**
@@ -18,32 +18,17 @@ import { extractParagraphs } from "./utils";
  */
 const COLLAPSED_PREVIEW_CHARS = 600;
 
-export const SUBAGENT_RENDER_INTERVAL_MS = 1000;
-
 export function renderSubagentResult(
   config: SubagentConfig,
   result: AgentToolResult<unknown>,
   options: ToolRenderResultOptions,
   theme: Theme,
-  ctx: ToolRenderContext<SubagentRenderState>,
+  ctx: ToolRenderContext,
 ) {
   const container = new Container();
   container.addChild(new Spacer(1));
 
   const details = result.details as SubagentDetails | undefined;
-
-  const running = details?.status === "running" || options.isPartial;
-  if (running) {
-    if (!ctx.state.interval) {
-      ctx.state.interval = setInterval(
-        () => ctx.invalidate(),
-        SUBAGENT_RENDER_INTERVAL_MS,
-      );
-    }
-  } else if (ctx.state.interval) {
-    clearInterval(ctx.state.interval);
-    ctx.state.interval = undefined;
-  }
 
   if (!details) {
     const text = result.content
@@ -57,6 +42,8 @@ export function renderSubagentResult(
     );
     return container;
   }
+
+  const running = details.status === "running" || options.isPartial;
 
   if (options.expanded) {
     const detailsBlock = config.renderDetails?.(details.params, theme, ctx.cwd);
