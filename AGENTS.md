@@ -100,7 +100,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 
 | Directory | Purpose | Key files |
 |---|---|---|
-| `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests, requests detailed reasoning summaries from GPT-5.6 Codex models, and stores live Codex quota headers | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
+| `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests, requests detailed reasoning summaries from GPT-5.6 Codex models, and merges live Codex quota headers into API-backed cache data | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, latest TPS telemetry, cache hit rate, and resume cache freshness | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |

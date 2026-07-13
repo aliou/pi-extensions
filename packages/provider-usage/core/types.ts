@@ -106,6 +106,7 @@ export interface UsageQuota {
   depletion: DepletionModel;
   replenishment: ReplenishmentModel;
   state?: QuotaState;
+  expirationDates?: Date[];
   source: UsageSource;
   raw?: unknown;
 }

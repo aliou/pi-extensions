@@ -40,3 +40,16 @@ export interface OpenAiCredits {
   overage_limit_reached: boolean;
   balance: string;
 }
+
+export interface OpenAiCodexResetCreditsResponse {
+  available_count: number;
+  credits: OpenAiCodexResetCredit[];
+}
+
+export interface OpenAiCodexResetCredit {
+  id: string;
+  reset_type: string;
+  status: string;
+  granted_at: string;
+  expires_at?: string | null;
+}

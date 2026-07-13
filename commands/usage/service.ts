@@ -26,7 +26,11 @@ export async function loadUsageDashboard(
 ): Promise<UsageDashboard> {
   const now = new Date();
   const cache = await readUsageCache(now);
-  if (cache?.fresh && !options.forceRefresh) {
+  if (
+    cache?.fresh &&
+    !options.forceRefresh &&
+    !hasHeaderOnlySnapshot(cache.snapshots)
+  ) {
     const hints = await buildProjectionHints(cache.snapshots);
     setProjectionHints(hints);
     return {
@@ -53,6 +57,15 @@ export async function loadUsageDashboard(
     stale: false,
     refreshedAt: now,
   };
+}
+
+function hasHeaderOnlySnapshot(snapshots: ProviderUsageSnapshot[]): boolean {
+  return snapshots.some(
+    (snapshot) =>
+      snapshot.source.kind === "response-header" &&
+      !snapshot.account?.id &&
+      !snapshot.account?.email,
+  );
 }
 
 async function fetchAllProviderSnapshots(

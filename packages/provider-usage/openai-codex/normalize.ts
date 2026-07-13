@@ -3,7 +3,11 @@ import type {
   UsageQuota,
   UsageSource,
 } from "../core/index";
-import type { OpenAiCodexUsageResponse, OpenAiWindow } from "./raw-types";
+import type {
+  OpenAiCodexResetCreditsResponse,
+  OpenAiCodexUsageResponse,
+  OpenAiWindow,
+} from "./raw-types";
 
 const PROVIDER = "openai-codex" as const;
 const DEFAULT_ENDPOINT = "https://chatgpt.com/backend-api/wham/usage";
@@ -12,13 +16,14 @@ export function normalizeOpenAiCodexUsage(
   raw: OpenAiCodexUsageResponse,
   fetchedAt: Date,
   endpoint = DEFAULT_ENDPOINT,
+  resetCredits?: OpenAiCodexResetCreditsResponse,
 ): ProviderUsageSnapshot {
   const source: UsageSource = { kind: "api", endpoint, fetchedAt };
   const quotas: UsageQuota[] = [];
   addWindow(
     quotas,
     "primary_window",
-    "5h window",
+    windowName(raw.rate_limit?.primary_window),
     raw.rate_limit?.primary_window,
     "primary",
     undefined,
@@ -29,7 +34,7 @@ export function normalizeOpenAiCodexUsage(
   addWindow(
     quotas,
     "secondary_window",
-    "7 day window",
+    windowName(raw.rate_limit?.secondary_window),
     raw.rate_limit?.secondary_window,
     "secondary",
     undefined,
@@ -42,7 +47,7 @@ export function normalizeOpenAiCodexUsage(
     addWindow(
       quotas,
       `${limit.metered_feature ?? slug(limit.limit_name)}.primary_window`,
-      `5h window (${limit.limit_name.toLowerCase()})`,
+      windowName(limit.rate_limit.primary_window, limit.limit_name),
       limit.rate_limit.primary_window,
       "model",
       limit.metered_feature ?? slug(limit.limit_name),
@@ -53,7 +58,7 @@ export function normalizeOpenAiCodexUsage(
     addWindow(
       quotas,
       `${limit.metered_feature ?? slug(limit.limit_name)}.secondary_window`,
-      `7 day window (${limit.limit_name.toLowerCase()})`,
+      windowName(limit.rate_limit.secondary_window, limit.limit_name),
       limit.rate_limit.secondary_window,
       "model",
       limit.metered_feature ?? slug(limit.limit_name),
@@ -84,6 +89,8 @@ export function normalizeOpenAiCodexUsage(
       raw: raw.credits,
     });
   }
+
+  addResetCreditsQuota(quotas, resetCredits, source, fetchedAt);
 
   return {
     provider: PROVIDER,
@@ -148,6 +155,64 @@ function windowLabel(window: OpenAiWindow): string {
   return window.limit_window_seconds
     ? `${Math.round(window.limit_window_seconds / 3600)} hour`
     : "window";
+}
+
+function windowName(
+  window: OpenAiWindow | null | undefined,
+  limitName?: string,
+): string {
+  const period =
+    window?.limit_window_seconds === 604_800
+      ? "Weekly"
+      : window?.limit_window_seconds === 18_000
+        ? "5h"
+        : window?.limit_window_seconds
+          ? `${Math.round(window.limit_window_seconds / 3600)}h`
+          : "Window";
+  return limitName ? `${limitName} ${period}` : period;
+}
+
+function addResetCreditsQuota(
+  quotas: UsageQuota[],
+  response: OpenAiCodexResetCreditsResponse | undefined,
+  source: UsageSource,
+  fetchedAt: Date,
+): void {
+  if (
+    !response ||
+    !Array.isArray(response.credits) ||
+    !Number.isFinite(response.available_count)
+  ) {
+    return;
+  }
+  const expirationDates = response.credits
+    .filter((credit) => credit.status === "available")
+    .map((credit) => parseDate(credit.expires_at))
+    .filter((date): date is Date => date != null && date > fetchedAt)
+    .sort((left, right) => left.getTime() - right.getTime());
+  const available = Math.max(0, response.available_count);
+  if (available === 0 && expirationDates.length === 0) return;
+
+  quotas.push({
+    provider: PROVIDER,
+    id: "rate_limit_reset_credits",
+    name: "Limit reset credits",
+    role: "allowance",
+    updatedAt: fetchedAt,
+    metric: { kind: "count", unit: "reset" },
+    amount: { usedPercent: 0, remaining: available },
+    period: { kind: "allowance", label: "banked resets" },
+    depletion: { kind: "remaining-balance" },
+    replenishment: { kind: "none" },
+    expirationDates,
+    source,
+  });
+}
+
+function parseDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function slug(value: string): string {

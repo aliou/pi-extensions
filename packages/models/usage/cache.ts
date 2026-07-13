@@ -11,7 +11,7 @@ const CACHE_TTL_MS = 5 * 60_000;
 let pendingCacheWrite = Promise.resolve();
 
 interface UsageCacheFile {
-  version: 6;
+  version: 7;
   writtenAt: string;
   snapshots: unknown[];
 }
@@ -28,7 +28,7 @@ export async function readUsageCache(
   try {
     const cacheText = await readFile(cachePath(), "utf8");
     const parsed = JSON.parse(cacheText) as UsageCacheFile;
-    if (parsed.version !== 6 || !Array.isArray(parsed.snapshots)) return null;
+    if (parsed.version !== 7 || !Array.isArray(parsed.snapshots)) return null;
     const writtenAt = new Date(parsed.writtenAt);
     return {
       snapshots: reviveDates(parsed.snapshots) as ProviderUsageSnapshot[],
@@ -60,7 +60,7 @@ async function writeUsageCacheFile(
   const path = cachePath();
   await mkdir(dirname(path), { recursive: true });
   const body: UsageCacheFile = {
-    version: 6,
+    version: 7,
     writtenAt: now.toISOString(),
     snapshots: snapshots.map(snapshotForCache),
   };
@@ -73,8 +73,15 @@ export async function applyUsageObservationToCache(
 ): Promise<void> {
   return enqueueCacheWrite(async () => {
     const cache = await readUsageCache(now);
+    if (
+      !cache?.snapshots.some(
+        (snapshot) => snapshot.provider === observation.provider,
+      )
+    ) {
+      return;
+    }
     await writeUsageCacheFile(
-      mergeUsageObservation(cache?.snapshots ?? [], observation),
+      mergeUsageObservation(cache.snapshots, observation),
       now,
     );
   });
@@ -87,22 +94,11 @@ export function mergeUsageObservation(
   const existing = snapshots.find(
     (snapshot) => snapshot.provider === observation.provider,
   );
-  const next = existing
-    ? mergeSnapshot(existing, observation)
-    : {
-        provider: observation.provider,
-        displayName: observation.displayName ?? observation.provider,
-        fetchedAt: observation.observedAt,
-        status: observation.status,
-        account: observation.account,
-        quotas: observation.quotas,
-        source: observation.source,
-      };
-  return existing
-    ? snapshots.map((snapshot) =>
-        snapshot.provider === observation.provider ? next : snapshot,
-      )
-    : [...snapshots, next];
+  if (!existing) return snapshots;
+  const next = mergeSnapshot(existing, observation);
+  return snapshots.map((snapshot) =>
+    snapshot.provider === observation.provider ? next : snapshot,
+  );
 }
 
 function mergeSnapshot(
@@ -214,7 +210,11 @@ function reviveDates(value: unknown): unknown {
   const out: Record<string, unknown> = {};
   for (const [key, child] of Object.entries(value)) {
     if (typeof child === "string" && isDateKey(key)) out[key] = new Date(child);
-    else out[key] = reviveDates(child);
+    else if (key === "expirationDates" && Array.isArray(child)) {
+      out[key] = child.map((date) =>
+        typeof date === "string" ? new Date(date) : date,
+      );
+    } else out[key] = reviveDates(child);
   }
   return out;
 }

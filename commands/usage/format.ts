@@ -40,6 +40,8 @@ export function formatUsageLabel(quota: UsageQuota): string {
 
   if (metric.kind === "count") {
     const unit = unitLabel(metric.unit);
+    if (amount.remaining != null)
+      return `${round(amount.remaining)} ${unit} available`;
     if (amount.capacity != null && quota.depletion.kind === "offset-burn")
       return `${percent}/${round(amount.capacity)}${unit}`;
     if (amount.used != null && amount.capacity != null)
@@ -69,6 +71,19 @@ export function quotaRenewalLabel(quota: UsageQuota): string | undefined {
   }
   if ("endsAt" in quota.period) return formatReset(quota.period.endsAt, "ends");
   return undefined;
+}
+
+export function quotaExpirationLabel(quota: UsageQuota): string | undefined {
+  if (!quota.expirationDates?.length) return undefined;
+  const dates = quota.expirationDates.map((date) =>
+    date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+  );
+  return `expires ${dates.join(" · ")}`;
 }
 
 export function periodSubtitle(quota: UsageQuota): string | undefined {

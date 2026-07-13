@@ -6,6 +6,7 @@ import {
   formatDuration,
   formatUsageLabel,
   periodSubtitle,
+  quotaExpirationLabel,
   quotaRenewalLabel,
 } from "./format";
 import { getProjectionHint } from "./projections";
@@ -31,6 +32,7 @@ export function buildQuotaViews(
     usedPercent: clampPercent(quota.amount.usedPercent),
     usageLabel: formatUsageLabel(quota),
     renewsLabel: quotaRenewalLabel(quota),
+    expirationLabel: quotaExpirationLabel(quota),
     pacePercent: pacePercent(quota),
     markerPercent: markerPercent(quota),
     projectedPercent: projectedPercent(quota),

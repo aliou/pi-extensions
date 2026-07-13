@@ -55,7 +55,8 @@ function renderQuotaBlock(
   if (vm.message) leftParts.push(theme.fg("dim", vm.message));
 
   const leftStr = leftParts.join("  ");
-  const rightStr = vm.renewsLabel ? theme.fg("dim", vm.renewsLabel) : "";
+  const rightLabel = vm.renewsLabel ?? vm.expirationLabel;
+  const rightStr = rightLabel ? theme.fg("dim", rightLabel) : "";
   const gap = Math.max(
     2,
     barWidth - visibleWidth(leftStr) - visibleWidth(rightStr),

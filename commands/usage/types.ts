@@ -21,6 +21,7 @@ export interface UsageQuotaView {
   usedPercent: number;
   usageLabel: string;
   renewsLabel?: string;
+  expirationLabel?: string;
   pacePercent?: number | null;
   markerPercent?: number | null;
   projectedPercent?: number | null;

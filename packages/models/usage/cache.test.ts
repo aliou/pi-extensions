@@ -53,18 +53,13 @@ describe("mergeUsageObservation", () => {
     ]);
   });
 
-  it("creates a minimal snapshot when no API cache exists", () => {
+  it("does not seed the dashboard cache from partial response headers", () => {
     const merged = mergeUsageObservation(
       [],
       observation([quota("primary_window", 30, "response-header")]),
     );
 
-    expect(merged).toHaveLength(1);
-    expect(merged[0]).toMatchObject({
-      provider: "openai-codex",
-      displayName: "OpenAI Codex",
-      fetchedAt: headerTime,
-    });
+    expect(merged).toEqual([]);
   });
 });
 
