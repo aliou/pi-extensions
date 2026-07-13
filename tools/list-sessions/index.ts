@@ -100,16 +100,20 @@ function stopLoadingResult(component: Component | undefined): void {
 export const LIST_SESSIONS_GUIDANCE = `
 ## list_sessions
 
-Use list_sessions to see recent sessions for a specific directory.
+Use list_sessions to browse recent sessions for a specific directory. Results are ordered by modification time, newest first.
 
 **When to use:**
 - User wants to see what sessions exist for a project directory
-- User wants to browse recent sessions without a keyword search
+- User wants to browse recent sessions for a directory without a keyword search
 - User wants to see sessions from child directories of a project
 
 **When NOT to use:**
 - User wants to search by keyword (use find_sessions)
 - User wants to read a specific session (use read_session)
+
+**How to use results:**
+- Use depth: 0 for the exact directory; increase depth only when child projects are relevant.
+- Select a session id, then use read_session with a narrow extraction goal before answering questions about its content.
 `;
 
 /**
@@ -118,20 +122,21 @@ Use list_sessions to see recent sessions for a specific directory.
 export const listSessionsTool = defineTool({
   name: "list_sessions",
   label: "List Sessions",
-  description: `List past Pi coding sessions for a given directory.
+  description: `Browse recent Pi coding sessions for a directory.
 
 WHEN TO USE:
 - Browse recent sessions for a project directory
 - See what sessions exist without a keyword search
-- List sessions from child directories with depth parameter
+- Include child directories only when needed with depth
 
-RESULTS: Returns sessions sorted by modification date (newest first) with metadata including name, message count, and dates.`,
+RESULTS: Returns sessions sorted by modification date (newest first), including names, message counts, and dates. Use read_session to inspect a selected session.`,
   promptSnippet:
-    "List recent Pi sessions for a directory, optionally including child directories.",
+    "Browse recent sessions for an exact directory or limited child-directory depth, sorted by modification time.",
   promptGuidelines: [
-    "list_sessions: Use to list sessions for a specific directory without keyword search.",
-    "list_sessions: Use depth > 0 to include sessions from child directories.",
-    "list_sessions: Do not use for keyword search (use find_sessions instead).",
+    "list_sessions: Use to browse recent sessions for a specific directory without keyword search.",
+    "list_sessions: Use depth > 0 only when child directories are relevant; depth 0 is an exact directory match.",
+    "list_sessions: Use read_session after selecting a session; do not infer session content from list metadata.",
+    "list_sessions: Do not use for keyword search; use find_sessions instead.",
   ],
 
   parameters: ListSessionsParams,
@@ -183,6 +188,10 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
         created: r.created,
         modified: r.modified,
         messageCount: r.messageCount,
+        matchMode: r.matchMode,
+        matchedType: r.matchedType,
+        matchedEntryId: r.matchedEntryId,
+        matchedAt: r.matchedAt,
       })),
     });
 
@@ -262,7 +271,7 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
 
       if (!options.expanded) {
         for (const session of results) {
-          const date = (session.created || session.modified || "").slice(0, 10);
+          const date = (session.modified || session.created || "").slice(0, 10);
           const label = session.name || "(untitled)";
           const preview =
             label.length > 48 ? `${label.slice(0, 48)}...` : label;
@@ -274,7 +283,7 @@ RESULTS: Returns sessions sorted by modification date (newest first) with metada
         }
       } else {
         for (const session of results) {
-          const date = (session.created || session.modified || "").slice(0, 10);
+          const date = (session.modified || session.created || "").slice(0, 10);
           const title = session.name || "(untitled)";
           const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;
 

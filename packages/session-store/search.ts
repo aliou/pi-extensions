@@ -67,6 +67,10 @@ function toSessionResult(r: SesameSearchResult): SessionResult {
     messageCount: 0, // filled by fillMessageCounts
     matchedSnippet: r.matchedSnippet || undefined,
     score: r.score || undefined,
+    matchMode: r.matchMode,
+    matchedType: r.matchedType,
+    matchedEntryId: r.matchedEntryId,
+    matchedAt: r.matchedAt,
   };
 }
 
@@ -105,10 +109,6 @@ function fillMessageCounts(results: SessionResult[]): void {
  */
 export function searchSessions(options: SearchOptions): SessionResult[] {
   const { query } = options;
-
-  if (!query || query.trim() === "") {
-    return [];
-  }
 
   const db = getDb();
   const sesameOptions = toSesameOptions(options);
@@ -170,6 +170,10 @@ export function listSessions(options: ListOptions): SessionResult[] {
       messageCount: row.message_count ?? 0,
       matchedSnippet: undefined,
       score: undefined,
+      matchMode: "browse",
+      matchedType: null,
+      matchedEntryId: null,
+      matchedAt: null,
     }));
   }
 
@@ -201,6 +205,10 @@ export function listSessions(options: ListOptions): SessionResult[] {
     messageCount: row.message_count ?? 0,
     matchedSnippet: undefined,
     score: undefined,
+    matchMode: "browse",
+    matchedType: null,
+    matchedEntryId: null,
+    matchedAt: null,
   }));
 }
 
@@ -275,5 +283,9 @@ export function searchSessionsByName(
     messageCount: row.message_count ?? 0,
     matchedSnippet: row.name || "(recent session)",
     score: 0,
+    matchMode: "browse",
+    matchedType: null,
+    matchedEntryId: null,
+    matchedAt: null,
   }));
 }

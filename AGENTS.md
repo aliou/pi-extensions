@@ -126,7 +126,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `bash/` | `bash` | Adds `cwd` param, spawn hooks, sanitization |
 | `edit/` | `edit`, `apply_patch` | Model-aware edit tool. Routes Codex/GPT models to a from-scratch `apply_patch` (V4A freeform patch, replacing `edit`+`write`), Kimi K2.7 Code to an overloaded `edit` with `old_string`/`new_string`, and everyone else to the native JSON `edit`; enables Anthropic strict tool-use validation on default `edit` via `before_provider_request` |
 | `find/` | `find` | Adds `glob`, blocked paths |
-| `find-sessions/` | `find_sessions` | Session keyword search via `@harness/session-store` |
+| `find-sessions/` | `find_sessions` | Session search or recent-session browsing via `@harness/session-store`; reports match provenance |
 | `get-current-time/` | `get_current_time` | Passthrough |
 | `grep/` | `grep` | Adds `literal`, `context`, blocked paths, custom render |
 | `librarian/` | `librarian`, `resume_librarian` | Zero-shot remote and cross-repo codebase researcher |

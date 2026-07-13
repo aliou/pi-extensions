@@ -9,6 +9,10 @@ export interface SessionResult {
   messageCount: number;
   matchedSnippet?: string;
   score?: number;
+  matchMode: "all" | "any" | "browse";
+  matchedType: string | null;
+  matchedEntryId: string | null;
+  matchedAt: string | null;
 }
 
 /** Lightweight session reference (autocomplete, context injection). */
@@ -22,7 +26,7 @@ export interface SessionRef {
 
 /** Options for searchSessions. */
 export interface SearchOptions {
-  query: string;
+  query?: string;
   cwd?: string;
   after?: string;
   before?: string;

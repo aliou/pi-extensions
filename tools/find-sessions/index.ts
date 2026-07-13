@@ -18,9 +18,12 @@ import { searchSessions } from "@harness/session-store";
 import { Type } from "typebox";
 
 const FindSessionsParams = Type.Object({
-  query: Type.String({
-    description: "Keyword to search for in sessions",
-  }),
+  query: Type.Optional(
+    Type.String({
+      description:
+        "Keyword to search for in sessions. Omit to browse recent sessions.",
+    }),
+  ),
   cwd: Type.Optional(
     Type.String({
       description: "Filter to sessions from this working directory",
@@ -48,7 +51,7 @@ const FindSessionsParams = Type.Object({
 });
 
 interface FindSessionsDetails {
-  query: string;
+  query?: string;
   filters: {
     cwd?: string;
     after?: string;
@@ -112,10 +115,10 @@ function stopLoadingResult(component: Component | undefined): void {
 
 function renderSessionCard(
   session: SessionResult,
-  query: string,
+  query: string | undefined,
   theme: Theme,
 ): string[] {
-  const date = (session.created || session.modified || "").slice(0, 10);
+  const date = (session.modified || session.created || "").slice(0, 10);
   const title = session.name || "(untitled)";
   const msgCount = `${session.messageCount} msg${session.messageCount === 1 ? "" : "s"}`;
   const snippet = session.matchedSnippet?.replace(/\s+/g, " ").trim();
@@ -124,9 +127,21 @@ function renderSessionCard(
   lines.push(
     `${theme.fg("muted", "┌─")} ${theme.fg("accent", session.id.slice(0, 8))} ${theme.fg("muted", "•")} ${theme.fg("muted", date)} ${theme.fg("muted", "•")} ${theme.fg("toolOutput", title)} ${theme.fg("muted", "•")} ${theme.fg("success", msgCount)}`,
   );
+  if (query) {
+    lines.push(
+      `${theme.fg("muted", "│")} ${theme.fg("muted", "term:")} ${theme.fg("accent", `"${query}"`)}`,
+    );
+  }
+
   lines.push(
-    `${theme.fg("muted", "│")} ${theme.fg("muted", "term:")} ${theme.fg("accent", `"${query}"`)}`,
+    `${theme.fg("muted", "│")} ${theme.fg("muted", "mode:")} ${theme.fg("accent", session.matchMode)}`,
   );
+
+  if (session.matchedType) {
+    lines.push(
+      `${theme.fg("muted", "│")} ${theme.fg("muted", "type:")} ${theme.fg("toolOutput", session.matchedType)}`,
+    );
+  }
 
   if (typeof session.score === "number") {
     lines.push(
@@ -147,15 +162,21 @@ function renderSessionCard(
 export const FIND_SESSIONS_GUIDANCE = `
 ## find_sessions
 
-Use find_sessions when the user explicitly asks to find or search for a previous session or conversation.
+Use find_sessions to discover past sessions by topic, date, project, or recent activity. It searches indexed session text, titles, and active checkpoints.
 
 **When to use:**
 - User asks to find a past conversation ("find the session where we discussed X")
-- User wants to locate sessions by topic, date, or project
+- User wants to locate work by topic, date, project, title, or checkpoint
+- User wants recent sessions and does not need directory-depth filtering; omit the query to browse by most recently modified
 
 **When NOT to use:**
 - Questions about the current session
 - General codebase search (use lookout/grep)
+
+**How to use results:**
+- Use a focused query when the user supplies a topic. Sesame tries all terms first and broadens only when needed; check the reported matchMode.
+- Match provenance identifies whether text, a tool call, a session title, or a checkpoint matched. Pass the selected id to read_session with a narrow extraction goal.
+- Search results are discovery metadata, not the session evidence. Use read_session before making claims about a past session.
 `;
 
 /**
@@ -164,21 +185,22 @@ Use find_sessions when the user explicitly asks to find or search for a previous
 export const findSessionsTool = defineTool({
   name: "find_sessions",
   label: "Find Sessions",
-  description: `Search through past Pi coding sessions by keyword or phrase.
+  description: `Search or browse past Pi coding sessions.
 
 WHEN TO USE:
-- Locate previous sessions by topic ("database", "auth", "bug fix")
-- Find sessions from a specific project directory
-- Search sessions within a date range
-- Retrieve recent work to continue from
+- Locate previous sessions by topic, title, or checkpoint ("database", "auth", "bug fix")
+- Find sessions from a specific project directory or modification-date range
+- Omit query to browse recent sessions, optionally narrowed by directory or date
 
-RESULTS: Returns matching sessions with metadata including name, directory, date, and matched snippet.
+RESULTS: Returns session metadata plus the best matching snippet and provenance. Match provenance can identify message text, tool calls, titles, or checkpoints. Use read_session to inspect a selected session; do not treat search snippets as complete evidence.
 Uses Sesame indexed search.`,
-  promptSnippet: "Find previous Pi sessions by topic, date, or project.",
+  promptSnippet:
+    "Search or browse past sessions by topic, title, checkpoint, date, or project; returns match provenance.",
   promptGuidelines: [
-    "find_sessions: Use when the user explicitly asks to find or search for a previous session or conversation.",
-    "find_sessions: Use when the user wants past sessions by topic, date, or project.",
-    "find_sessions: Do not use for the current session or for general codebase search.",
+    "find_sessions: Use when the user asks to find, search, or browse previous sessions by topic, title, checkpoint, date, project, or recent activity.",
+    "find_sessions: Omit query to browse recent sessions; provide a focused query for a known topic.",
+    "find_sessions: Inspect matchMode and provenance to understand why a session matched, then use read_session for evidence.",
+    "find_sessions: Do not use for the current session or general codebase search.",
   ],
 
   parameters: FindSessionsParams,
@@ -190,7 +212,8 @@ Uses Sesame indexed search.`,
     _onUpdate,
     ctx,
   ): Promise<ExecuteResult> {
-    const { query, cwd, after, before, limit } = params;
+    const { cwd, after, before, limit } = params;
+    const query = params.query?.trim() || undefined;
 
     // Get current session ID to filter it out
     const currentSessionId = ctx.sessionManager.getSessionId();
@@ -248,6 +271,10 @@ Uses Sesame indexed search.`,
         messageCount: r.messageCount,
         matchedSnippet: r.matchedSnippet,
         score: r.score,
+        matchMode: r.matchMode,
+        matchedType: r.matchedType,
+        matchedEntryId: r.matchedEntryId,
+        matchedAt: r.matchedAt,
       })),
     });
 
@@ -263,13 +290,16 @@ Uses Sesame indexed search.`,
   },
 
   renderCall(args, theme) {
-    const query = args.query.trim();
-    const shortQuery = query.length > 70 ? `${query.slice(0, 67)}...` : query;
+    const query = args.query?.trim();
+    const isBrowse = !query;
+    const displayQuery = query ?? "recent sessions";
+    const shortQuery =
+      query && query.length > 70 ? `${query.slice(0, 67)}...` : query;
 
     return new ToolCallHeader(
       {
         toolName: "Find Sessions",
-        mainArg: `"${shortQuery}"`,
+        mainArg: isBrowse ? displayQuery : `"${shortQuery}"`,
         optionArgs: [
           { label: "limit", value: String(args.limit ?? 10), tone: "accent" },
           ...(args.cwd ? [{ label: "cwd", value: args.cwd }] : []),
@@ -277,7 +307,7 @@ Uses Sesame indexed search.`,
           ...(args.before ? [{ label: "before", value: args.before }] : []),
         ],
         longArgs:
-          query.length > 70
+          query && query.length > 70
             ? [
                 {
                   label: "query",
@@ -318,7 +348,9 @@ Uses Sesame indexed search.`,
     if (resultCount === 0) {
       fields.push(
         new Text(
-          `${theme.fg("muted", "No sessions found matching")} ${theme.fg("accent", `"${query}"`)}`,
+          query
+            ? `${theme.fg("muted", "No sessions found matching")} ${theme.fg("accent", `"${query}"`)}`
+            : theme.fg("muted", "No recent sessions found"),
           0,
           0,
         ),
@@ -328,7 +360,7 @@ Uses Sesame indexed search.`,
 
       if (!options.expanded) {
         for (const session of results) {
-          const date = (session.created || session.modified || "").slice(0, 10);
+          const date = (session.modified || session.created || "").slice(0, 10);
           const label = session.name || "(untitled)";
           const preview =
             label.length > 48 ? `${label.slice(0, 48)}...` : label;
