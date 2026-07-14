@@ -10,13 +10,7 @@ import { renderThinking, renderToolCall } from "./activity";
 import { formatCollapsedHint } from "./footer";
 import { Separator } from "./separator";
 import type { ToolRenderContext } from "./types";
-import { extractParagraphs } from "./utils";
-
-/**
- * Show the full response when collapsed if it is shorter than this; otherwise
- * only show the first paragraph as a preview.
- */
-const COLLAPSED_PREVIEW_CHARS = 600;
+import { selectCollapsedPreview } from "./utils";
 
 export function renderSubagentResult(
   config: SubagentConfig,
@@ -76,33 +70,14 @@ export function renderSubagentResult(
 }
 
 function renderCollapsedResponse(text: string) {
-  const trimmed = text.trim();
-  if (trimmed.length <= COLLAPSED_PREVIEW_CHARS) {
-    return { component: new Markdown(trimmed, 0, 0, getMarkdownTheme()) };
-  }
-
-  const paragraphs = splitParagraphs(trimmed);
-  const hiddenParagraphs = Math.max(0, paragraphs.length - 1);
-  const preview = truncatePreview(extractParagraphs(trimmed, 1));
+  const { preview, hidden } = selectCollapsedPreview(text);
   return {
     component: new Markdown(preview, 0, 0, getMarkdownTheme()),
     footerPrefix:
-      hiddenParagraphs > 0
-        ? `${hiddenParagraphs} ${hiddenParagraphs === 1 ? "paragraph" : "paragraphs"} more`
+      hidden > 0
+        ? `${hidden} ${hidden === 1 ? "paragraph" : "paragraphs"} more`
         : undefined,
   };
-}
-
-function truncatePreview(text: string) {
-  if (text.length <= COLLAPSED_PREVIEW_CHARS) return text;
-  return `${text.slice(0, COLLAPSED_PREVIEW_CHARS).trimEnd()}…`;
-}
-
-function splitParagraphs(text: string) {
-  return text
-    .trim()
-    .split(/\n\s*\n/)
-    .filter((paragraph) => paragraph.trim().length > 0);
 }
 
 function renderRunning(
