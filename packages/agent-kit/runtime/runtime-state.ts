@@ -1,10 +1,15 @@
+import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type {
   AgentSession,
   AgentSessionEvent,
 } from "@earendil-works/pi-coding-agent";
 import type { TSchema } from "typebox";
 import type { SubagentConfig } from "../types";
-import { emptyUsage, SubagentCostTracker } from "./cost-tracker";
+import {
+  emptyUsage,
+  isAssistantMessage,
+  SubagentCostTracker,
+} from "./cost-tracker";
 import { SubagentMessageTracker } from "./message-tracker";
 import { SubagentToolCallTracker } from "./tool-call-tracker";
 import type { SubagentDetails } from "./types";
@@ -13,6 +18,7 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
   private messageTracker = new SubagentMessageTracker();
   private toolCallTracker = new SubagentToolCallTracker();
   private costTracker = new SubagentCostTracker();
+  private lastAssistantMessage?: AssistantMessage;
   private details: SubagentDetails;
 
   constructor(config: SubagentConfig<Params>, session: AgentSession) {
@@ -45,6 +51,10 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
 
   get value() {
     return this.details;
+  }
+
+  get lastAssistant() {
+    return this.lastAssistantMessage;
   }
 
   setPrompt(prompt: string) {
@@ -88,6 +98,9 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
       }
 
       case "message_end": {
+        if (isAssistantMessage(event.message)) {
+          this.lastAssistantMessage = event.message;
+        }
         const changed = this.costTracker.update(event);
         if (!changed) return false;
 
@@ -108,17 +121,6 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
       response,
       thinking: false,
       status: "success",
-      endedAt: Date.now(),
-    };
-  }
-
-  markEmptyResponse() {
-    this.stopThinking();
-    this.details = {
-      ...this.details,
-      error: "No response from subagent",
-      thinking: false,
-      status: "error",
       endedAt: Date.now(),
     };
   }

@@ -9,6 +9,7 @@ import { isBlank } from "@harness/utils";
 import type { Optional } from "@harness/utils/types";
 import type { Static, TSchema } from "typebox";
 import type { SubagentConfig } from "../types";
+import { buildBlankResponseError } from "./blank-response";
 import { appendSubagentSessionFooter, textContent } from "./content";
 import { SubagentRuntimeState } from "./runtime-state";
 import { formatSubagentStatus } from "./status";
@@ -71,10 +72,11 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
 
       const response = this.session.getLastAssistantText();
       if (isBlank(response)) {
-        this.state.markEmptyResponse();
-      } else {
-        this.state.markSuccess(response);
+        throw new Error(
+          buildBlankResponseError(this.state.lastAssistant, this.config.name),
+        );
       }
+      this.state.markSuccess(response);
 
       const content = this.config.resumable
         ? appendSubagentSessionFooter(

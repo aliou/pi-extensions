@@ -41,7 +41,9 @@ export class SubagentCostTracker {
   }
 }
 
-function isAssistantMessage(message: unknown): message is AssistantMessage {
+export function isAssistantMessage(
+  message: unknown,
+): message is AssistantMessage {
   return (
     typeof message === "object" &&
     message !== null &&

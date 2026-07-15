@@ -68,6 +68,8 @@ Current subagent-based tools include `advisor`, `artisan`, `librarian`, `look-at
 
 Subagents are zero-shot: only their final response is returned to the parent. Parent agents should make each subagent call self-contained.
 
+Subagent runs that produce no final answer fail the parent tool call. Provider context-overflow errors tell the parent to start a fresh, narrower subagent call because resuming retains the oversized context.
+
 - Advisory and review subagents (`advisor`, `oracle`, `artisan`, `reviewer`) prefer outcome-first prompts: outcome, what good means, constraints, how to verify, available evidence, and desired final shape. Avoid process-heavy step lists unless the sequence is a hard requirement.
 - Research and extraction subagents (`scout`, `librarian`, `read-session`) prefer narrow scope, explicit constraints, concrete search targets, and requested evidence. Ask for files, line ranges, session evidence, or `not found` instead of allowing inference.
 - Vision and design subagents (`look-at`, screenshot-heavy `artisan` calls) prefer precise multimodal objectives: what visible evidence to inspect, what to ignore, and the desired output format.
