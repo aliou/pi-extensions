@@ -1,6 +1,10 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
-import { buildOpusAdvisorPrompt, buildPrompt } from "./prompt";
+import {
+  buildGpt56SolAdvisorPrompt,
+  buildOpusAdvisorPrompt,
+  buildPrompt,
+} from "./prompt";
 import type { AdvisorParamsType } from "./types";
 
 const params: AdvisorParamsType = {
@@ -45,7 +49,30 @@ describe("advisor prompt", () => {
     expect(result.text).toContain(params.proposal);
   });
 
+  it("builds a GPT-5.6 Sol-specific advisory prompt", () => {
+    const result = buildPrompt(params, ctx, {
+      provider: "openai-codex",
+      id: "gpt-5.6-sol",
+    });
+
+    expect(result.text).toContain(
+      "Outcome: improve the main agent's next decision",
+    );
+    expect(result.text).toContain("Autonomy boundary: advise only");
+    expect(result.text).toContain("make the simplest valid assumption");
+    expect(result.text).toContain("Required answer shape:");
+    expect(result.text).toContain(params.task);
+    expect(result.text).toContain(params.context);
+    expect(result.text).toContain(params.proposal);
+    expect(result.text).toContain(
+      "- packages/agent-kit/models/model-resolver.ts",
+    );
+  });
+
   it("keeps specialized builders deterministic", () => {
     expect(buildOpusAdvisorPrompt(params)).toBe(buildOpusAdvisorPrompt(params));
+    expect(buildGpt56SolAdvisorPrompt(params)).toBe(
+      buildGpt56SolAdvisorPrompt(params),
+    );
   });
 });

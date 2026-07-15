@@ -62,7 +62,7 @@ export default async function advisor(pi: ExtensionAPI): Promise<void> {
     resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
-    // Primary: Claude Opus 4.8 at xhigh effort for complex advisory work.
+    // Opus is selected twice as often as GPT-5.6 Sol.
     // Do not set non-default sampling parameters; Opus 4.8 rejects them.
     modelPreferences: [
       {
@@ -70,6 +70,12 @@ export default async function advisor(pi: ExtensionAPI): Promise<void> {
         model: "claude-opus-4-8",
         thinking: "xhigh",
         weight: 1,
+      },
+      {
+        provider: "openai-codex",
+        model: "gpt-5.6-sol",
+        thinking: "xhigh",
+        weight: 0.5,
       },
     ],
   });
