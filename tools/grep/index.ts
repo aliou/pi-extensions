@@ -36,6 +36,12 @@ const WrappedSchema = Type.Object({
         "Treat pattern as literal string instead of regex (default: false)",
     }),
   ),
+  noIgnore: Type.Optional(
+    Type.Boolean({
+      description:
+        "Include files ignored by .gitignore / .ignore / .fdignore (default: false)",
+    }),
+  ),
   context: Type.Optional(
     Type.Number({
       description:
@@ -53,7 +59,7 @@ function createGrepTool(pi: ExtensionAPI) {
   return defineTool({
     name: "grep",
     label: "grep",
-    description: `Search file contents for a pattern. Returns matching lines with file paths and line numbers. Respects .gitignore. Output is truncated to ${DEFAULT_LIMIT} matches or 50KB (whichever is hit first). Long lines are truncated to 500 chars.`,
+    description: `Search file contents for a pattern. Returns matching lines with file paths and line numbers. Respects .gitignore unless noIgnore is set. Output is truncated to ${DEFAULT_LIMIT} matches or 50KB (whichever is hit first). Long lines are truncated to 500 chars.`,
     promptSnippet: "Search file contents for patterns (respects .gitignore)",
     parameters: WrappedSchema,
     promptGuidelines: [
@@ -61,6 +67,7 @@ function createGrepTool(pi: ExtensionAPI) {
       "grep: Use literal=true when searching for strings with special regex characters (e.g. symbols, paths).",
       "grep: Use glob to narrow search to specific file types (e.g. '*.ts', '**/*.spec.ts').",
       "grep: Use context to show surrounding lines for understanding match context.",
+      "grep: Use noIgnore=true when the target files are ignored by .gitignore.",
     ],
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       const {
@@ -69,6 +76,7 @@ function createGrepTool(pi: ExtensionAPI) {
         glob,
         ignoreCase,
         literal,
+        noIgnore,
         context,
         limit,
       } = params;
@@ -113,6 +121,7 @@ function createGrepTool(pi: ExtensionAPI) {
       const rgArgs = ["--json", "--line-number", "--color=never", "--hidden"];
       if (ignoreCase) rgArgs.push("--ignore-case");
       if (literal) rgArgs.push("--fixed-strings");
+      if (noIgnore) rgArgs.push("--no-ignore");
       if (glob) rgArgs.push("--glob", glob);
       rgArgs.push(pattern, ...absoluteSearchPaths);
 

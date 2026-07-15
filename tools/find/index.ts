@@ -12,11 +12,17 @@ const DEFAULT_LIMIT = 1000;
 
 const WrappedSchema = Type.Object({
   pattern: Type.String({
-    description: "The pattern to search for (glob or regex)",
+    description: "The pattern to search for (glob)",
   }),
   path: Type.Optional(
     Type.String({
       description: "The directory to search in (defaults to cwd)",
+    }),
+  ),
+  noIgnore: Type.Optional(
+    Type.Boolean({
+      description:
+        "Include files ignored by .gitignore / .ignore / .fdignore (default: false)",
     }),
   ),
   limit: Type.Optional(
@@ -26,16 +32,54 @@ const WrappedSchema = Type.Object({
   ),
 });
 
+// fd --glob matches patterns against the file basename by default. When a user
+// passes a glob with a literal directory prefix such as src/**/*.ts, we need
+// to run fd inside that prefix directory with the remaining file pattern so the
+// directory part is actually honored.
+function splitGlobPattern(pattern: string): {
+  baseDir: string | undefined;
+  filePattern: string;
+} {
+  const metaChars = new Set(["*", "?", "{", "}", "[", "]"]);
+  let firstMeta = -1;
+  for (let i = 0; i < pattern.length; i++) {
+    const char = pattern[i];
+    if (char && metaChars.has(char)) {
+      firstMeta = i;
+      break;
+    }
+  }
+
+  if (firstMeta <= 0) {
+    return { baseDir: undefined, filePattern: pattern };
+  }
+
+  const slashIndex = pattern.lastIndexOf("/", firstMeta - 1);
+  if (slashIndex <= 0) {
+    return { baseDir: undefined, filePattern: pattern };
+  }
+
+  const baseDir = pattern.slice(0, slashIndex);
+  const filePattern = pattern.slice(slashIndex + 1);
+
+  if (baseDir === "**" || baseDir === "*") {
+    return { baseDir: undefined, filePattern: pattern };
+  }
+
+  return { baseDir, filePattern };
+}
+
 function createFindTool(pi: ExtensionAPI) {
   return defineTool({
     name: "find",
     label: "Find Files",
-    description: `Find files by name using the \`fd\` command-line tool. Supports glob patterns and regex. Searches recursively from the specified path. Respects .gitignore. Results are truncated to ${DEFAULT_LIMIT} entries.`,
-    promptSnippet: "Find files by glob pattern or regex (respects .gitignore)",
+    description: `Find files by name using the \`fd\` command-line tool. Supports glob patterns. Searches recursively from the specified path. Respects .gitignore unless noIgnore is set. Results are truncated to ${DEFAULT_LIMIT} entries.`,
+    promptSnippet: "Find files by glob pattern (respects .gitignore)",
     parameters: WrappedSchema,
     promptGuidelines: [
       "find: Use find instead of shell find or fd when locating files in the project.",
       "find: Prefer passing path explicitly instead of scanning broad roots.",
+      "find: Use noIgnore=true when the target files are ignored by .gitignore.",
     ],
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       const pattern = params.pattern;
@@ -59,14 +103,38 @@ function createFindTool(pi: ExtensionAPI) {
         throw new Error(`Path not found: ${absoluteSearchPath}`);
       }
 
+      const { baseDir, filePattern } = splitGlobPattern(pattern);
+      const effectiveSearchPath = baseDir
+        ? resolve(absoluteSearchPath, baseDir)
+        : absoluteSearchPath;
+
+      if (BLOCKED_PATHS.has(effectiveSearchPath)) {
+        throw new Error(
+          `Searching '${effectiveSearchPath}' is not allowed — too broad. Narrow the search to a specific project or subdirectory.`,
+        );
+      }
+
+      if (!existsSync(effectiveSearchPath)) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "No files found matching the pattern.",
+            },
+          ],
+          details: {},
+        };
+      }
+
       const fdArgs = [
         "--glob",
         "--color=never",
         "--hidden",
+        ...(params.noIgnore ? ["--no-ignore"] : []),
         "--max-results",
         String(limit),
-        pattern,
-        absoluteSearchPath,
+        filePattern,
+        effectiveSearchPath,
       ];
 
       const result = await pi.exec("fd", fdArgs, {
