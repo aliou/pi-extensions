@@ -77,7 +77,7 @@ export function parsePatch(patch: string): ParseResult {
 
   const ensureUpdateHunkNotEmpty = (line: string, lineNumber: number): void => {
     const last = hunks[hunks.length - 1];
-    if (!last || last.type !== "update") return;
+    if (last?.type !== "update") return;
     if (last.chunks.length === 0 && mode === "UpdateFile") {
       fail(
         `Update file hunk for path '${last.path}' is empty`,
@@ -159,7 +159,7 @@ export function parsePatch(patch: string): ParseResult {
 
   const ensureChunk = (lineNumber: number): UpdateFileChunk => {
     const last = hunks[hunks.length - 1];
-    if (!last || last.type !== "update") {
+    if (last?.type !== "update") {
       fail("Internal error: update chunk without an update hunk", lineNumber);
     }
     if (last.chunks.length === 0) {
@@ -182,7 +182,7 @@ export function parsePatch(patch: string): ParseResult {
     lineNumber: number,
   ): void => {
     const last = hunks[hunks.length - 1];
-    if (!last || last.type !== "update") {
+    if (last?.type !== "update") {
       fail("Internal error: update content without an update hunk", lineNumber);
     }
     const lc = last.chunks[last.chunks.length - 1];

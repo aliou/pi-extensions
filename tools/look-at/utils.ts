@@ -125,7 +125,7 @@ export function injectLookAtGuidance(
   cwd: string,
 ): boolean {
   const last = messages.at(-1);
-  if (!last || last.role !== "user") return false;
+  if (last?.role !== "user") return false;
 
   const paths = findReferencedImageFiles(userMessageText(last.content), cwd);
   if (paths.length === 0) return false;

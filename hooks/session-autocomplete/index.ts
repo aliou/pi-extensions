@@ -46,7 +46,7 @@ export default async function (pi: ExtensionAPI) {
   // model knows to call read_session. Re-applied before every LLM call.
   pi.on("context", (event) => {
     const last = event.messages.at(-1);
-    if (!last || last.role !== "user") return;
+    if (last?.role !== "user") return;
 
     const ids = extractSessionIds(messageText(last.content));
     if (ids.length === 0) return;
