@@ -38,7 +38,7 @@ export default function defaultSettings(pi: ExtensionAPI): void {
         if (confirmed) {
           applyModelOverrides(config, MODEL_OVERRIDES);
           writeModelsJson(modelsJsonPath, config);
-          ctx.modelRegistry.refresh();
+          await ctx.modelRegistry.refresh();
           ctx.ui.notify(
             "models.json updated. Model overrides applied.",
             "info",

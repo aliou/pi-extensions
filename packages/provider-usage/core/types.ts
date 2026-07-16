@@ -1,5 +1,3 @@
-import type { AuthStorage } from "@earendil-works/pi-coding-agent";
-
 export type ProviderId =
   | "anthropic"
   | "openai-codex"
@@ -26,7 +24,7 @@ export interface ProviderUsageCapabilities {
 }
 
 export interface ProviderUsageFetchContext {
-  authStorage?: AuthStorage;
+  getProviderApiKey?: (provider: ProviderId) => Promise<string | undefined>;
   signal?: AbortSignal;
   now?: Date;
   fetch?: typeof fetch;

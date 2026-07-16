@@ -16,7 +16,7 @@ import { setProjectionHints } from "./projections";
 import type { UsageDashboard } from "./types";
 
 export interface LoadUsageOptions {
-  authStorage?: ProviderUsageFetchContext["authStorage"];
+  getProviderApiKey?: ProviderUsageFetchContext["getProviderApiKey"];
   signal?: AbortSignal;
   forceRefresh?: boolean;
 }
@@ -90,7 +90,7 @@ async function safeFetchProvider(
   const fetchedAt = new Date();
   try {
     return await client.fetchUsage({
-      authStorage: options.authStorage,
+      getProviderApiKey: options.getProviderApiKey,
       signal: options.signal,
       timeoutMs: 10_000,
       apertureBaseUrl,

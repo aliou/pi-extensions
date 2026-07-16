@@ -11,7 +11,12 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { isNil } from "@harness/utils/nil";
 import type { TSchema } from "typebox";
-import { pickModel, resolveModel, type SubagentModelChoice } from "../models";
+import {
+  createSubagentModelRuntime,
+  pickModel,
+  resolveModel,
+  type SubagentModelChoice,
+} from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
   SUBAGENT_SESSION_CUSTOM_TYPE,
@@ -197,6 +202,10 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       agentsFiles,
     );
     await resourceLoader.reload();
+    const modelRuntime = await createSubagentModelRuntime(
+      ctx.modelRegistry,
+      selection.model,
+    );
 
     const { session } = await createAgentSession({
       cwd,
@@ -207,7 +216,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       customTools,
       agentDir: this.subagentDir,
       resourceLoader,
-      modelRegistry: ctx.modelRegistry,
+      modelRuntime,
       settingsManager: this.settingsManager,
     });
 
@@ -237,7 +246,10 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     return SessionManager.open(sessionFile);
   }
 
-  private pickModelOrThrow(ctx: ExtensionContext): SubagentModelChoice {
+  private async pickModelOrThrow(
+    ctx: ExtensionContext,
+  ): Promise<SubagentModelChoice> {
+    await ctx.modelRegistry.refresh();
     const selection = pickModel(
       ctx.modelRegistry,
       this.config.modelPreferences,
@@ -250,10 +262,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     return selection;
   }
 
-  private resolveModelOrThrow(
+  private async resolveModelOrThrow(
     ctx: ExtensionContext,
     record?: SubagentSessionRecord,
-  ): SubagentModelChoice {
+  ): Promise<SubagentModelChoice> {
+    await ctx.modelRegistry.refresh();
     const selection = resolveModel(
       ctx.modelRegistry,
       this.config.modelPreferences,

@@ -5,7 +5,7 @@ import type {
   ProviderUsageSnapshot,
   UsageQuota,
 } from "@harness/provider-usage";
-import { assert, describe, expect, it, vi } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 import { ModelBroker } from "./model-broker";
 import type {
   ModelPreference,
@@ -18,21 +18,6 @@ const GROUP = "ad:utility:text";
 const now = new Date("2026-06-16T00:00:00Z");
 
 describe("ModelBroker", () => {
-  it("refreshes the registry before resolving models", () => {
-    const refresh = vi.fn();
-
-    new ModelBroker({
-      registry: {
-        refresh,
-        find: () => undefined,
-        hasConfiguredAuth: () => false,
-      } as unknown as ModelRegistry,
-      rosters: roster([]),
-    });
-
-    expect(refresh).toHaveBeenCalledOnce();
-  });
-
   it("chooses the first authed model in roster order", () => {
     const broker = brokerFor({
       authed: ["synthetic/a", "neuralwatt/b"],

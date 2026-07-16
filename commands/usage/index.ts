@@ -84,7 +84,11 @@ export default function usageCommand(pi: ExtensionAPI): void {
       await ensureApertureBaseUrl(cmdCtx.ui);
 
       const activeProvider = cmdCtx.model?.provider;
-      const authStorage = cmdCtx.modelRegistry?.authStorage;
+      const getProviderApiKey = (
+        provider: Parameters<
+          typeof cmdCtx.modelRegistry.getApiKeyForProvider
+        >[0],
+      ) => cmdCtx.modelRegistry.getApiKeyForProvider(provider);
 
       const result = await cmdCtx.ui.custom<"closed">(
         (tui, theme, _keybindings, done) => {
@@ -98,7 +102,7 @@ export default function usageCommand(pi: ExtensionAPI): void {
             panel = null;
             tui.requestRender();
             loadUsageDashboard({
-              authStorage,
+              getProviderApiKey,
               signal: loader.signal,
               forceRefresh,
             })

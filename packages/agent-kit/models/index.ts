@@ -1,4 +1,5 @@
 export { pickModel, resolveModel } from "./model-resolver";
+export { createSubagentModelRuntime } from "./model-runtime";
 export type {
   SubagentModelChoice,
   SubagentModelPreference,
