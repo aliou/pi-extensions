@@ -15,4 +15,6 @@ export interface HarnessGrepDetails extends GrepToolDetails {
   relativeTo?: string;
   matchCount?: number;
   matches?: GrepMatchData[];
+  outputTruncated?: boolean;
+  searchOutputTruncated?: boolean;
 }

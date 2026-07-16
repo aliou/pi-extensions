@@ -1,12 +1,19 @@
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { relative } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineTool, truncateLine } from "@earendil-works/pi-coding-agent";
+import {
+  DEFAULT_MAX_BYTES,
+  DEFAULT_MAX_LINES,
+  defineTool,
+  truncateHead,
+  truncateLine,
+} from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { BLOCKED_PATHS } from "./blocked-paths";
 import { resolveSearchPaths } from "./path-utils";
 import { renderCall } from "./render";
-import type { GrepMatchData, HarnessGrepDetails, RgMatch } from "./types";
+import { runRg } from "./rg";
+import type { GrepMatchData, HarnessGrepDetails } from "./types";
 
 const DEFAULT_LIMIT = 100;
 
@@ -55,7 +62,7 @@ const WrappedSchema = Type.Object({
   ),
 });
 
-function createGrepTool(pi: ExtensionAPI) {
+function createGrepTool() {
   return defineTool({
     name: "grep",
     label: "grep",
@@ -123,59 +130,35 @@ function createGrepTool(pi: ExtensionAPI) {
       if (literal) rgArgs.push("--fixed-strings");
       if (noIgnore) rgArgs.push("--no-ignore");
       if (glob) rgArgs.push("--glob", glob);
-      rgArgs.push(pattern, ...absoluteSearchPaths);
+      rgArgs.push("--", pattern, ...absoluteSearchPaths);
+      const result = await runRg(
+        rgArgs,
+        ctx.cwd,
+        signal ?? undefined,
+        effectiveLimit,
+      );
 
-      const result = await pi.exec("rg", rgArgs, {
-        signal: signal ?? undefined,
-        cwd: ctx.cwd,
-      });
-
-      if (result.killed && signal?.aborted) {
-        throw new Error("Operation aborted");
-      }
-
-      if (result.code !== 0 && result.code !== 1) {
+      if (result.code !== 0 && result.code !== 1 && !result.killed) {
         throw new Error(
           result.stderr || `ripgrep exited with code ${result.code}`,
         );
       }
 
-      // Parse rg JSON output to collect matches
-      const matches: RgMatch[] = [];
-      let matchCount = 0;
-      let matchLimitReached = false;
-
-      for (const line of result.stdout.split("\n")) {
-        if (!line.trim()) continue;
-        let event: {
-          type: string;
-          data?: { path?: { text: string }; line_number?: number };
-        };
-        try {
-          event = JSON.parse(line);
-        } catch (_error) {
-          void _error;
-          continue;
-        }
-        if (event.type === "match") {
-          matchCount++;
-          const filePath = event.data?.path?.text;
-          const lineNumber = event.data?.line_number;
-          if (filePath && typeof lineNumber === "number") {
-            if (matches.length < effectiveLimit) {
-              matches.push({ filePath, lineNumber });
-            }
-          }
-          if (matchCount >= effectiveLimit) {
-            matchLimitReached = true;
-          }
-        }
-      }
+      const { matches, matchCount, matchLimitReached } = result;
 
       if (matches.length === 0) {
         return {
-          content: [{ type: "text", text: "No matches found" }],
-          details: undefined,
+          content: [
+            {
+              type: "text",
+              text: result.outputTruncated
+                ? "Search output exceeded the safety limit before any matches could be collected"
+                : "No matches found",
+            },
+          ],
+          details: result.outputTruncated
+            ? { searchOutputTruncated: true }
+            : undefined,
         };
       }
 
@@ -219,13 +202,32 @@ function createGrepTool(pi: ExtensionAPI) {
 
       let linesTruncated = false;
       const matchData: GrepMatchData[] = [];
+      let renderedBytes = 0;
+      let renderingTruncated = false;
+
+      const addMatchData = (data: GrepMatchData): boolean => {
+        const rendered = `${data.path}:${data.line}: ${data.text}`;
+        const lineBytes = Buffer.byteLength(rendered, "utf8");
+        const separatorBytes = matchData.length > 0 ? 1 : 0;
+        if (
+          matchData.length >= DEFAULT_MAX_LINES ||
+          renderedBytes + separatorBytes + lineBytes > DEFAULT_MAX_BYTES
+        ) {
+          renderingTruncated = true;
+          return false;
+        }
+        matchData.push(data);
+        renderedBytes += separatorBytes + lineBytes;
+        return true;
+      };
 
       for (const match of matches) {
+        if (renderingTruncated) break;
         const relativePath = formatPath(match.filePath);
         const lines = getFileLines(match.filePath);
 
         if (!lines.length) {
-          matchData.push({
+          addMatchData({
             path: relativePath,
             line: match.lineNumber,
             text: "(unable to read file)",
@@ -249,24 +251,40 @@ function createGrepTool(pi: ExtensionAPI) {
           if (wasTruncated) linesTruncated = true;
 
           if (contextValue > 0 && !isMatchLine) {
-            matchData.push({
-              path: relativePath,
-              line: current,
-              text: `  ${truncatedText.trim()}`,
-            });
+            if (
+              !addMatchData({
+                path: relativePath,
+                line: current,
+                text: `  ${truncatedText.trim()}`,
+              })
+            ) {
+              break;
+            }
           } else {
-            matchData.push({
-              path: relativePath,
-              line: current,
-              text: truncatedText.trim(),
-            });
+            if (
+              !addMatchData({
+                path: relativePath,
+                line: current,
+                text: truncatedText.trim(),
+              })
+            ) {
+              break;
+            }
           }
         }
       }
 
+      const textContent = matchData
+        .map((m) => `${m.path}:${m.line}: ${m.text}`)
+        .join("\n");
+      const truncation = truncateHead(textContent, {
+        maxBytes: DEFAULT_MAX_BYTES,
+        maxLines: DEFAULT_MAX_LINES,
+      });
+
       const details: HarnessGrepDetails = {
         matchCount,
-        matches: matchData,
+        matches: matchData.slice(0, truncation.outputLines),
         relativeTo:
           isSingleDirectory &&
           searchDir &&
@@ -277,14 +295,12 @@ function createGrepTool(pi: ExtensionAPI) {
       };
       if (matchLimitReached) details.matchLimitReached = effectiveLimit;
       if (linesTruncated) details.linesTruncated = true;
-
-      // Text content for LLM consumption (flat format)
-      const textContent = matchData
-        .map((m) => `${m.path}:${m.line}: ${m.text}`)
-        .join("\n");
+      if (result.outputTruncated) details.searchOutputTruncated = true;
+      if (renderingTruncated) details.outputTruncated = true;
+      if (truncation.truncated) details.truncation = truncation;
 
       return {
-        content: [{ type: "text", text: textContent }],
+        content: [{ type: "text", text: truncation.content }],
         details,
       };
     },
@@ -296,5 +312,5 @@ function createGrepTool(pi: ExtensionAPI) {
 }
 
 export default function (pi: ExtensionAPI): void {
-  pi.registerTool(createGrepTool(pi));
+  pi.registerTool(createGrepTool());
 }
