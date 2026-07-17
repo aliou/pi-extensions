@@ -79,8 +79,8 @@ export default function usageCommand(pi: ExtensionAPI): void {
       // Prompt for the Aperture base URL on first run and persist it. This
       // is best-effort: anthropic (Claude Code subscription) and openai-codex
       // don't need Aperture, so the dashboard still loads if the user skips or
-      // the gateway is unreachable. synthetic/neuralwatt will just show as
-      // failed snapshots until Aperture is configured.
+      // the gateway is unreachable. synthetic/neuralwatt/openrouter will just
+      // show as failed snapshots until Aperture is configured.
       await ensureApertureBaseUrl(cmdCtx.ui);
 
       const activeProvider = cmdCtx.model?.provider;

@@ -2,7 +2,8 @@ export type ProviderId =
   | "anthropic"
   | "openai-codex"
   | "synthetic"
-  | "neuralwatt";
+  | "neuralwatt"
+  | "openrouter";
 
 export interface ProviderUsageClient {
   id: ProviderId;
