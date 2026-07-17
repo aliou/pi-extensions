@@ -25,3 +25,4 @@ export {
 } from "./result";
 export { isBlank, isPresent, truncate } from "./string";
 export type { Maybe, Optional } from "./types";
+export { escapeXml } from "./xml";

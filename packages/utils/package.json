@@ -9,7 +9,8 @@
     "./nil": "./nil.ts",
     "./path": "./path.ts",
     "./string": "./string.ts",
-    "./types": "./types.ts"
+    "./types": "./types.ts",
+    "./xml": "./xml.ts"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "*"
