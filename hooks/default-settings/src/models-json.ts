@@ -1,8 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { SOURCE_OF_TRUTH_COMMENT } from "./comment";
 
 export interface ModelsJsonConfig {
-  _comment?: string;
   providers: Record<
     string,
     {
@@ -41,6 +39,5 @@ export function readModelsJson(path: string): ModelsJsonConfig {
 }
 
 export function writeModelsJson(path: string, config: ModelsJsonConfig): void {
-  config._comment = SOURCE_OF_TRUTH_COMMENT;
   writeFileSync(path, JSON.stringify(config, null, 2), "utf-8");
 }
