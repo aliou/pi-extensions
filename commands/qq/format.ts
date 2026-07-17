@@ -30,25 +30,20 @@ export function formatFooter(details: QqAnswerDetails): string {
   return parts.join(" ");
 }
 
-export function buildSideChatContext(details: QqAnswerDetails): string {
-  return `The following context comes from a side chat. Use it as supporting context for the current task.\n\n<side_chat_context id="${escapeXmlAttribute(details.id)}">\n  <user_prompt>\n${indent(escapeXmlText(details.question), 4)}\n  </user_prompt>\n  <assistant_response>\n${indent(escapeXmlText(details.answer), 4)}\n  </assistant_response>\n</side_chat_context>`;
+/** First displayable line of a question, control chars replaced with spaces. */
+export function safeFirstLine(text: string): string {
+  return Array.from(text)
+    .map((char) => {
+      const code = char.codePointAt(0);
+      if (code === undefined) return "";
+      return code < 32 || code === 127 ? " " : char;
+    })
+    .join("")
+    .trim();
 }
 
-function indent(text: string, spaces: number): string {
-  const prefix = " ".repeat(spaces);
-  return text
-    .split("\n")
-    .map((line) => `${prefix}${line}`)
-    .join("\n");
-}
-
-function escapeXmlText(text: string): string {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-
-function escapeXmlAttribute(text: string): string {
-  return escapeXmlText(text).replaceAll('"', "&quot;");
+/** "3 questions" on wide terminals, "3q" when width is tight. */
+export function formatQuestionCount(count: number, narrow: boolean): string {
+  if (count <= 1) return narrow ? "1q" : "1 question";
+  return narrow ? `${count}q` : `${count} questions`;
 }

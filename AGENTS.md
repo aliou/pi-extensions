@@ -92,7 +92,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `copy-session-path/` | `/copy:session-path` | Copy session file path to clipboard |
 | `feedback/` (hook) | `/feedback` | Rate recent subagent runs (registered from the hook dir) |
 | `label/` | `/label <text>` | Label the current session entry |
-| `qq/` | `/qq <question>`, `/qq:list` | Quick question without interrupting main session |
+| `qq/` | `/qq [question]` | Quick question / resumable side chat without interrupting the main session |
 | `review/` | `/review`, `/review:split` | Local review workflow |
 | `spawn/` | `/spawn [note]` | Create a linked child session |
 | `theme/` | `/theme` | Cycle color theme |
@@ -102,6 +102,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 
 | Directory | Purpose | Key files |
 |---|---|---|
+| `resource-loader/` | Append `.agents/AGENTS.local.md` (cwd only) to the system prompt; complements Pi's built-in `AGENTS.md`/`CLAUDE.md` discovery which does not consult `.agents/` | `index.ts`, `load.ts` |
 | `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests, requests detailed reasoning summaries from GPT-5.6 Codex models, and merges live Codex quota headers into API-backed cache data | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, latest TPS telemetry, cache hit rate, and resume cache freshness | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |

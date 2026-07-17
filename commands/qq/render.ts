@@ -6,7 +6,7 @@ import {
 import { Markdown, Text, truncateToWidth } from "@earendil-works/pi-tui";
 import { wrapInRoundedBorder } from "@harness/ui/border";
 import { formatFooter } from "./format";
-import type { QqAnswerDetails, QqContextDetails } from "./types";
+import type { QqAnswerDetails } from "./types";
 
 export function renderQqAnswerCard(
   details: QqAnswerDetails,
@@ -56,25 +56,3 @@ export function renderQqAnswerCard(
     color: (text) => theme.fg("success", text),
   });
 }
-
-export const renderQqContext: MessageRenderer<QqContextDetails> = (
-  message,
-  options,
-  theme,
-) => {
-  const answer = message.details?.answer;
-  if (!answer) return undefined;
-
-  return {
-    render(width: number) {
-      return renderQqAnswerCard(
-        answer,
-        { expanded: options.expanded, label: "side chat", includeHint: true },
-        theme,
-        width,
-      );
-    },
-    handleInput() {},
-    invalidate() {},
-  };
-};

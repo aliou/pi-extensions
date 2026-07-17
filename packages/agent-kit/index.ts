@@ -70,6 +70,34 @@ export function createSubagent<Params extends TSchema>(
     );
   };
 
+  const resumeWithParams = async (
+    sessionId: string,
+    params: Static<Params>,
+    options: SubagentRunOptions<Params>,
+  ) => {
+    const invocationTools = await resolveTools(
+      config.tools,
+      params,
+      options.ctx,
+    );
+    const session = await sessions.resume(
+      sessionId,
+      options.ctx,
+      invocationTools,
+    );
+    const runtime = new SubagentRuntime<Params>(
+      config,
+      session,
+      options.signal,
+    );
+    return runtime.execute(
+      options.callId ?? config.name,
+      params,
+      options.onUpdate,
+      options.ctx,
+    );
+  };
+
   const asTool = () =>
     defineTool({
       name: config.name,
@@ -156,6 +184,7 @@ export function createSubagent<Params extends TSchema>(
 
   return {
     runWithParams,
+    resumeWithParams,
     asTool,
     subscribe,
     register,

@@ -1,3 +1,4 @@
+import type { Api, Model } from "@earendil-works/pi-ai";
 import type {
   ExtensionAPI,
   ExtensionCommandContext,
@@ -6,15 +7,13 @@ import { createSubagent } from "@harness/agent-kit";
 import type { SubagentDetails } from "@harness/agent-kit/runtime";
 import { QqParams } from "./types";
 
-export async function runQqSubagent(
+/** Build the qq subagent config (identical for new and resume runs). */
+function buildQqSubagent(
   pi: ExtensionAPI,
-  ctx: ExtensionCommandContext,
+  model: Model<Api>,
   systemPrompt: string,
-  userMessage: string,
-): Promise<SubagentDetails | undefined> {
-  if (!ctx.model) return undefined;
-
-  const qqSubagent = createSubagent(pi, {
+) {
+  return createSubagent(pi, {
     name: "qq",
     label: "QQ",
     description: "Answer a quick side question",
@@ -22,8 +21,8 @@ export async function runQqSubagent(
     tools: [],
     modelPreferences: [
       {
-        provider: ctx.model.provider,
-        model: ctx.model.id,
+        provider: model.provider,
+        model: model.id,
         thinking: "off",
         weight: 1,
       },
@@ -31,11 +30,31 @@ export async function runQqSubagent(
     parameters: QqParams,
     buildPrompt: (params) => ({ text: params.prompt }),
   });
+}
 
-  const result = await qqSubagent.runWithParams(
-    { prompt: userMessage },
-    { callId: "qq", ctx },
-  );
+/**
+ * Run a qq subagent. When `sessionId` is omitted, starts a NEW side chat;
+ * when provided, resumes that existing qq thread. Returns the run details,
+ * or undefined when no model is selected.
+ */
+export async function runQq(
+  pi: ExtensionAPI,
+  ctx: ExtensionCommandContext,
+  systemPrompt: string,
+  userMessage: string,
+  sessionId?: string,
+): Promise<SubagentDetails | undefined> {
+  if (!ctx.model) return undefined;
+
+  const qqSubagent = buildQqSubagent(pi, ctx.model, systemPrompt);
+  const params = { prompt: userMessage };
+  const result =
+    sessionId === undefined
+      ? await qqSubagent.runWithParams(params, { callId: "qq", ctx })
+      : await qqSubagent.resumeWithParams(sessionId, params, {
+          callId: "qq",
+          ctx,
+        });
 
   return result.details;
 }
