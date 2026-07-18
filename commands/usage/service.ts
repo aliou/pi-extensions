@@ -29,15 +29,17 @@ export async function loadUsageDashboard(
   if (
     cache?.fresh &&
     !options.forceRefresh &&
+    hasAllRegisteredProviders(cache.snapshots) &&
     !hasHeaderOnlySnapshot(cache.snapshots)
   ) {
-    const hints = await buildProjectionHints(cache.snapshots);
+    const snapshots = await refreshOpenRouterSnapshot(cache.snapshots, options);
+    const hints = await buildProjectionHints(snapshots);
     setProjectionHints(hints);
     return {
-      snapshots: cache.snapshots,
-      fromCache: true,
+      snapshots,
+      fromCache: false,
       stale: false,
-      refreshedAt: cache.writtenAt,
+      refreshedAt: now,
     };
   }
 
@@ -57,6 +59,37 @@ export async function loadUsageDashboard(
     stale: false,
     refreshedAt: now,
   };
+}
+
+async function refreshOpenRouterSnapshot(
+  cached: ProviderUsageSnapshot[],
+  options: LoadUsageOptions,
+): Promise<ProviderUsageSnapshot[]> {
+  const client = providerUsageClients.find(
+    (candidate) => candidate.id === "openrouter",
+  );
+  if (!client) return cached;
+
+  const fetched = await safeFetchProvider(
+    client,
+    options,
+    getApertureBaseUrl(),
+  );
+  const refreshed = await withProviderStatus(fetched, options.signal);
+  const usable = mergeFailedWithCache([refreshed], cached)[0];
+  if (!usable) return cached;
+
+  return cached.map((snapshot) =>
+    snapshot.provider === "openrouter" ? usable : snapshot,
+  );
+}
+
+function hasAllRegisteredProviders(
+  snapshots: ProviderUsageSnapshot[],
+): boolean {
+  return providerUsageClients.every((client) =>
+    snapshots.some((snapshot) => snapshot.provider === client.id),
+  );
 }
 
 function hasHeaderOnlySnapshot(snapshots: ProviderUsageSnapshot[]): boolean {
