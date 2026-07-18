@@ -82,6 +82,10 @@ export function buildPrompt(
 
   switch (family) {
     case "gpt-5.5":
+    case "gpt-5.6":
+    case "gpt-5.6-sol":
+    case "gpt-5.6-terra":
+    case "gpt-5.6-luna":
       return { text: buildGptArtisanPrompt(params) };
     case "kimi-k2.7-code":
       return { text: buildKimiArtisanPrompt(params) };

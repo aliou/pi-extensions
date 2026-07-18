@@ -11,10 +11,16 @@ const params: ReviewerParamsType = {
 const ctx = {} as ExtensionContext;
 
 describe("reviewer prompt", () => {
-  it("builds a highest-impact review prompt for GPT-5.5", () => {
+  it.each([
+    "gpt-5.5",
+    "gpt-5.6",
+    "gpt-5.6-sol",
+    "gpt-5.6-terra",
+    "gpt-5.6-luna",
+  ])("builds a highest-impact review prompt for %s", (id) => {
     const result = buildPrompt(params, ctx, {
       provider: "openai-codex",
-      id: "gpt-5.5",
+      id,
     });
 
     expect(result.text).toContain("highest-impact findings");

@@ -38,6 +38,10 @@ export function buildPrompt(
     case "glm-5.2":
       return { text: buildGlmReadSessionPrompt(params) };
     case "gpt-5.5":
+    case "gpt-5.6":
+    case "gpt-5.6-sol":
+    case "gpt-5.6-terra":
+    case "gpt-5.6-luna":
     case "kimi-k2.7-code":
     case undefined:
       return { text: buildGenericReadSessionPrompt(params) };

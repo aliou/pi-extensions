@@ -37,6 +37,10 @@ export function buildPrompt(
     case "glm-5.2":
       return { text: buildGlmReviewerPrompt(params) };
     case "gpt-5.5":
+    case "gpt-5.6":
+    case "gpt-5.6-sol":
+    case "gpt-5.6-terra":
+    case "gpt-5.6-luna":
       return { text: buildGptReviewerPrompt(params) };
     case "glm-4.7-flash":
     case "kimi-k2.7-code":

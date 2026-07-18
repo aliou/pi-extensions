@@ -56,7 +56,7 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
-    // Primary: gpt-5.5 at xhigh (oracle is quality-at-any-latency).
+    // Primary: GPT-5.6 Sol at xhigh (oracle is quality-at-any-latency).
     // Fallback: synthetic GLM-5.2 at xhigh -> the synthetic shim maps xhigh to
     // "medium", which the GLM-5.2 chat template falls through to Max effort
     // (neuralwatt would map xhigh -> "max" directly). Used when openai-codex is
@@ -64,7 +64,7 @@ export default async function oracle(pi: ExtensionAPI): Promise<void> {
     modelPreferences: [
       {
         provider: "openai-codex",
-        model: "gpt-5.5",
+        model: "gpt-5.6-sol",
         thinking: "xhigh",
         weight: 1,
       },

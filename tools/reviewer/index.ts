@@ -50,14 +50,14 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
-    // Primary: gpt-5.5 at medium (balanced default per OpenAI guidance).
+    // Primary: GPT-5.6 Terra at high for bounded, complex static reviews.
     // Fallback: synthetic GLM-5.2 at high. ~9% bleed at weight 0.1; takes over
     // when openai-codex is unavailable.
     modelPreferences: [
       {
         provider: "openai-codex",
-        model: "gpt-5.5",
-        thinking: "medium",
+        model: "gpt-5.6-terra",
+        thinking: "high",
         weight: 1,
       },
       {

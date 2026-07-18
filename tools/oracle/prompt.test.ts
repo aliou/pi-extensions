@@ -16,10 +16,16 @@ const params: OracleParamsType = {
 const ctx = {} as ExtensionContext;
 
 describe("oracle prompt", () => {
-  it("builds an outcome-first prompt for GPT-5.5", () => {
+  it.each([
+    "gpt-5.5",
+    "gpt-5.6",
+    "gpt-5.6-sol",
+    "gpt-5.6-terra",
+    "gpt-5.6-luna",
+  ])("builds an outcome-first prompt for %s", (id) => {
     const result = buildPrompt(params, ctx, {
       provider: "openai-codex",
-      id: "gpt-5.5",
+      id,
     });
 
     expect(result.text).toContain("outcome-first advisory shape");

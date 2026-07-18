@@ -20,6 +20,15 @@ describe("model family helpers", () => {
   });
 
   it.each([
+    [model("openai-codex", "gpt-5.6"), "gpt-5.6"],
+    [model("openai-codex", "gpt-5.6-sol"), "gpt-5.6-sol"],
+    [model("openrouter", "openai/gpt-5.6-terra"), "gpt-5.6-terra"],
+    [model("openai-codex", "gpt-5.6-luna"), "gpt-5.6-luna"],
+  ] as const)("recognizes GPT-5.6 variants: $0", (candidate, family) => {
+    expect(knownModelFamily(candidate)).toBe(family);
+  });
+
+  it.each([
     model("synthetic", "hf:zai-org/GLM-4.7-Flash"),
     model("zai", "glm-4.7-flash-fast"),
   ])("recognizes GLM-4.7-Flash variants: $provider/$id", (candidate) => {
