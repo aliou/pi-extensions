@@ -4,7 +4,7 @@ GPT-5.6 is a newer GPT-5 family with a Sol, Terra, and Luna size range. Tune the
 
 ## Model profile
 
-- Best fit: Sol for the most demanding coding and professional work, Terra for balanced daily work, and Luna for fast, lower-cost tasks. Select the variant before compensating with prompt complexity.
+- Best fit: Sol for complex, open-ended, high-value work; Terra for everyday multi-step work that needs judgment; Luna for clear, well-scoped, high-volume work. Select the variant before compensating with prompt complexity.
 - Behavioral profile: proactive and compressed by default. It benefits from a small, precise task contract and explicit permission boundaries.
 - Reasoning: configure effort in the API rather than asking for visible reasoning. Begin at the corresponding GPT-5.5 effort level, then compare that level and one level lower.
 - Context and caching: preserve a stable prompt prefix where possible. GPT-5.6 introduces explicit cache breakpoints and a minimum 30-minute cache life; use these in integration design, not task prose.
@@ -38,7 +38,18 @@ When the task is underspecified, state whether it should make the simplest valid
 
 ## Reasoning, tools, and long runs
 
-Reasoning effort is a runtime trade-off, not prompt text. Use `low` for latency-sensitive or cheaply verified work; use `medium` as a general baseline; increase to `high` or `xhigh` only when evaluation proves a quality gain; reserve `max` for exceptional quality-first work.
+Reasoning effort is a runtime trade-off, not prompt text. The GPT-5.6 Codex guidance identifies these useful model-and-effort pairings:
+
+| Codex level | Best fit |
+| --- | --- |
+| Sol Medium | Default starting point for difficult work. |
+| Terra High | Understood implementation or review work with meaningful complexity. |
+| Luna xHigh | Well-scoped implementation where speed matters. |
+| Sol Ultra | High-stakes work with scattered context, substantial ambiguity, or a need for proactive multi-agent coordination. |
+
+The post's rule of thumb is to increase effort as models get smaller: Sol Medium, Terra High, and Luna xHigh are comparable starting points for the same class of task. Ultra is not a routine default; reserve it for work where maximum reasoning and coordination justify the extra tokens.
+
+Codex labels such as `Ultra` are product-level terms, not this repository's `thinking` enum. Keep the provider-supported configuration values (such as `medium`, `high`, and `xhigh`) in code; do not invent `thinking: "ultra"`. For all models, start at the smallest effort that meets the finish line and raise it only when representative evaluation shows a material gain.
 
 For tool-heavy workflows, define the stage, allowed tools, result schema, retry limit, stop condition, and handoff. Use direct tool calls when the next action depends on fresh model judgement, approval, or native artifacts. Use programmatic tool calling when code can reliably filter, join, rank, aggregate, deduplicate, or validate bulky tool output before returning a smaller result to the model.
 
@@ -61,4 +72,5 @@ Require fresh evidence for current, repository-specific, and user-specific claim
 - OpenAI, [Programmatic tool calling](https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling)
 - OpenAI, [Prompting overview](https://learn.chatgpt.com/docs/prompting)
 - OpenAI, [Previewing GPT-5.6 Sol](https://openai.com/index/gpt-5-6/)
+- Peter V., [Choosing GPT-5.6 Sol, Terra, or Luna in Codex](https://x.com/pvncher/status/2077708372363624894)
 - Simon Willison, [The new GPT-5.6 family: Luna, Terra, Sol](https://simonwillison.net/2026/Jul/9/gpt-5-6/)
