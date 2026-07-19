@@ -59,6 +59,35 @@ describe("apply_patch result rendering", () => {
     expect(output).toContain("old line");
     expect(output).toContain("new line");
   });
+
+  it("suppresses expanded diffs for binary files", () => {
+    const component = renderApplyPatchResult(
+      {
+        ...result,
+        details: {
+          ...result.details,
+          summary: ["M assets/logo.png"],
+          fileDiffs: [
+            {
+              status: "M" as const,
+              path: "assets/logo.png",
+              isBinary: true,
+              diff: "-binary old bytes\n+binary new bytes",
+            },
+          ],
+        },
+      },
+      { expanded: true },
+      plainTheme,
+      { isError: false },
+    );
+    const output = component.render(120).join("\n");
+
+    expect(output).toContain("M  assets/logo.png");
+    expect(output).toContain("binary file; diff suppressed");
+    expect(output).not.toContain("binary old bytes");
+    expect(output).not.toContain("binary new bytes");
+  });
 });
 
 describe("apply_patch call rendering", () => {

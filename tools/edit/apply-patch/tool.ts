@@ -100,6 +100,8 @@ export interface ApplyPatchDetails {
 export interface ApplyPatchFileDiff {
   status: "A" | "M" | "D";
   path: string;
+  /** Present when the file contains binary content and its diff is suppressed. */
+  isBinary?: true;
   diff: string;
 }
 
@@ -168,6 +170,14 @@ function buildApplyPatchDetails(
 ): ApplyPatchDetails {
   const fileDiffs = result.fileChanges
     .map((change): ApplyPatchFileDiff | undefined => {
+      if (change.isBinary) {
+        return {
+          status: getFileChangeStatus(change.before, change.after),
+          path: change.path,
+          isBinary: true,
+          diff: "",
+        };
+      }
       const diff = generateDiffString(change.before, change.after).diff;
       if (!diff) return undefined;
       return {

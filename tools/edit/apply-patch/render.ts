@@ -138,18 +138,23 @@ function formatExpandedDiff(
     return details.diff ? renderDiff(details.diff) : undefined;
   }
   return fileDiffs
-    .map(
-      (fileDiff) =>
-        `${formatExpandedPath(fileDiff, theme)}\n${renderDiff(fileDiff.diff)}`,
-    )
+    .map((fileDiff) => {
+      if (fileDiff.isBinary) {
+        return `${formatExpandedPath(fileDiff, theme, false)} ${theme.fg("dim", "(binary file; diff suppressed)")}`;
+      }
+      return `${formatExpandedPath(fileDiff, theme)}\n${renderDiff(fileDiff.diff)}`;
+    })
     .join("\n\n");
 }
 
 function formatExpandedPath(
   fileDiff: ApplyPatchFileDiff,
   theme: Theme,
+  showStat = true,
 ): string {
-  const stat = renderFileStat(summarizeDiff(fileDiff.diff), theme);
+  const stat = showStat
+    ? renderFileStat(summarizeDiff(fileDiff.diff), theme)
+    : "";
   return `${formatStatus(fileDiff.status, theme)}  ${theme.fg("accent", theme.bold(fileDiff.path))}${stat}`;
 }
 

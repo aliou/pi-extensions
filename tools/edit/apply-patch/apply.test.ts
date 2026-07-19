@@ -406,6 +406,48 @@ describe("apply_patch tool", () => {
     expect(result.details?.diff).toContain("+1 export const X = 2;");
   });
 
+  it.each([
+    { path: "logo.data", content: Buffer.from([0xff, 0xd8, 0xff, 0xe0]) },
+    { path: "archive.data", content: Buffer.from([0x01, 0x00, 0x02]) },
+  ])("detects binary $path by content, not extension", async ({
+    path,
+    content,
+  }) => {
+    vol.writeFileSync(join(cwd, path), content);
+    const tool = createApplyPatchToolDefinition(cwd);
+    const result = await tool.execute(
+      "tc1",
+      {
+        input: `*** Begin Patch\n*** Delete File: ${path}\n*** End Patch`,
+      },
+      undefined,
+      undefined,
+      createToolContext({ cwd }),
+    );
+
+    expect(result.details?.fileDiffs).toEqual([
+      { status: "D", path, isBinary: true, diff: "" },
+    ]);
+  });
+
+  it("keeps valid UTF-8 text diffable even when it starts with GIF", async () => {
+    vol.writeFileSync(join(cwd, "notes.txt"), "GIF notes\n");
+    const tool = createApplyPatchToolDefinition(cwd);
+    const result = await tool.execute(
+      "tc1",
+      {
+        input: "*** Begin Patch\n*** Delete File: notes.txt\n*** End Patch",
+      },
+      undefined,
+      undefined,
+      createToolContext({ cwd }),
+    );
+
+    expect(result.details?.fileDiffs).toEqual([
+      { status: "D", path: "notes.txt", diff: "-1 GIF notes" },
+    ]);
+  });
+
   it("surfaces parse errors as thrown errors", async () => {
     const tool = createApplyPatchToolDefinition(cwd);
     await expect(

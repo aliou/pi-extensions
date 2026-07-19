@@ -22,6 +22,7 @@
 
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { TextDecoder } from "node:util";
 
 import { seekSequence } from "./seek";
 import type {
@@ -58,22 +59,33 @@ export async function applyHunks(
       if (hunk.type === "add") {
         const abs = resolve(cwd, hunk.path);
         const exists = await pathExists(abs);
-        const before = exists ? await readFileText(abs) : "";
+        const before = exists
+          ? await readFileContent(abs)
+          : { text: "", isBinary: false };
         if (exists) overwritten.push(affectedPath);
         await writeFileWithDirs(abs, hunk.contents);
         added.push(affectedPath);
-        fileChanges.push({ path: affectedPath, before, after: hunk.contents });
+        fileChanges.push(
+          createFileChange(
+            affectedPath,
+            before.text,
+            hunk.contents,
+            before.isBinary || isBinaryText(hunk.contents),
+          ),
+        );
       } else if (hunk.type === "delete") {
         const abs = resolve(cwd, hunk.path);
         await ensureNotDirectory(abs);
-        const before = await readFileText(abs);
+        const before = await readFileContent(abs);
         await rm(abs, { force: false });
         deleted.push(affectedPath);
-        fileChanges.push({ path: affectedPath, before, after: "" });
+        fileChanges.push(
+          createFileChange(affectedPath, before.text, "", before.isBinary),
+        );
       } else {
         const abs = resolve(cwd, hunk.path);
-        const original = await readFileText(abs);
-        const next = deriveNewContents(original, hunk.chunks, abs);
+        const original = await readFileContent(abs);
+        const next = deriveNewContents(original.text, hunk.chunks, abs);
         if (hunk.movePath) {
           const dest = resolve(cwd, hunk.movePath);
           // Issue A: a Move to the same path writes the new content then
@@ -86,26 +98,36 @@ export async function applyHunks(
             );
           }
           const destExists = await pathExists(dest);
-          const destBefore = destExists ? await readFileText(dest) : "";
+          const destBefore = destExists
+            ? await readFileContent(dest)
+            : { text: "", isBinary: false };
           if (destExists) {
             overwritten.push(hunk.movePath);
           }
           await writeFileWithDirs(dest, next);
           await ensureNotDirectory(abs);
           await rm(abs, { force: false });
-          fileChanges.push({ path: hunk.path, before: original, after: "" });
-          fileChanges.push({
-            path: hunk.movePath,
-            before: destBefore,
-            after: next,
-          });
+          fileChanges.push(
+            createFileChange(hunk.path, original.text, "", original.isBinary),
+          );
+          fileChanges.push(
+            createFileChange(
+              hunk.movePath,
+              destBefore.text,
+              next,
+              destBefore.isBinary || original.isBinary || isBinaryText(next),
+            ),
+          );
         } else {
           await writeFileWithDirs(abs, next);
-          fileChanges.push({
-            path: affectedPath,
-            before: original,
-            after: next,
-          });
+          fileChanges.push(
+            createFileChange(
+              affectedPath,
+              original.text,
+              next,
+              original.isBinary || isBinaryText(next),
+            ),
+          );
         }
         modified.push(affectedPath);
       }
@@ -185,15 +207,51 @@ async function pathExists(absPath: string): Promise<boolean> {
   }
 }
 
-async function readFileText(absPath: string): Promise<string> {
+interface FileContent {
+  text: string;
+  isBinary: boolean;
+}
+
+async function readFileContent(absPath: string): Promise<FileContent> {
   try {
-    return await readFile(absPath, "utf8");
+    const buffer = await readFile(absPath);
+    return { text: buffer.toString("utf8"), isBinary: isBinaryBuffer(buffer) };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       throw new Error(`Failed to read file to update ${absPath}`);
     }
     throw error;
   }
+}
+
+function isBinaryText(text: string): boolean {
+  return isBinaryBuffer(Buffer.from(text));
+}
+
+function isBinaryBuffer(buffer: Uint8Array): boolean {
+  const sample = buffer.subarray(0, 8_000);
+  if (sample.includes(0)) return true;
+
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(sample);
+  } catch {
+    return true;
+  }
+
+  return sample.some(
+    (byte) => byte < 0x20 && byte !== 0x09 && byte !== 0x0a && byte !== 0x0d,
+  );
+}
+
+function createFileChange(
+  path: string,
+  before: string,
+  after: string,
+  isBinary: boolean,
+): FileChange {
+  return isBinary
+    ? { path, before, after, isBinary: true }
+    : { path, before, after };
 }
 
 /** Compute new file contents after applying `chunks` to `original`. */

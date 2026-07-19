@@ -76,4 +76,6 @@ export interface FileChange {
   path: string;
   before: string;
   after: string;
+  /** Present when either version has binary content. */
+  isBinary?: true;
 }
