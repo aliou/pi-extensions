@@ -22,8 +22,14 @@ test("shows all skills for ??", async () => {
   const root = mkdtempSync(join(tmpdir(), "skill-autocomplete-"));
   mkdirSync(join(root, "alpha"));
   mkdirSync(join(root, "beta"));
-  writeFileSync(join(root, "alpha", "SKILL.md"), "alpha instructions");
-  writeFileSync(join(root, "beta", "SKILL.md"), "beta instructions");
+  writeFileSync(
+    join(root, "alpha", "SKILL.md"),
+    "---\nname: alpha\ndescription: Alpha skill description\n---\n\nalpha instructions",
+  );
+  writeFileSync(
+    join(root, "beta", "SKILL.md"),
+    "---\nname: beta\ndescription: Beta skill description\n---\n\nbeta instructions",
+  );
 
   try {
     const provider = createSkillAutocompleteProvider(current, [root]);
@@ -33,7 +39,10 @@ test("shows all skills for ??", async () => {
 
     expect(suggestions).toMatchObject({
       prefix: "??",
-      items: [{ label: "alpha" }, { label: "beta" }],
+      items: [
+        { label: "alpha", description: "Alpha skill description" },
+        { label: "beta", description: "Beta skill description" },
+      ],
     });
   } finally {
     rmSync(root, { recursive: true, force: true });

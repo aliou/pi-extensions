@@ -1,9 +1,17 @@
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { collapseHomePath } from "@harness/utils/path";
+
+interface SkillFrontmatter {
+  description?: string;
+  [key: string]: unknown;
+}
 
 export interface SkillInfo {
   /** Directory name, e.g. "vitest". */
   name: string;
+  /** Description from the SKILL.md frontmatter. */
+  description?: string;
   /** Absolute path to SKILL.md, e.g. "/home/user/skills/vitest/SKILL.md". */
   fullPath: string;
   /** Absolute skill directory used to resolve relative references. */
@@ -37,8 +45,12 @@ export function listSkills(skillsRoots: string[]): SkillInfo[] {
       try {
         if (statSync(absolutePath).isDirectory() && existsSync(fullPath)) {
           seenNames.add(name);
+          const { frontmatter } = parseFrontmatter<SkillFrontmatter>(
+            readFileSync(fullPath, "utf-8"),
+          );
           skills.push({
             name,
+            description: frontmatter.description,
             fullPath,
             baseDir: absolutePath,
             directory: collapseHomePath(absolutePath),

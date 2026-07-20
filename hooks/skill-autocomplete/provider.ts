@@ -95,7 +95,7 @@ export function createSkillAutocompleteProvider(
         const items: AutocompleteItem[] = skills.map((skill) => ({
           value: skill.name,
           label: skill.name,
-          description: skill.directory,
+          description: skill.description ?? skill.directory,
         }));
 
         return {
