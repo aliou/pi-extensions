@@ -116,6 +116,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `skill-autocomplete/` | `?` skill autocomplete; sends each inline skill as a rendered context message and retains skill names in user prose | `index.ts`, `expand.ts`, `render.ts` |
 | `tmux-autocomplete/` | `@tmux:` tmux session/window autocomplete | `index.ts`, `provider.ts`, `tmux.ts`, `types.ts` |
 | `tps/` | Per-turn tokens-per-second telemetry emitted as `ad:tps:telemetry` for footer display and other consumers | `index.ts`, `utils.ts`, `types.ts` |
+| `workspace-metadata/` | Record model-hidden hostname, canonical cwd, and Git remote metadata for new/forked sessions, and backfill existing sessions that lack it | `index.ts`, `helpers.ts`, `types.ts` |
 | `zoxide-autocomplete/` | `@z:` project path autocomplete | `index.ts` |
 
 ## Tools
