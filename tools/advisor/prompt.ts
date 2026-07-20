@@ -150,7 +150,9 @@ function advisorModelFamily(
 ): AdvisorModelFamily | undefined {
   const id = normalizedId(model);
 
-  if (id === "claude-opus-4-8") return "opus-4.8";
+  if (id === "claude-opus-4-8" || id === "claude-opus-4.8") {
+    return "opus-4.8";
+  }
   if (id === "gpt-5.6-sol") return "gpt-5.6-sol";
 
   return undefined;

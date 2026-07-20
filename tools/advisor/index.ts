@@ -62,7 +62,8 @@ export default async function advisor(pi: ExtensionAPI): Promise<void> {
     resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
-    // Opus is selected twice as often as GPT-5.6 Sol.
+    // Prefer Opus through direct Anthropic or OpenRouter, with
+    // GPT-5.6 Sol retained as the existing lower-weight fallback.
     // Do not set non-default sampling parameters; Opus 4.8 rejects them.
     modelPreferences: [
       {
@@ -72,10 +73,16 @@ export default async function advisor(pi: ExtensionAPI): Promise<void> {
         weight: 1,
       },
       {
+        provider: "openrouter",
+        model: "anthropic/claude-opus-4.8",
+        thinking: "xhigh",
+        weight: 0.5,
+      },
+      {
         provider: "openai-codex",
         model: "gpt-5.6-sol",
         thinking: "xhigh",
-        weight: 0.5,
+        weight: 0,
       },
     ],
   });

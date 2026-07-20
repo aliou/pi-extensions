@@ -37,6 +37,15 @@ describe("advisor prompt", () => {
     );
   });
 
+  it("builds the Opus prompt for the OpenRouter fallback", () => {
+    const result = buildPrompt(params, ctx, {
+      provider: "aperture",
+      id: "anthropic/claude-opus-4.8",
+    });
+
+    expect(result.text).toContain("Claude Opus 4.8's strengths");
+  });
+
   it("uses the generic prompt for unknown models", () => {
     const result = buildPrompt(params, ctx, {
       provider: "openai-codex",
