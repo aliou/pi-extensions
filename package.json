@@ -17,6 +17,8 @@
     ]
   },
   "scripts": {
+    "evals": "vitest run --config evals/vitest.config.ts",
+    "evals:ui": "vitest-evals serve .vitest-evals --port 11116",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --build",
@@ -49,6 +51,7 @@
     "@earendil-works/pi-ai": "0.80.8",
     "@earendil-works/pi-coding-agent": "0.80.8",
     "@earendil-works/pi-tui": "0.80.8",
+    "@golevelup/ts-vitest": "^4.0.0",
     "@harness/test-utils": "workspace:*",
     "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
@@ -56,7 +59,8 @@
     "memfs": "^4.64.0",
     "typebox": "*",
     "typescript": "^5.7.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "vitest-evals": "^0.15.0"
   },
   "pnpm": {
     "overrides": {

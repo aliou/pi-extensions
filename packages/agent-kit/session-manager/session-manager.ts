@@ -16,6 +16,7 @@ import {
   pickModel,
   resolveModel,
   type SubagentModelChoice,
+  type SubagentModelPreference,
 } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
@@ -55,8 +56,9 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     invocationTools: SubagentToolSpec[],
     agentsFiles: SubagentAgentsFile[],
     fn: (session: AgentSession) => Promise<T>,
+    modelPreferences?: readonly SubagentModelPreference[],
   ): Promise<T> {
-    const selection = await this.pickModelOrThrow(ctx);
+    const selection = await this.pickModelOrThrow(ctx, modelPreferences);
     const parentSessionId = ctx.sessionManager.getSessionId();
     const sessionManager = this.createSessionManager(ctx.cwd);
     const session = await this.createAgentSession(
@@ -248,12 +250,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
 
   private async pickModelOrThrow(
     ctx: ExtensionContext,
+    modelPreferences: readonly SubagentModelPreference[] = this.config
+      .modelPreferences,
   ): Promise<SubagentModelChoice> {
     await ctx.modelRegistry.refresh();
-    const selection = pickModel(
-      ctx.modelRegistry,
-      this.config.modelPreferences,
-    );
+    const selection = pickModel(ctx.modelRegistry, modelPreferences);
     if (!selection) {
       throw new Error(`No model available for ${this.config.label} subagent`);
     }

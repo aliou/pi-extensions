@@ -7,8 +7,8 @@ import { buildPrompt, SESSION_NAME_SYSTEM_PROMPT } from "./prompt";
 import { createSessionNameTools } from "./tools";
 import { countCompletedAssistantTurns, getRecentTurns } from "./turns";
 
-export default async function sessionName(pi: ExtensionAPI): Promise<void> {
-  const subagent = createSubagent(pi, {
+export function createSessionNameSubagent(pi: ExtensionAPI) {
+  return createSubagent(pi, {
     name: "session_name",
     label: "Session Name",
     description: "Generate or refine a concise session name.",
@@ -46,6 +46,10 @@ export default async function sessionName(pi: ExtensionAPI): Promise<void> {
     }),
     buildPrompt: (params) => ({ text: buildPrompt(params) }),
   });
+}
+
+export default function sessionName(pi: ExtensionAPI): void {
+  const subagent = createSessionNameSubagent(pi);
 
   pi.on("turn_end", async (event, ctx) => {
     if (event.message.role !== "assistant") return;

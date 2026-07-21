@@ -4,6 +4,7 @@ import {
   type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
+import type { SubagentModelPreference } from "./models";
 import {
   renderSubagentCall,
   renderSubagentResult,
@@ -23,12 +24,21 @@ import type {
 
 export { loadAgentsFilesFromCwd } from "./agents-files";
 
-export type SubagentRunOptions<Params extends TSchema> = {
+type SubagentExecutionOptions<Params extends TSchema> = {
   callId?: string;
   signal?: AbortSignal;
   onUpdate?: Parameters<SubagentRuntime<Params>["execute"]>[2];
   ctx: Parameters<SubagentRuntime<Params>["execute"]>[3];
 };
+
+export type SubagentRunOptions<Params extends TSchema> =
+  SubagentExecutionOptions<Params> & {
+    /** Replace the configured model roster for this invocation. */
+    modelPreferences?: readonly SubagentModelPreference[];
+  };
+
+export type SubagentResumeOptions<Params extends TSchema> =
+  SubagentExecutionOptions<Params>;
 
 export type SubagentRegisterOptions = {
   tool?: boolean;
@@ -67,13 +77,14 @@ export function createSubagent<Params extends TSchema>(
           options.ctx,
         );
       },
+      options.modelPreferences,
     );
   };
 
   const resumeWithParams = async (
     sessionId: string,
     params: Static<Params>,
-    options: SubagentRunOptions<Params>,
+    options: SubagentResumeOptions<Params>,
   ) => {
     const invocationTools = await resolveTools(
       config.tools,

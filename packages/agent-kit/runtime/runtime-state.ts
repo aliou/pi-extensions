@@ -30,7 +30,7 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
         ? {
             provider: session.model.provider,
             model: session.model.id,
-            thinking: "off",
+            thinking: session.thinkingLevel,
           }
         : config.modelPreferences?.find(
             (model) =>

@@ -14,6 +14,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    exclude: ["evals/**", "**/*.eval.ts"],
     include: [
       "commands/**/*.test.ts",
       "hooks/**/*.test.ts",

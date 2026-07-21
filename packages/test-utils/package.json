@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "*",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.10"
   },
   "devDependencies": {
-    "@vitest/expect": "^4.0.18"
+    "@vitest/expect": "^4.1.10"
   }
 }

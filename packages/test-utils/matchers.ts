@@ -54,3 +54,15 @@ declare module "@vitest/expect" {
     toHaveRegisteredCommand(name: string): void;
   }
 }
+
+declare module "vitest" {
+  interface Assertion<T> {
+    toHaveRegisteredTool(name: string): T;
+    toHaveRegisteredCommand(name: string): T;
+  }
+
+  interface AsymmetricMatchersContaining {
+    toHaveRegisteredTool(name: string): void;
+    toHaveRegisteredCommand(name: string): void;
+  }
+}
