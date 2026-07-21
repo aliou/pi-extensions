@@ -9,6 +9,7 @@ import {
   createGistHandler,
   createGitHubHandler,
   createMarkdownNewHandler,
+  createNpmHandler,
   createTailscaleHandler,
   createTwitterHandler,
   type ReadUrlHandler,
@@ -27,6 +28,7 @@ function createReadUrlTool(_pi: ExtensionAPI) {
     createTwitterHandler(),
     createGitHubHandler(),
     createGistHandler(),
+    createNpmHandler(),
     createTailscaleHandler(),
     createMarkdownNewHandler(),
   ];
