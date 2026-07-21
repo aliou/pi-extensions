@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "owner": "aliou",
+  "extensions": [
+    {
+      "path": "hooks/skill-autocomplete",
+      "packageName": "@aliou/pi-harness-skill-autocomplete",
+      "description": "Skill autocomplete for Pi",
+      "public": false,
+      "gistId": "24e409b0c959bd1c62e0911b0b1dd7db",
+      "runtimeExecutables": [],
+      "workspaceBundles": [
+        {
+          "package": "@harness/events",
+          "imports": ["@harness/events"],
+          "entry": "packages/events/index.ts",
+          "file": "events.js"
+        },
+        {
+          "package": "@harness/completion",
+          "imports": ["@harness/completion"],
+          "entry": "packages/completion/index.ts",
+          "file": "completion.js"
+        },
+        {
+          "package": "@harness/utils",
+          "imports": ["@harness/utils/path"],
+          "entry": "packages/utils/index.ts",
+          "file": "utils.js"
+        }
+      ]
+    }
+  ]
+}

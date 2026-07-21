@@ -52,7 +52,9 @@
 
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
+              gh
               nodejs
+              nushell
               pnpm_10
             ];
 

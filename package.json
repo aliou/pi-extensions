@@ -23,6 +23,8 @@
     "test": "vitest run",
     "test:patches": "node scripts/run-patch-tests.mjs",
     "test:watch": "vitest",
+    "extensions:build": "nu scripts/publish-extensions.nu build",
+    "extensions:publish": "nu scripts/publish-extensions.nu publish",
     "build:native": "./scripts/build-native-tools.sh",
     "postinstall": "./scripts/build-native-tools.sh"
   },
@@ -50,6 +52,7 @@
     "@harness/test-utils": "workspace:*",
     "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
+    "esbuild": "0.28.1",
     "memfs": "^4.64.0",
     "typebox": "*",
     "typescript": "^5.7.0",

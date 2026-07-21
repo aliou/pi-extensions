@@ -17,6 +17,7 @@ When adding new content or changing existing behavior, update the closest releva
 - `tools/` - Agent tools exposed to Pi sessions.
 - `packages/` - Shared internal workspace packages. Each package lives in `packages/<name>/` and is imported through its `@harness/*` workspace package name.
 - `patches/` - Local patches on top of Pi and its dependencies. One directory per patch (see Patches below).
+- `scripts/` - Maintenance, native build, patch test, and extension Gist release scripts.
 - `tests/` - Test setup and docs. Shared test utilities live in `packages/test-utils`.
 
 ## New feature placement
@@ -153,6 +154,24 @@ pnpm lint
 pnpm test
 pnpm test:patches
 ```
+
+## Extension Gist releases
+
+`scripts/extension-gists.json` is the opt-in release manifest for standalone extension Gists. Each entry records its package metadata, runtime executable requirements, visibility, and stable Gist ID. A missing Gist ID means the first publish creates the Gist and writes its ID back to the manifest; later publishes update that Gist.
+
+The Nushell release script builds each selected extension as `index.js` and each declared `@harness/*` workspace package as a separate flat ESM file. Pi runtime packages remain peer dependencies. The build fails if it reaches third-party `node_modules`, an undeclared workspace import, a non-Pi external package, or known repository-relative runtime resources. Generated packages contain the flat JavaScript files and `package.json` under `dist/extensions/`.
+
+```sh
+# Build every manifest entry, or one entry by path.
+pnpm extensions:build
+pnpm extensions:build hooks/skill-autocomplete
+
+# Preview, create, or update Gists using the current gh login.
+pnpm extensions:publish --dry-run
+pnpm extensions:publish hooks/skill-autocomplete
+```
+
+Review and commit `scripts/extension-gists.json` after a first publish records a new Gist ID. Add only extensions that can run without repository-relative assets or external runtime npm dependencies. Runtime executables such as `git`, `tmux`, or `zoxide` must be declared in the manifest.
 
 Workspace packages:
 
