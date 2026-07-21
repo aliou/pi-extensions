@@ -43,6 +43,14 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
     // providers, so primary and fallback stay consistent. ~9% bleed at 0.1.
     modelPreferences: [
       {
+        // Cheap trial primary: demote if quality lags GLM-5.2. Served without
+        // thinking (neuralwatt registers reasoning: false).
+        provider: "neuralwatt",
+        model: "gemma-4-31b",
+        thinking: "off",
+        weight: 2,
+      },
+      {
         provider: "synthetic",
         model: "hf:zai-org/GLM-5.2",
         thinking: "low",

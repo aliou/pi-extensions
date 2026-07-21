@@ -58,6 +58,14 @@ Always provide a clear objective describing what you want to learn from the imag
     // to express the lowest available effort. ~9% bleed at weight 0.1.
     modelPreferences: [
       {
+        // Cheap trial primary: demote if quality lags Kimi. Served without
+        // thinking (neuralwatt registers reasoning: false).
+        provider: "neuralwatt",
+        model: "gemma-4-31b",
+        thinking: "off",
+        weight: 2,
+      },
+      {
         provider: "synthetic",
         model: "hf:moonshotai/Kimi-K2.7-Code",
         thinking: "low",
