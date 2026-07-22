@@ -11,7 +11,7 @@ export class ProviderUsageRegistry {
     return this.clients.find((client) => client.id === provider);
   }
 
-  require(provider: ProviderId): ProviderUsageClient {
+  getOrThrow(provider: ProviderId): ProviderUsageClient {
     const client = this.get(provider);
     if (!client)
       throw new Error(`No provider usage client registered for ${provider}`);

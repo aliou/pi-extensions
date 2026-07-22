@@ -29,6 +29,34 @@
           "file": "utils.js"
         }
       ]
+    },
+    {
+      "path": "commands/usage",
+      "packageName": "@aliou/pi-harness-usage",
+      "description": "Provider usage dashboard for Pi",
+      "public": false,
+      "gistId": "3bc8a0652dc7ac6c357dde6da320efc3",
+      "runtimeExecutables": [],
+      "workspaceBundles": [
+        {
+          "package": "@harness/events",
+          "imports": ["@harness/events"],
+          "entry": "packages/events/index.ts",
+          "file": "events.js"
+        },
+        {
+          "package": "@harness/provider-usage",
+          "imports": ["@harness/provider-usage"],
+          "entry": "packages/provider-usage/index.ts",
+          "file": "provider-usage.js"
+        },
+        {
+          "package": "@harness/models",
+          "imports": ["@harness/models/usage"],
+          "entry": "packages/models/usage/index.ts",
+          "file": "models-usage.js"
+        }
+      ]
     }
   ]
 }
