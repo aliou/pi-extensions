@@ -3,12 +3,12 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@earendil-works/pi-ai": "0.80.8",
-    "@earendil-works/pi-tui": "0.80.8"
+    "@earendil-works/pi-ai": "0.81.1",
+    "@earendil-works/pi-tui": "0.81.1"
   },
   "pnpm": {
     "patchedDependencies": {
-      "@earendil-works/pi-tui@0.80.8": "pi-tui--markdown-code-block/patch.diff"
+      "@earendil-works/pi-tui@0.81.1": "pi-tui--markdown-code-block/patch.diff"
     }
   }
 }
