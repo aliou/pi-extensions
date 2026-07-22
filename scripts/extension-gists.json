@@ -57,6 +57,22 @@
           "file": "models-usage.js"
         }
       ]
+    },
+    {
+      "path": "tools/read-url",
+      "packageName": "@aliou/pi-harness-read-url",
+      "description": "Read URL as Markdown for Pi",
+      "public": false,
+      "gistId": "52ce73915ff5337c7f430eceea8c6ed3",
+      "runtimeExecutables": ["gh", "npm"],
+      "workspaceBundles": [
+        {
+          "package": "@harness/utils",
+          "imports": ["@harness/utils/path"],
+          "entry": "packages/utils/index.ts",
+          "file": "utils.js"
+        }
+      ]
     }
   ]
 }

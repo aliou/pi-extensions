@@ -2,7 +2,6 @@
  * Read URL tool render functions.
  */
 
-import { ToolCallHeader } from "@aliou/pi-utils-ui";
 import type {
   AgentToolResult,
   Theme,
@@ -14,13 +13,10 @@ import type { ReadUrlDetails } from "./types";
 import { DEFAULT_PREVIEW_MAX_LINES } from "./utils/temp-file-preview";
 
 export function renderCall(args: { url: string }, theme: Theme) {
-  return new ToolCallHeader(
-    {
-      toolName: "Read URL",
-      mainArg: args.url.trim(),
-      showColon: true,
-    },
-    theme,
+  return new Text(
+    `${theme.fg("toolTitle", theme.bold("Read URL:"))} ${theme.fg("accent", args.url.trim())}`,
+    0,
+    0,
   );
 }
 
