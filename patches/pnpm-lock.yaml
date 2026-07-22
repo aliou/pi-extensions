@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@earendil-works/pi-ai@0.80.8':
-    hash: 1c9c20d71e27b7e6d120eb1970316414bfc0fd9bb7ccc6763c3b877eafd835c6
-    path: pi-ai--disable-request-compression/patch.diff
   '@earendil-works/pi-tui@0.80.8':
     hash: c1e48e46356c1e50b17ec1caeeab66b4707fb775b9cc3df16f6c14672da5ee7f
     path: pi-tui--markdown-code-block/patch.diff
@@ -18,7 +15,7 @@ importers:
     dependencies:
       '@earendil-works/pi-ai':
         specifier: 0.80.8
-        version: 0.80.8(patch_hash=1c9c20d71e27b7e6d120eb1970316414bfc0fd9bb7ccc6763c3b877eafd835c6)(ws@8.21.0)(zod@4.4.3)
+        version: 0.80.8(ws@8.21.0)(zod@4.4.3)
       '@earendil-works/pi-tui':
         specifier: 0.80.8
         version: 0.80.8(patch_hash=c1e48e46356c1e50b17ec1caeeab66b4707fb775b9cc3df16f6c14672da5ee7f)
@@ -636,7 +633,7 @@ snapshots:
 
   '@babel/runtime@7.29.7': {}
 
-  '@earendil-works/pi-ai@0.80.8(patch_hash=1c9c20d71e27b7e6d120eb1970316414bfc0fd9bb7ccc6763c3b877eafd835c6)(ws@8.21.0)(zod@4.4.3)':
+  '@earendil-works/pi-ai@0.80.8(ws@8.21.0)(zod@4.4.3)':
     dependencies:
       '@anthropic-ai/sdk': 0.91.1(zod@4.4.3)
       '@aws-sdk/client-bedrock-runtime': 3.1048.0
