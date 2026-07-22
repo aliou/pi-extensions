@@ -8,7 +8,6 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "@earendil-works/pi-ai@0.80.8": "./pi-ai--disable-request-compression/patch.diff",
       "@earendil-works/pi-tui@0.80.8": "pi-tui--markdown-code-block/patch.diff"
     }
   }
