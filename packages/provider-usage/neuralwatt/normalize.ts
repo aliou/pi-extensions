@@ -50,34 +50,6 @@ export function normalizeNeuralwattUsage(
     });
   }
 
-  if (raw.balance) {
-    quotas.push({
-      provider: PROVIDER,
-      id: "balance",
-      name: "Credit balance",
-      role: "budget",
-      updatedAt,
-      metric: { kind: "currency", code: "USD", minorUnit: false },
-      amount: {
-        usedPercent: percentUsed(
-          raw.balance.credits_used_usd,
-          raw.balance.total_credits_usd,
-        ),
-        capacity: raw.balance.total_credits_usd,
-        used: raw.balance.credits_used_usd,
-        remaining: raw.balance.credits_remaining_usd,
-      },
-      period: {
-        kind: "allowance",
-        label: raw.balance.accounting_method ?? "credits",
-      },
-      depletion: { kind: "remaining-balance" },
-      replenishment: { kind: "none" },
-      source,
-      raw: raw.balance,
-    });
-  }
-
   if (raw.key?.allowance) {
     quotas.push({
       provider: PROVIDER,
@@ -104,7 +76,15 @@ export function normalizeNeuralwattUsage(
     });
   }
 
-  if (raw.limits?.overage_limit_usd != null) {
+  if (raw.limits?.overage_limit_usd != null && raw.subscription) {
+    const overageKwh = Math.max(
+      0,
+      raw.subscription.kwh_used - raw.subscription.kwh_included,
+    );
+    const overageRateUsdPerKwh = 5;
+    const overageUsedUsd = overageKwh * overageRateUsdPerKwh;
+    const capacity = raw.limits.overage_limit_usd;
+
     quotas.push({
       provider: PROVIDER,
       id: "limits.overage_limit_usd",
@@ -113,15 +93,17 @@ export function normalizeNeuralwattUsage(
       updatedAt,
       metric: { kind: "currency", code: "USD", minorUnit: false },
       amount: {
-        usedPercent: 0,
-        capacity: raw.limits.overage_limit_usd,
-        remaining: raw.limits.overage_limit_usd,
+        usedPercent: percentUsed(overageUsedUsd, capacity),
+        capacity,
+        used: overageUsedUsd,
+        remaining: Math.max(0, capacity - overageUsedUsd),
       },
       period: { kind: "billing", label: "overage" },
       depletion: { kind: "remaining-balance" },
       replenishment: { kind: "none" },
+      state: { overage: overageUsedUsd > 0 },
       source,
-      raw: raw.limits,
+      raw: { balance: raw.balance, limits: raw.limits },
     });
   }
 

@@ -28,8 +28,16 @@ export function formatUsageLabel(quota: UsageQuota): string {
 
   if (metric.kind === "currency") {
     const scale = metric.minorUnit ? 100 : 1;
-    if (amount.capacity != null)
-      return `${percent}/${formatMoney(amount.capacity / scale, metric.code)}`;
+    if (amount.capacity != null) {
+      const capacity = formatMoney(amount.capacity / scale, metric.code);
+      if (
+        quota.provider === "neuralwatt" &&
+        quota.id === "limits.overage_limit_usd"
+      ) {
+        return `${percent}/${capacity} (${formatMoney(rawBalanceCreditsUsd(quota), metric.code)})`;
+      }
+      return `${percent}/${capacity}`;
+    }
   }
 
   if (metric.kind === "energy") {
@@ -136,4 +144,11 @@ function round(value: number): string {
 function unitLabel(unit: string): string {
   if (unit === "request") return "reqs";
   return unit.endsWith("s") ? unit : `${unit}s`;
+}
+
+function rawBalanceCreditsUsd(quota: UsageQuota): number {
+  const raw = quota.raw as
+    | { balance?: { credits_remaining_usd?: number | null } | null }
+    | undefined;
+  return raw?.balance?.credits_remaining_usd ?? 0;
 }

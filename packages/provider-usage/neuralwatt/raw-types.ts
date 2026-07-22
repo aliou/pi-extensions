@@ -1,3 +1,10 @@
+export interface NeuralwattUsageBlock {
+  cost_usd: number;
+  requests: number;
+  tokens: number;
+  energy_kwh: number;
+}
+
 export interface NeuralwattQuotaResponse {
   snapshot_at: string;
   balance?: {
@@ -5,6 +12,10 @@ export interface NeuralwattQuotaResponse {
     total_credits_usd: number;
     credits_used_usd: number;
     accounting_method?: string;
+  } | null;
+  usage?: {
+    lifetime: NeuralwattUsageBlock;
+    current_month: NeuralwattUsageBlock;
   } | null;
   limits?: {
     overage_limit_usd?: number | null;

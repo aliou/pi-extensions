@@ -37,25 +37,28 @@ function renderQuotaBlock(
   }
 
   const leftParts: string[] = [];
-  if (vm.projectionLabel) {
-    leftParts.push(
-      vm.severity !== "none"
-        ? theme.fg(color, vm.projectionLabel)
-        : theme.fg("dim", vm.projectionLabel),
-    );
-  } else if (vm.projectedPercent != null && vm.projectedPercent > 0) {
-    const projected = `proj ${Math.round(vm.projectedPercent)}%`;
-    leftParts.push(
-      vm.severity !== "none"
-        ? theme.fg(color, projected)
-        : theme.fg("dim", projected),
-    );
+  const rightLabel = vm.renewsLabel ?? vm.expirationLabel;
+
+  if (vm.usedPercent < 100) {
+    if (vm.projectionLabel) {
+      leftParts.push(
+        vm.severity !== "none"
+          ? theme.fg(color, vm.projectionLabel)
+          : theme.fg("dim", vm.projectionLabel),
+      );
+    } else if (vm.projectedPercent != null && vm.projectedPercent > 0) {
+      const projected = `proj ${Math.round(vm.projectedPercent)}%`;
+      leftParts.push(
+        vm.severity !== "none"
+          ? theme.fg(color, projected)
+          : theme.fg("dim", projected),
+      );
+    }
+    if (vm.severity !== "none") leftParts.push(theme.fg(color, vm.severity));
+    if (vm.message) leftParts.push(theme.fg("dim", vm.message));
   }
-  if (vm.severity !== "none") leftParts.push(theme.fg(color, vm.severity));
-  if (vm.message) leftParts.push(theme.fg("dim", vm.message));
 
   const leftStr = leftParts.join("  ");
-  const rightLabel = vm.renewsLabel ?? vm.expirationLabel;
   const rightStr = rightLabel ? theme.fg("dim", rightLabel) : "";
   const gap = Math.max(
     2,
