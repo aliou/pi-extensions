@@ -22,8 +22,9 @@ function enableTool(pi: ExtensionAPI) {
   }
 }
 
-export default function lookAt(pi: ExtensionAPI): void {
-  const subagent = createSubagent(pi, {
+/** Creates the production look-at subagent for registration and eval harnesses. */
+export function createLookAtSubagent(pi: ExtensionAPI) {
+  return createSubagent(pi, {
     name: TOOL_NAME,
     label: "Look At",
     description: `Analyze an image file using a vision subagent. Returns a text description of the image content.
@@ -112,7 +113,10 @@ Always provide a clear objective describing what you want to learn from the imag
       };
     },
   });
+}
 
+export default function lookAt(pi: ExtensionAPI): void {
+  const subagent = createLookAtSubagent(pi);
   const tool = subagent.asTool();
   subagent.subscribe();
 
