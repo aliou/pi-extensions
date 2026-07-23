@@ -16,4 +16,6 @@ The report UI loads the available reports when it starts. Restart it to include 
 
 Model rosters and cases live beside each eval. Each eval folder has a README describing what it tests, how its harness and judges work, and how to run it directly.
 
+Shared eval infrastructure lives in `evals/lib/`, including the Pi model runtime, strict headless extension context, and verified remote-PNG cache.
+
 The custom harnesses use `@golevelup/ts-vitest` `createMock` for Pi extension and context objects. Stub only the methods the production path uses, and prefer strict mocks so new runtime dependencies fail visibly.
