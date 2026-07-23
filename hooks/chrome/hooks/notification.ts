@@ -129,6 +129,10 @@ function shouldUseTerminalEffects(): boolean {
   return process.stdout.isTTY;
 }
 
+function notificationsDelegatedToHerdr(): boolean {
+  return process.env.HERDR_ENV === "1";
+}
+
 async function notify(
   pi: ExtensionAPI,
   message: string,
@@ -206,7 +210,11 @@ export function setupNotificationHook(pi: ExtensionAPI) {
     if (notification) {
       const message = notification.handler(event, ctx);
       if (message) {
-        await notify(pi, message, notification.sound);
+        pi.events.emit(AD_NOTIFY_ATTENTION_EVENT, {
+          description: message,
+          toolCallId: event.toolCallId,
+          toolName: event.toolName,
+        });
       }
     }
 
@@ -223,7 +231,11 @@ export function setupNotificationHook(pi: ExtensionAPI) {
       if (notification) {
         const message = notification.handler(result, ctx);
         if (message) {
-          await notify(pi, message, notification.sound);
+          pi.events.emit(AD_NOTIFY_ATTENTION_EVENT, {
+            description: message,
+            toolCallId: result.toolCallId,
+            toolName: result.toolName,
+          });
         }
       }
     }
@@ -255,14 +267,17 @@ export function setupNotificationHook(pi: ExtensionAPI) {
   });
 
   pi.events.on(AD_NOTIFY_DANGEROUS_EVENT, (data: unknown) => {
+    if (notificationsDelegatedToHerdr()) return;
     void handleDangerousLikeEvent(pi, data as AdNotifyDangerousEvent);
   });
 
   pi.events.on(AD_NOTIFY_ATTENTION_EVENT, (data: unknown) => {
+    if (notificationsDelegatedToHerdr()) return;
     void handleAttentionEvent(pi, data as AdNotifyAttentionEvent);
   });
 
   pi.events.on(AD_NOTIFY_DONE_EVENT, (data: unknown) => {
+    if (notificationsDelegatedToHerdr()) return;
     void handleDoneEvent(pi, data as AdNotifyDoneEvent);
   });
 }

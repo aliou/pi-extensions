@@ -110,6 +110,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `fast-mode/` | Session-local fast-mode controls for Anthropic and Codex | `index.ts`, `anthropic.ts`, `codex.ts`, `helpers.ts` |
+| `herdr/` | Report Pi cache freshness and harness attention notifications directly to Herdr | `index.ts`, `cache-status.ts`, `cache-metadata.ts`, `lib/client.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |
 | `project-trust/` | Auto-trust projects matching configured path prefixes; falls through to core for everything else | `index.ts`, `config.ts`, `types.ts` |
 | `protect-sessions-dir/` | Gate agent access to sessions directory | `gate.ts`, `session-gate-dialog.ts`, `bash-parser.ts` |
