@@ -15,12 +15,6 @@ export function createSessionNameSubagent(pi: ExtensionAPI) {
     systemPrompt: SESSION_NAME_SYSTEM_PROMPT,
     tools: createSessionNameTools(pi),
     maxToolCalls: 1,
-    // Primary: synthetic GLM-4.7-Flash (cheapest; 147/149 in the window).
-    // Fallback: neuralwatt glm-5.2-short-fast (reasoning disabled -> off only).
-    // Both are low-cost non-reasoning tiers. ~9% bleed at weight 0.1.
-    // NOTE: GLM-4.7-Flash has been observed inventing tools (open, cd, execute)
-    // when not constrained; the session_name prompt must enumerate the single
-    // allowed tool explicitly.
     modelPreferences: [
       {
         provider: "synthetic",
@@ -29,10 +23,10 @@ export function createSessionNameSubagent(pi: ExtensionAPI) {
         weight: 1,
       },
       {
-        provider: "neuralwatt",
-        model: "glm-5.2-short-fast",
+        provider: "openrouter",
+        model: "z-ai/glm-4.7-flash",
         thinking: "off",
-        weight: 0.1,
+        weight: 0,
       },
     ],
     parameters: Type.Object({
