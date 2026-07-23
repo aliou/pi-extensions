@@ -76,7 +76,7 @@ export default async function advisor(pi: ExtensionAPI): Promise<void> {
         provider: "openrouter",
         model: "anthropic/claude-opus-4.8",
         thinking: "xhigh",
-        weight: 0.5,
+        weight: 0,
       },
       {
         provider: "openai-codex",
