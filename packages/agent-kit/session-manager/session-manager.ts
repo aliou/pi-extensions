@@ -36,6 +36,11 @@ const DEFAULT_SUBAGENT_EXTENSION_PATHS: string[] = [
   // The handler reads them off event.systemPromptOptions and appends
   // "## Available tools" + "## Tool usage guidelines" sections.
   "./packages/agent-kit/extensions/subagent-tool-prompt",
+  // Adds the `x-session-id` Aperture provenance header on every provider
+  // request. Subagents do not load `pi-ts-aperture`, so without this their
+  // requests are not grouped in Aperture traces. Set-if-absent keeps
+  // Aperture authoritative in parents that also load this extension.
+  "./hooks/provider-tweaks",
 ];
 
 export class SubagentSessionManager<Params extends TSchema = TSchema> {

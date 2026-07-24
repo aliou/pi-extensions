@@ -6,9 +6,12 @@ import {
   type CodexResponsesPayload,
   injectDetailedReasoningSummary,
 } from "./openai-codex";
+import { addSessionIdHeader } from "./session-id";
 
 export default function (pi: ExtensionAPI): void {
   pi.on("before_provider_headers", (event, ctx) => {
+    addSessionIdHeader(event.headers, ctx.sessionManager.getSessionId());
+
     if (ctx.model?.provider !== "anthropic") return;
 
     addSessionAffinityHeader(event.headers, ctx.sessionManager.getSessionId());
