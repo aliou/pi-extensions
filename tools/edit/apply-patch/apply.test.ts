@@ -207,6 +207,19 @@ describe("applyHunks", () => {
     expect(vol.readFileSync(join(cwd, "same.txt"), "utf8")).toBe("original\n");
   });
 
+  it("rejects a Move to a symlink alias of the source", async () => {
+    vol.writeFileSync(join(cwd, "same.txt"), "original\n");
+    vol.symlinkSync(join(cwd, "same.txt"), join(cwd, "alias.txt"));
+    const { hunks } = parsePatch(
+      "*** Begin Patch\n*** Update File: same.txt\n*** Move to: alias.txt\n@@\n-original\n+new\n*** End Patch",
+    );
+
+    await expect(applyHunks(hunks, cwd)).rejects.toThrow(
+      /same as the source path/,
+    );
+    expect(vol.readFileSync(join(cwd, "same.txt"), "utf8")).toBe("original\n");
+  });
+
   // Issue B: Add File over an existing file overwrites (codex scenario 011)
   // but is reported in `overwritten` and the summary so the clobber is visible.
   it("Add File over an existing file overwrites and reports the overwrite", async () => {
@@ -287,6 +300,39 @@ describe("applyHunks", () => {
       "a.txt",
     ]);
   });
+
+  it("serializes concurrent patches that affect the same file", async () => {
+    vol.writeFileSync(join(cwd, "shared.txt"), "alpha\nbeta\n");
+    const first = parsePatch(
+      "*** Begin Patch\n*** Update File: shared.txt\n@@\n-alpha\n+ALPHA\n*** End Patch",
+    );
+    const second = parsePatch(
+      "*** Begin Patch\n*** Update File: shared.txt\n@@\n-beta\n+BETA\n*** End Patch",
+    );
+
+    await Promise.all([
+      applyHunks(first.hunks, cwd),
+      applyHunks(second.hunks, cwd),
+    ]);
+
+    expect(vol.readFileSync(join(cwd, "shared.txt"), "utf8")).toBe(
+      "ALPHA\nBETA\n",
+    );
+  });
+
+  it("does not mutate when already aborted", async () => {
+    vol.writeFileSync(join(cwd, "abort.txt"), "before\n");
+    const { hunks } = parsePatch(
+      "*** Begin Patch\n*** Update File: abort.txt\n@@\n-before\n+after\n*** End Patch",
+    );
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      applyHunks(hunks, cwd, undefined, controller.signal),
+    ).rejects.toThrow();
+    expect(vol.readFileSync(join(cwd, "abort.txt"), "utf8")).toBe("before\n");
+  });
 });
 
 // Ports of openai/codex `codex-rs/apply-patch/tests/fixtures/scenarios` and
@@ -359,6 +405,20 @@ describe("applyHunks (codex scenarios)", () => {
     );
     // created.txt remains (best-effort, non-transactional).
     expect(vol.readFileSync(join(cwd, "created.txt"), "utf8")).toBe("hello\n");
+  });
+
+  it("names both paths of an earlier committed move on later failure", async () => {
+    vol.writeFileSync(join(cwd, "source.txt"), "old\n");
+    const { hunks } = parsePatch(
+      "*** Begin Patch\n" +
+        "*** Update File: source.txt\n*** Move to: destination.txt\n@@\n-old\n+new\n" +
+        "*** Update File: missing.txt\n@@\n-old\n+new\n" +
+        "*** End Patch",
+    );
+
+    await expect(applyHunks(hunks, cwd)).rejects.toThrow(
+      /Files already modified before this error: source\.txt, destination\.txt/,
+    );
   });
 
   // lib.rs test_pure_addition_chunk_followed_by_removal: two chunks in one

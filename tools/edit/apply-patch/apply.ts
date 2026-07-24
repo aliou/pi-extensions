@@ -20,9 +20,17 @@
  * already modified so the model can re-read them instead of double-applying.
  */
 
-import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  realpath,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { TextDecoder } from "node:util";
+import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
 
 import { seekSequence } from "./seek";
 import type {
@@ -37,10 +45,100 @@ export async function applyHunks(
   hunks: Hunk[],
   cwd: string,
   onProgress?: (partial: ApplyPatchResult) => void,
+  signal?: AbortSignal,
 ): Promise<ApplyPatchResult> {
   if (hunks.length === 0) {
     throw new Error("No files were modified.");
   }
+
+  const rawPaths = [
+    ...new Set(
+      hunks.flatMap((hunk) => {
+        const paths = [resolve(cwd, hunk.path)];
+        if (hunk.type === "update" && hunk.movePath) {
+          paths.push(resolve(cwd, hunk.movePath));
+        }
+        return paths;
+      }),
+    ),
+  ];
+  const canonicalEntries = await Promise.all(
+    rawPaths.map(
+      async (path) => [path, await canonicalMutationPath(path)] as const,
+    ),
+  );
+  const canonicalByPath = new Map(canonicalEntries);
+
+  for (const hunk of hunks) {
+    if (hunk.type !== "update" || !hunk.movePath) continue;
+    const source = resolve(cwd, hunk.path);
+    const destination = resolve(cwd, hunk.movePath);
+    if (canonicalByPath.get(source) === canonicalByPath.get(destination)) {
+      throw new Error(
+        `Move to: '${hunk.movePath}' is the same as the source path '${hunk.path}'. This would delete the file. Use Update File without a Move to instead.`,
+      );
+    }
+  }
+
+  const affectedPaths = [
+    ...new Set(canonicalEntries.map(([, path]) => path)),
+  ].sort();
+
+  return withMutationQueues(affectedPaths, () =>
+    applyHunksUnlocked(hunks, cwd, onProgress, signal),
+  );
+}
+
+async function withMutationQueues<T>(
+  paths: string[],
+  operation: () => Promise<T>,
+): Promise<T> {
+  const [path, ...remaining] = paths;
+  if (!path) return operation();
+  return withFileMutationQueue(path, () =>
+    withMutationQueues(remaining, operation),
+  );
+}
+
+function isMissingPathError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error.code === "ENOENT" || error.code === "ENOTDIR")
+  );
+}
+
+async function canonicalMutationPath(path: string): Promise<string> {
+  try {
+    return await realpath(path);
+  } catch (error) {
+    if (isMissingPathError(error)) return resolve(path);
+    throw error;
+  }
+}
+
+class PartialApplyAbortError extends Error {}
+
+function throwIfAbortedAfterCommit(
+  signal: AbortSignal | undefined,
+  committedPaths: string[],
+  note?: string,
+): void {
+  if (!signal?.aborted) return;
+  const suffix = note ? ` ${note}` : "";
+  throw new PartialApplyAbortError(
+    `Operation aborted.\nFiles already modified before this error: ${committedPaths.join(", ")}. The patch was partially applied; re-reading those files before retrying.${suffix}`,
+  );
+}
+
+async function applyHunksUnlocked(
+  hunks: Hunk[],
+  cwd: string,
+  onProgress?: (partial: ApplyPatchResult) => void,
+  signal?: AbortSignal,
+): Promise<ApplyPatchResult> {
+  signal?.throwIfAborted();
 
   const added: string[] = [];
   const modified: string[] = [];
@@ -55,7 +153,9 @@ export async function applyHunks(
 
   for (const hunk of hunks) {
     const affectedPath = hunkPath(hunk);
+    const committedPaths = hunkCommittedPaths(hunk);
     try {
+      signal?.throwIfAborted();
       if (hunk.type === "add") {
         const abs = resolve(cwd, hunk.path);
         const exists = await pathExists(abs);
@@ -63,7 +163,12 @@ export async function applyHunks(
           ? await readFileContent(abs)
           : { text: "", isBinary: false };
         if (exists) overwritten.push(affectedPath);
+        signal?.throwIfAborted();
         await writeFileWithDirs(abs, hunk.contents);
+        throwIfAbortedAfterCommit(signal, [
+          ...appliedBefore,
+          ...committedPaths,
+        ]);
         added.push(affectedPath);
         fileChanges.push(
           createFileChange(
@@ -77,7 +182,12 @@ export async function applyHunks(
         const abs = resolve(cwd, hunk.path);
         await ensureNotDirectory(abs);
         const before = await readFileContent(abs);
+        signal?.throwIfAborted();
         await rm(abs, { force: false });
+        throwIfAbortedAfterCommit(signal, [
+          ...appliedBefore,
+          ...committedPaths,
+        ]);
         deleted.push(affectedPath);
         fileChanges.push(
           createFileChange(affectedPath, before.text, "", before.isBinary),
@@ -104,9 +214,19 @@ export async function applyHunks(
           if (destExists) {
             overwritten.push(hunk.movePath);
           }
+          signal?.throwIfAborted();
           await writeFileWithDirs(dest, next);
+          throwIfAbortedAfterCommit(
+            signal,
+            [...appliedBefore, affectedPath],
+            `The move source '${hunk.path}' was not removed.`,
+          );
           await ensureNotDirectory(abs);
           await rm(abs, { force: false });
+          throwIfAbortedAfterCommit(signal, [
+            ...appliedBefore,
+            ...committedPaths,
+          ]);
           fileChanges.push(
             createFileChange(hunk.path, original.text, "", original.isBinary),
           );
@@ -119,7 +239,12 @@ export async function applyHunks(
             ),
           );
         } else {
+          signal?.throwIfAborted();
           await writeFileWithDirs(abs, next);
+          throwIfAbortedAfterCommit(signal, [
+            ...appliedBefore,
+            ...committedPaths,
+          ]);
           fileChanges.push(
             createFileChange(
               affectedPath,
@@ -132,6 +257,7 @@ export async function applyHunks(
         modified.push(affectedPath);
       }
     } catch (error) {
+      if (error instanceof PartialApplyAbortError) throw error;
       // Issue E: earlier hunks are already on disk; surface them so the model
       // knows the patch was partially applied and does not blindly retry the
       // whole patch (which would double-apply the committed hunks).
@@ -144,7 +270,7 @@ export async function applyHunks(
       }
       throw error;
     }
-    appliedBefore.push(affectedPath);
+    appliedBefore.push(...committedPaths);
     // Stream a partial result after each committed hunk so the UI can render
     // files as they are edited/created instead of waiting for the full patch.
     // Snapshot the accumulated arrays: they keep mutating as later hunks run,
@@ -172,6 +298,13 @@ export async function applyHunks(
 function hunkPath(hunk: Hunk): string {
   if (hunk.type === "update" && hunk.movePath) return hunk.movePath;
   return hunk.path;
+}
+
+function hunkCommittedPaths(hunk: Hunk): string[] {
+  if (hunk.type === "update" && hunk.movePath) {
+    return [hunk.path, hunk.movePath];
+  }
+  return [hunk.path];
 }
 
 async function writeFileWithDirs(

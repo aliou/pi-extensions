@@ -40,6 +40,7 @@ export const askUserTool = defineTool({
     "Ask the user to choose between options (structured questions)",
   parameters: AskUserQuestionParams,
   promptGuidelines: PROMPT_GUIDELINES,
+  executionMode: "sequential",
 
   async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
     if (!ctx.hasUI) {

@@ -83,6 +83,15 @@ describe("defaults edit tool", () => {
     expect(pi).toHaveRegisteredTool("edit");
   });
 
+  it("prefers capability-aware JSON-schema constrained sampling", async () => {
+    const pi = await createPiTestHarness(editExtension);
+
+    expect(pi.tool("edit").registered.constrainedSampling).toEqual({
+      type: "json_schema",
+      strict: "prefer",
+    });
+  });
+
   it("strips empty-string edits in prepareArguments", async () => {
     const pi = await createPiTestHarness(editExtension);
     const tool = pi.tool("edit").registered;
@@ -366,6 +375,55 @@ describe("kimi edit tool", () => {
     );
 
     expect(vol.readFileSync(absolutePath, "utf8")).toBe("one\r\ntwo\r\n");
+  });
+
+  it("serializes concurrent edits to the same file", async () => {
+    const tool = await kimiTool();
+    const cwd = "/tmp/kimi-edit-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
+    const absolutePath = join(cwd, "sample.txt");
+    vol.writeFileSync(absolutePath, "alpha\nbeta\n");
+
+    await Promise.all([
+      tool.execute(
+        "tc_1",
+        { path: "sample.txt", old_string: "alpha", new_string: "ALPHA" },
+        undefined,
+        undefined,
+        createToolContext({ cwd }),
+      ),
+      tool.execute(
+        "tc_2",
+        { path: "sample.txt", old_string: "beta", new_string: "BETA" },
+        undefined,
+        undefined,
+        createToolContext({ cwd }),
+      ),
+    ]);
+
+    expect(vol.readFileSync(absolutePath, "utf8")).toBe("ALPHA\nBETA\n");
+  });
+
+  it("does not mutate when already aborted", async () => {
+    const tool = await kimiTool();
+    const cwd = "/tmp/kimi-edit-cwd";
+    vol.mkdirSync(cwd, { recursive: true });
+    const absolutePath = join(cwd, "sample.txt");
+    vol.writeFileSync(absolutePath, "before\n");
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      tool.execute(
+        "tc_1",
+        { path: "sample.txt", old_string: "before", new_string: "after" },
+        controller.signal,
+        undefined,
+        createToolContext({ cwd }),
+      ),
+    ).rejects.toThrow();
+
+    expect(vol.readFileSync(absolutePath, "utf8")).toBe("before\n");
   });
 });
 

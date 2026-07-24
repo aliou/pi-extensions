@@ -127,9 +127,9 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 |---|---|---|
 | `advisor/` | `advisor`, `resume_advisor` | Zero-shot strategic advisor for hard decisions, stuck work, risk review, and pre-completion second opinions |
 | `artisan/` | `artisan`, `resume_artisan` | Zero-shot product design and frontend craft advisor |
-| `ask-user/` | `ask_user` | Passthrough |
-| `bash/` | `bash` | Adds `cwd` param, spawn hooks, sanitization |
-| `edit/` | `edit`, `apply_patch` | Model-aware edit tool. Routes Codex/GPT models to a from-scratch `apply_patch` (V4A freeform patch, replacing `edit`+`write`), Kimi K2.7 Code to an overloaded `edit` with `old_string`/`new_string`, and everyone else to the native JSON `edit`; enables Anthropic strict tool-use validation on default `edit` via `before_provider_request` |
+| `ask-user/` | `ask_user` | Sequential structured input dialogs |
+| `bash/` | `bash` | Adds `cwd` while preserving Pi's session environment, spawn hooks, and sanitization |
+| `edit/` | `edit`, `apply_patch` | Model-aware edit tool. Routes Codex/GPT models to a queued `apply_patch` (V4A freeform patch, replacing `edit`+`write`), Kimi K2.7 Code to a queued `edit` with `old_string`/`new_string`, and everyone else to the native JSON `edit` with capability-aware constrained sampling |
 | `find/` | `find` | Adds `glob`, blocked paths |
 | `find-sessions/` | `find_sessions` | Session search or recent-session browsing via `@harness/session-store`; reports match provenance |
 | `get-current-time/` | `get_current_time` | Passthrough |
@@ -162,7 +162,7 @@ pnpm test:patches
 
 `scripts/extension-gists.json` is the opt-in release manifest for standalone extension Gists. Each entry records its package metadata, runtime executable requirements, visibility, and stable Gist ID. A missing Gist ID means the first publish creates the Gist and writes its ID back to the manifest; later publishes update that Gist.
 
-The Nushell release script builds each selected extension as `index.js` and each declared `@harness/*` workspace package as a separate flat ESM file. Pi runtime packages remain peer dependencies. The build fails if it reaches third-party `node_modules`, an undeclared workspace import, a non-Pi external package, or known repository-relative runtime resources. Generated packages contain the flat JavaScript files and `package.json` under `dist/extensions/`.
+The Nushell release script builds each selected extension as `index.js` and each declared `@harness/*` workspace package as a separate flat ESM file. Pi runtime packages remain optional peer dependencies so Pi can supply its own compatible runtime. The build fails if it reaches third-party `node_modules`, an undeclared workspace import, a non-Pi external package, or known repository-relative runtime resources. Generated packages contain the flat JavaScript files and `package.json` under `dist/extensions/`.
 
 ```sh
 # Build every manifest entry, or one entry by path.
@@ -180,7 +180,7 @@ Workspace packages:
 
 | Directory | Package | Description |
 |---|---|---|
-| `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks; fresh runs can replace the model preference roster for evals |
+| `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks; returns nested model usage for Pi session accounting, and fresh runs can replace the model preference roster for evals |
 | `packages/completion/` | `@harness/completion` | Completion logic |
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
 | `packages/image-formats/` | `@harness/image-formats` | Image MIME detection and format conversion |

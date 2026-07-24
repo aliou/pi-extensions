@@ -20,7 +20,7 @@ export function createSessionNameTools(pi: ExtensionAPI): SubagentToolSpec[] {
           promptSnippet: "Set the current Pi session name",
           promptGuidelines: [
             "set_name is the only available tool; call it exactly once and then stop.",
-            "Do not invent or call any other tool.",
+            "set_name: Do not invent or call any other tool.",
           ],
           parameters: Type.Object({
             name: Type.String({

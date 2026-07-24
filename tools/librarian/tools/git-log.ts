@@ -71,8 +71,8 @@ Returns a tab-separated table: short sha, date, author, subject.
 Use checkout_repo first if the repository is remote.`,
     promptSnippet: "Search git history in a checked-out remote repo",
     promptGuidelines: [
-      "Run checkout_repo first; pass its returned absolute path as repoPath.",
-      "Use query/author/since/until/path filters; avoid broad unbounded scans.",
+      "git_log: Run checkout_repo first; pass its returned absolute path as repoPath.",
+      "git_log: Use query/author/since/until/path filters; avoid broad unbounded scans.",
     ],
     parameters: Params,
     async execute(_id, params, signal) {

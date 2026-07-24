@@ -99,7 +99,11 @@ const getCurrentTimeTool = defineTool({
     );
   },
 
-  renderResult(result, _options, theme) {
+  renderResult(result, { isPartial }, theme) {
+    if (isPartial) {
+      return new Text(theme.fg("muted", "Getting current time..."), 0, 0);
+    }
+
     const { details } = result as {
       details?: TimeDetails;
       content: Array<{ type: string; text?: string }>;

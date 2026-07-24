@@ -38,7 +38,76 @@ function overflowMessage(): AssistantMessage {
   };
 }
 
+function successMessage(): AssistantMessage {
+  return {
+    role: "assistant",
+    content: [{ type: "text", text: "Finished" }],
+    api: "openai-codex-responses",
+    provider: "openai-codex",
+    model: "gpt-5.5",
+    usage: {
+      input: 10,
+      output: 5,
+      cacheRead: 2,
+      cacheWrite: 1,
+      totalTokens: 18,
+      cost: {
+        input: 0.1,
+        output: 0.2,
+        cacheRead: 0.01,
+        cacheWrite: 0.02,
+        total: 0.33,
+      },
+    },
+    stopReason: "stop",
+    timestamp: 0,
+  };
+}
+
 describe("SubagentRuntime", () => {
+  it("returns nested model usage for parent session accounting", async () => {
+    let listener: ((event: AgentSessionEvent) => void) | undefined;
+    const message = successMessage();
+    const session = {
+      sessionId: "session-id",
+      sessionFile: "/tmp/session.jsonl",
+      model: {
+        provider: "openai-codex",
+        id: "gpt-5.5",
+      },
+      subscribe: vi.fn((next) => {
+        listener = next;
+        return vi.fn();
+      }),
+      prompt: vi.fn(async () => {
+        listener?.({ type: "message_end", message });
+      }),
+      getLastAssistantText: vi.fn(() => "Finished"),
+      dispose: vi.fn(),
+    } as unknown as AgentSession;
+    const config: SubagentConfig<typeof Params> = {
+      name: "reviewer",
+      label: "Reviewer",
+      description: "Review code",
+      systemPrompt: "Review code",
+      tools: [],
+      modelPreferences: [],
+      parameters: Params,
+      buildPrompt: () => ({ text: "Review this diff" }),
+    };
+
+    const runtime = new SubagentRuntime(config, session, undefined);
+    const result = await runtime.execute(
+      "call-id",
+      { task: "review" },
+      undefined,
+      {} as ExtensionContext,
+    );
+
+    expect(result.usage).toEqual(message.usage);
+    expect(result.details.usage).toEqual(message.usage);
+  });
+
   it("fails a blank context-overflow response", async () => {
     let listener: ((event: AgentSessionEvent) => void) | undefined;
     const session = {

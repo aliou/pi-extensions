@@ -85,10 +85,12 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
             this.session.sessionId,
           )
         : (response ?? "");
+      const details = this.state.snapshot();
 
       return {
         content: [textContent(content)],
-        details: this.state.snapshot(),
+        details,
+        usage: details.usage,
       };
     } catch (err: unknown) {
       if (this.limitAbort) {
@@ -102,10 +104,12 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
               this.session.sessionId,
             )
           : response;
+        const details = this.state.snapshot();
 
         return {
           content: [textContent(content)],
-          details: this.state.snapshot(),
+          details,
+          usage: details.usage,
         };
       }
 

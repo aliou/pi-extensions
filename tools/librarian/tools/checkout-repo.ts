@@ -129,9 +129,9 @@ Do NOT edit files in the cached checkout.`,
     promptSnippet:
       "Clone or reuse a local cache of a remote repo; returns absolute path",
     promptGuidelines: [
-      "Always call checkout_repo before exploring a remote repository; never assume a local path.",
-      "Pass the returned absolute path to ls/find/grep/read/git_log/git_show.",
-      "Do not edit, commit, push, or modify files in cached checkouts; they are read-only.",
+      "checkout_repo: Always call checkout_repo before exploring a remote repository; never assume a local path.",
+      "checkout_repo: Pass the returned absolute path to ls/find/grep/read/git_log/git_show.",
+      "checkout_repo: Do not edit, commit, push, or modify files in cached checkouts; they are read-only.",
     ],
     parameters: Params,
     async execute(_id, params, signal) {

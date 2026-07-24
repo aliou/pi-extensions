@@ -16,7 +16,7 @@
 //
 // Usage:
 //   node scripts/bump-pi-version.mjs                 # bump each to its latest
-//   PI_VERSION=0.80.6 node scripts/bump-pi-version.mjs   # bump all to a specific version
+//   PI_VERSION=0.82.0 node scripts/bump-pi-version.mjs   # bump all to a specific version
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";

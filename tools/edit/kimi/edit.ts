@@ -12,6 +12,7 @@ import { isAbsolute, relative, resolve, sep } from "node:path";
 import {
   generateDiffString,
   type ToolDefinition,
+  withFileMutationQueue,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import {
@@ -166,6 +167,7 @@ function replaceOnce(
 export async function applyKimiEdit(
   args: KimiEditInput,
   cwd: string,
+  signal?: AbortSignal,
 ): Promise<{
   oldContent: string;
   newContent: string;
@@ -181,37 +183,47 @@ export async function applyKimiEdit(
   }
 
   const absolutePath = resolveEditPath(args.path, cwd);
-  const raw = await readFile(absolutePath, "utf8");
-  const modelView = toModelTextView(raw);
-  const replaceAll = args.replace_all ?? false;
-  const occurrences = countOccurrences(modelView.text, args.old_string);
+  return withFileMutationQueue(absolutePath, async () => {
+    signal?.throwIfAborted();
+    const raw = await readFile(absolutePath, "utf8");
+    signal?.throwIfAborted();
+    const modelView = toModelTextView(raw);
+    const replaceAll = args.replace_all ?? false;
+    const occurrences = countOccurrences(modelView.text, args.old_string);
 
-  if (occurrences === 0) {
-    throw new Error(
-      `old_string not found in ${args.path}, the file contents may be out of date. Please use the read tool to reload the content.`,
+    if (occurrences === 0) {
+      throw new Error(
+        `old_string not found in ${args.path}, the file contents may be out of date. Please use the read tool to reload the content.`,
+      );
+    }
+
+    if (!replaceAll && occurrences > 1) {
+      throw new Error(
+        `old_string is not unique in ${args.path} (found ${occurrences} occurrences). To replace every occurrence, set replace_all=true. To replace only one occurrence, include more surrounding context in old_string.`,
+      );
+    }
+
+    const next = replaceAll
+      ? modelView.text.split(args.old_string).join(args.new_string)
+      : replaceOnce(modelView.text, args.old_string, args.new_string);
+
+    signal?.throwIfAborted();
+    await writeFile(
+      absolutePath,
+      materializeModelText(next, modelView.lineEndingStyle),
+      "utf8",
     );
-  }
-
-  if (!replaceAll && occurrences > 1) {
-    throw new Error(
-      `old_string is not unique in ${args.path} (found ${occurrences} occurrences). To replace every occurrence, set replace_all=true. To replace only one occurrence, include more surrounding context in old_string.`,
-    );
-  }
-
-  const next = replaceAll
-    ? modelView.text.split(args.old_string).join(args.new_string)
-    : replaceOnce(modelView.text, args.old_string, args.new_string);
-
-  await writeFile(
-    absolutePath,
-    materializeModelText(next, modelView.lineEndingStyle),
-    "utf8",
-  );
-  return {
-    oldContent: modelView.text,
-    newContent: next,
-    replacementCount: replaceAll ? occurrences : 1,
-  };
+    if (signal?.aborted) {
+      throw new Error(
+        `Operation aborted after editing ${args.path}. The file was modified; re-read it before retrying.`,
+      );
+    }
+    return {
+      oldContent: modelView.text,
+      newContent: next,
+      replacementCount: replaceAll ? occurrences : 1,
+    };
+  });
 }
 
 export function createKimiEditToolDefinition(
@@ -230,9 +242,13 @@ export function createKimiEditToolDefinition(
     promptGuidelines: KIMI_EDIT_GUIDELINES,
     parameters: KIMI_EDIT_SCHEMA,
     renderShell: "default",
-    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       const workdir = ctx?.cwd ?? cwd;
-      const result = await applyKimiEdit(params as KimiEditInput, workdir);
+      const result = await applyKimiEdit(
+        params as KimiEditInput,
+        workdir,
+        signal,
+      );
       const diff = generateDiffString(
         result.oldContent,
         result.newContent,

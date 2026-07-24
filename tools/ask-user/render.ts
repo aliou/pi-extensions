@@ -24,9 +24,13 @@ export function renderCall(args: Params, theme: Theme) {
 
 export function renderResult(
   result: AgentToolResult<AskUserQuestionDetails>,
-  { expanded }: ToolRenderResultOptions,
+  { expanded, isPartial }: ToolRenderResultOptions,
   theme: Theme,
 ): Text {
+  if (isPartial) {
+    return new Text(theme.fg("muted", "Waiting for user input..."), 0, 0);
+  }
+
   const { details } = result;
 
   if (details?.error) {

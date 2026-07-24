@@ -1,10 +1,7 @@
 import { homedir as getHomedir } from "node:os";
 import { resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import {
-  createBashTool,
-  createBashToolDefinition,
-} from "@earendil-works/pi-coding-agent";
+import { createBashToolDefinition } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
@@ -77,12 +74,13 @@ export default function (pi: ExtensionAPI): void {
     },
     async execute(toolCallId, params, signal, onUpdate, ctx) {
       const effectiveCwd = params.cwd ? resolve(ctx.cwd, params.cwd) : ctx.cwd;
-      const bashForCwd = createBashTool(effectiveCwd);
+      const bashForCwd = createBashToolDefinition(effectiveCwd);
       return bashForCwd.execute(
         toolCallId,
         { command: params.command, timeout: params.timeout },
         signal,
         onUpdate,
+        ctx,
       );
     },
   });

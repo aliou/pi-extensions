@@ -171,6 +171,14 @@ def peer-dependencies [externals: list<string>] {
   $result
 }
 
+def optional-peer-dependencies [peers: record] {
+  mut result = {}
+  for peer in ($peers | columns) {
+    $result = ($result | upsert $peer { optional: true })
+  }
+  $result
+}
+
 def extension-marker [entry: record] {
   $"[pi-harness:($entry.path)]"
 }
@@ -289,6 +297,7 @@ def build-entry [entry: record] {
       $externals = ([ ...$externals ...$bundle_externals ] | uniq)
     }
     let peers = peer-dependencies $externals
+    let optional_peers = optional-peer-dependencies $peers
 
     let package = {
       name: $entry.packageName
@@ -297,6 +306,7 @@ def build-entry [entry: record] {
       type: "module"
       keywords: ["pi-package"]
       peerDependencies: $peers
+      peerDependenciesMeta: $optional_peers
       pi: {
         extensions: ["./index.js"]
       }

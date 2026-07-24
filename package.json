@@ -47,27 +47,28 @@
   "devDependencies": {
     "@aliou/biome-plugins": "^0.8.1",
     "@biomejs/biome": "^2.5.3",
-    "@earendil-works/pi-agent-core": "0.80.8",
-    "@earendil-works/pi-ai": "0.80.8",
-    "@earendil-works/pi-coding-agent": "0.80.8",
-    "@earendil-works/pi-tui": "0.80.8",
+    "@earendil-works/pi-agent-core": "0.82.0",
+    "@earendil-works/pi-ai": "0.82.0",
+    "@earendil-works/pi-coding-agent": "0.82.0",
+    "@earendil-works/pi-tui": "0.82.0",
     "@golevelup/ts-vitest": "^4.0.0",
     "@harness/test-utils": "workspace:*",
     "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
     "esbuild": "0.28.1",
     "memfs": "^4.64.0",
-    "typebox": "*",
+    "typebox": "1.1.38",
     "typescript": "^5.7.0",
     "vitest": "^4.1.10",
     "vitest-evals": "^0.15.0"
   },
   "pnpm": {
     "overrides": {
-      "@earendil-works/pi-coding-agent": "0.80.8",
+      "@earendil-works/pi-coding-agent": "0.82.0",
       "@earendil-works/pi-agent-core": "$@earendil-works/pi-coding-agent",
       "@earendil-works/pi-ai": "$@earendil-works/pi-coding-agent",
-      "@earendil-works/pi-tui": "$@earendil-works/pi-coding-agent"
+      "@earendil-works/pi-tui": "$@earendil-works/pi-coding-agent",
+      "typebox": "1.1.38"
     },
     "onlyBuiltDependencies": [
       "@aliou/sh"

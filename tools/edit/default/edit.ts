@@ -9,9 +9,8 @@
  * preview as the model streams edit arguments (before `execute` runs).
  *
  * This is the edit interface used for non-Codex, non-Kimi models (Anthropic,
- * GLM, and the rest). For Anthropic models, strict tool-use validation is
- * layered on top via `strict.ts` + the `before_provider_request` hook in
- * `index.ts`.
+ * GLM, and the rest). It requests Pi's capability-aware JSON-schema
+ * constrained sampling, preferring strict validation where supported.
  */
 
 import type { EditToolInput } from "@earendil-works/pi-coding-agent";
@@ -62,6 +61,7 @@ export function createDefaultEditToolDefinition(
 
   return {
     ...nativeEdit,
+    constrainedSampling: { type: "json_schema", strict: "prefer" },
     prepareArguments(args: unknown) {
       return prepareEditArguments(args, nativeEdit.prepareArguments);
     },

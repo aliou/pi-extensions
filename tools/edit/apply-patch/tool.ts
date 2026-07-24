@@ -121,17 +121,22 @@ export function createApplyPatchToolDefinition(
     promptGuidelines: APPLY_PATCH_GUIDELINES,
     parameters: APPLY_PATCH_SCHEMA,
     renderShell: "default",
-    async execute(_toolCallId, params, _signal, onUpdate, ctx) {
+    async execute(_toolCallId, params, signal, onUpdate, ctx) {
       const workdir = ctx?.cwd ?? cwd;
       const { hunks } = parsePatch(params.input);
       // Stream a partial result per committed hunk so the UI renders files as
       // they are edited/created, instead of only after the whole patch lands.
-      const result = await applyHunks(hunks, workdir, (partial) => {
-        onUpdate?.({
-          content: [],
-          details: buildApplyPatchDetails(params.input, partial),
-        });
-      });
+      const result = await applyHunks(
+        hunks,
+        workdir,
+        (partial) => {
+          onUpdate?.({
+            content: [],
+            details: buildApplyPatchDetails(params.input, partial),
+          });
+        },
+        signal,
+      );
       const details = buildApplyPatchDetails(params.input, result);
       return {
         content: [
