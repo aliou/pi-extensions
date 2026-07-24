@@ -35,32 +35,19 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
       loadAgentsFilesFromCwd(path.resolve(ctx.cwd, params.cwd?.trim() || ".")),
     tools,
     extensionPaths,
-    // Primary: synthetic GLM-5.2 (524k ctx; the context-overflow failure mode
-    // that killed spark is structurally impossible). Fallback: neuralwatt glm-5.2
-    // (1M ctx) -- same model on the other provider. Synthetic is the subscription
-    // (free) path; neuralwatt is the paid fallback.
-    // GLM-5.2 exposes only off/high/xhigh; "low" clamps up to "high" on both
-    // providers, so primary and fallback stay consistent. ~9% bleed at 0.1.
+    // Primary: neuralwatt gemma-4-31b. Fallback: openrouter/google/gemma-4-31b-it.
     modelPreferences: [
       {
-        // Cheap trial primary: demote if quality lags GLM-5.2. Served without
-        // thinking (neuralwatt registers reasoning: false).
         provider: "neuralwatt",
         model: "gemma-4-31b",
         thinking: "off",
         weight: 2,
       },
       {
-        provider: "synthetic",
-        model: "hf:zai-org/GLM-5.2",
-        thinking: "low",
-        weight: 1,
-      },
-      {
-        provider: "neuralwatt",
-        model: "glm-5.2",
-        thinking: "low",
-        weight: 0.1,
+        provider: "openrouter",
+        model: "google/gemma-4-31b-it",
+        thinking: "off",
+        weight: 0,
       },
     ],
   });
