@@ -50,33 +50,31 @@ Always provide a clear objective describing what you want to learn from the imag
       "look_at: Provide a specific objective: what visible evidence to inspect, what to ignore, and the desired output format.",
       "look_at: Use context to provide product/code/error background, nearby files, expected UI state, or comparison target.",
       "look_at: Ask for exact visible evidence; for UI screenshots, ask about hierarchy, spacing, affordances, accessibility, and visible text.",
+      "look_at: Do not ask it to infer hidden state, behavior, or implementation details beyond what is visible in the image.",
     ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],
-    // Primary: synthetic Kimi-K2.7-Code (vision). Fallback: neuralwatt
-    // kimi-k2.7-code -- same model on the other provider. Kimi-K2.7-Code is
-    // thinking-only: "off" clamps to "medium" (its sole level), so "low" is used
-    // to express the lowest available effort. ~9% bleed at weight 0.1.
+    // Co-primaries at equal weight: Gemma 4 31B (neuralwatt) and the small
+    // synthetic vision model syn:small:vision (hf:Qwen/Qwen3.6-27B). If neither
+    // provider can serve those, fall back to Gemma 4 31B on OpenRouter.
     modelPreferences: [
       {
-        // Cheap trial primary: demote if quality lags Kimi. Served without
-        // thinking (neuralwatt registers reasoning: false).
         provider: "neuralwatt",
         model: "gemma-4-31b",
         thinking: "off",
-        weight: 2,
-      },
-      {
-        provider: "synthetic",
-        model: "hf:moonshotai/Kimi-K2.7-Code",
-        thinking: "low",
         weight: 1,
       },
       {
-        provider: "neuralwatt",
-        model: "kimi-k2.7-code",
-        thinking: "low",
-        weight: 0.1,
+        provider: "synthetic",
+        model: "syn:small:vision",
+        thinking: "off",
+        weight: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "google/gemma-4-31b-it",
+        thinking: "off",
+        weight: 0,
       },
     ],
     parameters: LookAtParams,
