@@ -23,6 +23,11 @@ export function isCodexModel(model: ModelLike): boolean {
   return model?.provider === "openai-codex";
 }
 
+/** Anthropic Claude models benefit from strict tool-use schema validation. */
+export function isAnthropicModel(model: ModelLike): boolean {
+  return model?.provider === "anthropic";
+}
+
 /** Kimi K2.7 Code is tuned for Moonshot's old_string/new_string edit shape. */
 export function isKimiCodeModel(model: ModelLike): boolean {
   const id = model?.id?.toLowerCase();

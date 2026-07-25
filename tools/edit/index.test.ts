@@ -83,13 +83,15 @@ describe("defaults edit tool", () => {
     expect(pi).toHaveRegisteredTool("edit");
   });
 
-  it("prefers capability-aware JSON-schema constrained sampling", async () => {
+  it("does not opt the edit tool into built-in constrained sampling", async () => {
     const pi = await createPiTestHarness(editExtension);
 
-    expect(pi.tool("edit").registered.constrainedSampling).toEqual({
-      type: "json_schema",
-      strict: "prefer",
-    });
+    // Strict validation for the edit tool is layered on the outgoing
+    // Anthropic wire payload via the `before_provider_request` hook
+    // (see `anthropic/strict.ts`), not via `constrainedSampling`. The
+    // registered schema stays non-strict so other providers keep tolerating
+    // stray keys (upstream pi #5501).
+    expect(pi.tool("edit").registered.constrainedSampling).toBeUndefined();
   });
 
   it("strips empty-string edits in prepareArguments", async () => {
