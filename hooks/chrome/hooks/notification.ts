@@ -125,7 +125,17 @@ async function playSound(pi: ExtensionAPI, soundPath: string): Promise<void> {
   }
 }
 
+/**
+ * Inside a herdr pane herdr owns the desktop notification surface (via the
+ * `herdr-cast` plugin posting native macOS toasts with click-to-jump). Posting
+ * the OSC sequences and playing the sound here would double up: a herdr toast
+ * AND a terminal-bell toast AND a second ding. So when HERDR_ENV=1 we stand
+ * down entirely. The ad:notify:* events still fire (emitted in agent_end / by
+ * the handlers below), so hooks/herdr/index.ts can translate them into the
+ * `herdr:blocked` state that herdr-cast rings on.
+ */
 function shouldUseTerminalEffects(): boolean {
+  if (process.env.HERDR_ENV === "1") return false; // herdr-cast drives notifications
   return process.stdout.isTTY;
 }
 
