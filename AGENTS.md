@@ -95,7 +95,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `feedback/` (hook) | `/feedback` | Rate recent subagent runs (registered from the hook dir) |
 | `label/` | `/label <text>` | Label the current session entry |
 | `qq/` | `/qq [question]` | Quick question / resumable side chat without interrupting the main session |
-| `review/` | `/review`, `/review:split` | Local review workflow |
+| `review/` | `/review`, `/review:split` | Local review workflow; split mode supports tmux, Herdr, and Ghostty |
 | `spawn/` | `/spawn [note]` | Create a linked child session |
 | `theme/` | `/theme` | Cycle color theme |
 | `usage/` | `/usage` | Interactive provider usage dashboard |

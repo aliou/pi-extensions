@@ -40,7 +40,7 @@ export default async function (pi: ExtensionAPI) {
 
   pi.registerCommand("review:split", {
     description:
-      "Review a diff in a tmux or Ghostty split. Default: diff against the default branch.",
+      "Review a diff in a tmux, Herdr, or Ghostty split. Default: diff against the default branch.",
     getArgumentCompletions,
     handler: async (args, ctx) => {
       await runReviewCommand(pi, args, ctx, (diffFile) =>
