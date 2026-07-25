@@ -17,6 +17,10 @@ interface ActiveBlock {
   toolCallId?: string;
 }
 
+type DangerousNotification = AdNotifyDangerousEvent & {
+  source?: string;
+};
+
 const activeBlocks = new Map<string, ActiveBlock>();
 
 function block(
@@ -51,7 +55,12 @@ function notificationKey(kind: BlockKind, toolCallId?: string): string {
 
 function handleDangerous(pi: ExtensionAPI): () => void {
   return pi.events.on(AD_NOTIFY_DANGEROUS_EVENT, (data) => {
-    const payload = data as AdNotifyDangerousEvent;
+    const payload = data as DangerousNotification;
+    // Guardrails' own Herdr adapter tracks the approval prompt precisely.
+    // This compatibility notification is still useful to other harness hooks,
+    // but treating it as another Herdr block leaves an uncorrelated block.
+    if (payload.source === "defaults:event-compat:guardrails") return;
+
     block(
       pi,
       notificationKey("dangerous", payload.toolCallId),
