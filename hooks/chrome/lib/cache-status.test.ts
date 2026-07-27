@@ -5,9 +5,12 @@ import {
   getCacheFreshness,
   NEURALWATT_GLM_CACHE_TTL_MS,
   NEURALWATT_KIMI_CACHE_TTL_MS,
+  OPENAI_GPT56_CACHE_TTL_MS,
   OPENAI_LONG_CACHE_TTL_MS,
   OPENAI_SHORT_CACHE_TTL_MS,
-  SYNTHETIC_CACHE_TTL_MS,
+  OPENROUTER_ANTHROPIC_LONG_CACHE_TTL_MS,
+  OPENROUTER_ANTHROPIC_SHORT_CACHE_TTL_MS,
+  OPENROUTER_QWEN_CACHE_TTL_MS,
 } from "./cache-status";
 
 function compactionEntry(timestampMs: number): SessionEntry {
@@ -56,35 +59,20 @@ function assistantEntry(overrides: {
 }
 
 describe("cache-status", () => {
-  it("marks Synthetic cache valid inside assumed window", () => {
+  it("returns unknown for Synthetic models", () => {
     const status = getCacheFreshness(
-      [assistantEntry({ timestampMs: 10_000 })],
-      10_000 + SYNTHETIC_CACHE_TTL_MS - 1,
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          provider: "synthetic",
+          model: "hf:moonshotai/Kimi-K2.5",
+        }),
+      ],
+      10_000 + 60 * 1000,
     );
 
-    expect(status?.state).toBe("valid");
-    expect(status?.ttlMs).toBe(SYNTHETIC_CACHE_TTL_MS);
-  });
-
-  it("marks Synthetic cache stale outside assumed window", () => {
-    const status = getCacheFreshness(
-      [assistantEntry({ timestampMs: 10_000 })],
-      10_000 + SYNTHETIC_CACHE_TTL_MS + 1,
-    );
-
-    expect(status?.state).toBe("stale");
-    expect(status?.ttlMs).toBe(SYNTHETIC_CACHE_TTL_MS);
-  });
-
-  it("keeps Synthetic on the assumed window even with long retention", () => {
-    const status = getCacheFreshness(
-      [assistantEntry({ timestampMs: 10_000 })],
-      10_000 + SYNTHETIC_CACHE_TTL_MS + 1,
-      "long",
-    );
-
-    expect(status?.state).toBe("stale");
-    expect(status?.ttlMs).toBe(SYNTHETIC_CACHE_TTL_MS);
+    expect(status?.state).toBe("unknown");
+    expect(status?.ttlMs).toBeUndefined();
   });
 
   it("uses 5 minutes for Neuralwatt Kimi", () => {
@@ -172,6 +160,128 @@ describe("cache-status", () => {
 
     expect(status?.state).toBe("valid");
     expect(status?.ttlMs).toBe(OPENAI_LONG_CACHE_TTL_MS);
+  });
+
+  it("uses 30 minutes for OpenAI GPT-5.6+", () => {
+    const status = getCacheFreshness(
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          api: "openai-responses",
+          provider: "openai",
+          model: "gpt-5.6-luna",
+        }),
+      ],
+      10_000 + OPENAI_GPT56_CACHE_TTL_MS - 1,
+    );
+
+    expect(status?.state).toBe("valid");
+    expect(status?.ttlMs).toBe(OPENAI_GPT56_CACHE_TTL_MS);
+  });
+
+  it("uses 5 minutes for OpenRouter Anthropic models by default", () => {
+    const status = getCacheFreshness(
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          api: "openai-responses",
+          provider: "openrouter",
+          model: "anthropic/claude-sonnet-4-5",
+        }),
+      ],
+      10_000 + OPENROUTER_ANTHROPIC_SHORT_CACHE_TTL_MS - 1,
+      "short",
+    );
+
+    expect(status?.state).toBe("valid");
+    expect(status?.ttlMs).toBe(OPENROUTER_ANTHROPIC_SHORT_CACHE_TTL_MS);
+  });
+
+  it("uses 1 hour for OpenRouter Anthropic models with long retention", () => {
+    const status = getCacheFreshness(
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          api: "openai-responses",
+          provider: "openrouter",
+          model: "anthropic/claude-sonnet-4-5",
+        }),
+      ],
+      10_000 + OPENROUTER_ANTHROPIC_LONG_CACHE_TTL_MS - 1,
+      "long",
+    );
+
+    expect(status?.state).toBe("valid");
+    expect(status?.ttlMs).toBe(OPENROUTER_ANTHROPIC_LONG_CACHE_TTL_MS);
+  });
+
+  it("uses 30 minutes for OpenRouter OpenAI GPT-5.6+", () => {
+    const status = getCacheFreshness(
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          api: "openai-responses",
+          provider: "openrouter",
+          model: "openai/gpt-5.6-luna",
+        }),
+      ],
+      10_000 + OPENAI_GPT56_CACHE_TTL_MS - 1,
+    );
+
+    expect(status?.state).toBe("valid");
+    expect(status?.ttlMs).toBe(OPENAI_GPT56_CACHE_TTL_MS);
+  });
+
+  it("uses short OpenAI TTL for OpenRouter OpenAI pre-5.6 models", () => {
+    const status = getCacheFreshness(
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          api: "openai-responses",
+          provider: "openrouter",
+          model: "openai/gpt-5.5",
+        }),
+      ],
+      10_000 + OPENAI_SHORT_CACHE_TTL_MS - 1,
+      "short",
+    );
+
+    expect(status?.state).toBe("valid");
+    expect(status?.ttlMs).toBe(OPENAI_SHORT_CACHE_TTL_MS);
+  });
+
+  it("uses 5 minutes for OpenRouter Qwen models", () => {
+    const status = getCacheFreshness(
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          api: "openai-responses",
+          provider: "openrouter",
+          model: "qwen/qwen3.5-plus",
+        }),
+      ],
+      10_000 + OPENROUTER_QWEN_CACHE_TTL_MS - 1,
+    );
+
+    expect(status?.state).toBe("valid");
+    expect(status?.ttlMs).toBe(OPENROUTER_QWEN_CACHE_TTL_MS);
+  });
+
+  it("returns unknown for OpenRouter Google/Gemini models", () => {
+    const status = getCacheFreshness(
+      [
+        assistantEntry({
+          timestampMs: 10_000,
+          api: "openai-responses",
+          provider: "openrouter",
+          model: "google/gemini-2.5-flash",
+        }),
+      ],
+      10_000 + 60 * 60 * 1000,
+    );
+
+    expect(status?.state).toBe("unknown");
+    expect(status?.ttlMs).toBeUndefined();
   });
 
   it("returns unknown after compaction without a newer assistant message", () => {
