@@ -14,19 +14,19 @@
           "package": "@harness/events",
           "imports": ["@harness/events"],
           "entry": "packages/events/index.ts",
-          "file": "events.js"
+          "file": "workspace-events.js"
         },
         {
           "package": "@harness/completion",
           "imports": ["@harness/completion"],
           "entry": "packages/completion/index.ts",
-          "file": "completion.js"
+          "file": "workspace-completion.js"
         },
         {
           "package": "@harness/utils",
           "imports": ["@harness/utils/path"],
           "entry": "packages/utils/index.ts",
-          "file": "utils.js"
+          "file": "workspace-utils.js"
         }
       ]
     },
@@ -42,25 +42,25 @@
           "package": "@harness/events",
           "imports": ["@harness/events"],
           "entry": "packages/events/index.ts",
-          "file": "events.js"
+          "file": "workspace-events.js"
         },
         {
           "package": "@harness/aperture",
           "imports": ["@harness/aperture"],
           "entry": "packages/aperture/index.ts",
-          "file": "aperture.js"
+          "file": "workspace-aperture.js"
         },
         {
           "package": "@harness/provider-usage",
           "imports": ["@harness/provider-usage"],
           "entry": "packages/provider-usage/index.ts",
-          "file": "provider-usage.js"
+          "file": "workspace-provider-usage.js"
         },
         {
           "package": "@harness/models",
           "imports": ["@harness/models/usage"],
           "entry": "packages/models/usage/index.ts",
-          "file": "models-usage.js"
+          "file": "workspace-models-usage.js"
         }
       ]
     },
@@ -76,7 +76,7 @@
           "package": "@harness/utils",
           "imports": ["@harness/utils/path"],
           "entry": "packages/utils/index.ts",
-          "file": "utils.js"
+          "file": "workspace-utils.js"
         }
       ]
     }
