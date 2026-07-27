@@ -17,7 +17,7 @@ import type {
   AutocompleteSuggestions,
 } from "@earendil-works/pi-tui";
 import { replaceAutocompletePrefix } from "@harness/completion";
-import { listSkills } from "./skills";
+import { listSkills, type SkillsRoot } from "./skills";
 import { SKILL_TOKEN_RE, SKILL_TRIGGER_CONSUMED_RE } from "./types";
 
 interface SkillToken {
@@ -34,9 +34,18 @@ export function extractSkillToken(
   return { trigger: match[1] ?? "?", token: match[2] ?? "" };
 }
 
+/** Prefix a skill's description with its `[source]` tag, mirroring pi's autocomplete. */
+function prefixDescription(
+  description: string | undefined,
+  sourceLabel: string,
+): string {
+  const text = description?.trim() ? description : sourceLabel;
+  return `[${sourceLabel}] ${text}`;
+}
+
 export function createSkillAutocompleteProvider(
   current: AutocompleteProvider,
-  skillsRoots: string[],
+  skillsRoots: SkillsRoot[],
 ): AutocompleteProvider {
   return {
     triggerCharacters: ["?"],
@@ -95,7 +104,10 @@ export function createSkillAutocompleteProvider(
         const items: AutocompleteItem[] = skills.map((skill) => ({
           value: skill.name,
           label: skill.name,
-          description: skill.description ?? skill.directory,
+          description: prefixDescription(
+            skill.description ?? skill.directory,
+            skill.sourceLabel,
+          ),
         }));
 
         return {

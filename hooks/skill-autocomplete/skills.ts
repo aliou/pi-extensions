@@ -1,10 +1,19 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename } from "node:path";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
-import { collapseHomePath } from "@harness/utils/path";
+import { collapseHomePath, expandHomePath } from "@harness/utils/path";
 
 interface SkillFrontmatter {
   description?: string;
   [key: string]: unknown;
+}
+
+/** A configured skill root, resolved to an absolute path with a display label. */
+export interface SkillsRoot {
+  /** Absolute path to the root directory containing skill folders. */
+  path: string;
+  /** Short label identifying this root, shown as a `[label]` prefix. */
+  label: string;
 }
 
 export interface SkillInfo {
@@ -18,20 +27,29 @@ export interface SkillInfo {
   baseDir: string;
   /** Tilde path to directory, e.g. "~/skills/vitest". */
   directory: string;
+  /** Label of the root this skill was loaded from. */
+  sourceLabel: string;
+}
+
+/** Derive a short, stable label for a skill root from its path. */
+export function deriveRootLabel(rawPath: string): string {
+  const expanded = expandHomePath(rawPath);
+  const base = basename(expanded);
+  return base || collapseHomePath(expanded);
 }
 
 /**
  * List skill directories under the given roots.
  * Only immediate subdirectories are included, sorted alphabetically.
  */
-export function listSkills(skillsRoots: string[]): SkillInfo[] {
+export function listSkills(skillsRoots: SkillsRoot[]): SkillInfo[] {
   const skills: SkillInfo[] = [];
   const seenNames = new Set<string>();
 
   for (const root of skillsRoots) {
     let entries: string[];
     try {
-      entries = readdirSync(root);
+      entries = readdirSync(root.path);
     } catch (_error) {
       void _error;
       continue;
@@ -40,7 +58,7 @@ export function listSkills(skillsRoots: string[]): SkillInfo[] {
     for (const name of entries) {
       if (seenNames.has(name)) continue;
 
-      const absolutePath = `${root}/${name}`;
+      const absolutePath = `${root.path}/${name}`;
       const fullPath = `${absolutePath}/SKILL.md`;
       try {
         if (statSync(absolutePath).isDirectory() && existsSync(fullPath)) {
@@ -54,6 +72,7 @@ export function listSkills(skillsRoots: string[]): SkillInfo[] {
             fullPath,
             baseDir: absolutePath,
             directory: collapseHomePath(absolutePath),
+            sourceLabel: root.label,
           });
         }
       } catch (_error) {

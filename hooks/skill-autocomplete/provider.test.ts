@@ -6,7 +6,7 @@ import { expect, test } from "vitest";
 import { createSkillAutocompleteEditor } from "./editor";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider, extractSkillToken } from "./provider";
-import { listSkills } from "./skills";
+import { listSkills, type SkillsRoot } from "./skills";
 
 const current = {
   getSuggestions: async () => null,
@@ -32,7 +32,8 @@ test("shows all skills for ??", async () => {
   );
 
   try {
-    const provider = createSkillAutocompleteProvider(current, [root]);
+    const roots: SkillsRoot[] = [{ path: root, label: "test" }];
+    const provider = createSkillAutocompleteProvider(current, roots);
     const suggestions = await provider.getSuggestions(["??"], 0, 2, {
       signal: new AbortController().signal,
     });
@@ -40,8 +41,8 @@ test("shows all skills for ??", async () => {
     expect(suggestions).toMatchObject({
       prefix: "??",
       items: [
-        { label: "alpha", description: "Alpha skill description" },
-        { label: "beta", description: "Beta skill description" },
+        { label: "alpha", description: "[test] Alpha skill description" },
+        { label: "beta", description: "[test] Beta skill description" },
       ],
     });
   } finally {
@@ -63,9 +64,10 @@ test("expands multiple skills and retains their names in prose", () => {
   );
 
   try {
+    const roots: SkillsRoot[] = [{ path: root, label: "test" }];
     const result = expandSkillReferences(
       "read the ??documentation skill and the ??ark-ui skill",
-      listSkills([root]),
+      listSkills(roots),
     );
 
     expect(result.skills.map((skill) => skill.name)).toEqual([
@@ -91,6 +93,7 @@ test("does not partially expand a longer unknown reference", () => {
       fullPath: "/tmp/foo/SKILL.md",
       baseDir: "/tmp/foo",
       directory: "/tmp/foo",
+      sourceLabel: "test",
     },
   ];
 

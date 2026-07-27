@@ -9,8 +9,16 @@
  *
  * The root paths are configured in `~/.pi/agent/settings/completion.json`:
  * ```json
- * { "skillsRoots": ["~/skills"] }
+ * {
+ *   "skillsRoots": [
+ *     "~/skills",
+ *     { "path": "~/code/src/skill-library", "label": "library" }
+ *   ]
+ * }
  * ```
+ * Each entry is either a bare path (label derived from the directory name) or
+ * an object with an explicit `label`. The label is shown as a `[label]` prefix
+ * on each skill's description, mirroring pi's source tagging.
  *
  * If the config file doesn't exist or any configured path doesn't exist,
  * a notification is shown on session start. The provider is still registered
@@ -28,10 +36,10 @@ import { createSkillAutocompleteEditor } from "./editor";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider } from "./provider";
 import { renderSkillInvocation, SKILL_INVOCATION_MESSAGE_TYPE } from "./render";
-import { listSkills } from "./skills";
+import { listSkills, type SkillsRoot } from "./skills";
 
 export default async function (pi: ExtensionAPI) {
-  let skillsRoots: string[] = [];
+  let skillsRoots: SkillsRoot[] = [];
 
   pi.registerMessageRenderer(
     SKILL_INVOCATION_MESSAGE_TYPE,
