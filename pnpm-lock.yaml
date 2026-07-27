@@ -27,6 +27,9 @@ importers:
       '@harness/agent-kit':
         specifier: workspace:*
         version: link:packages/agent-kit
+      '@harness/aperture':
+        specifier: workspace:*
+        version: link:packages/aperture
       '@harness/completion':
         specifier: workspace:*
         version: link:packages/completion
@@ -118,6 +121,12 @@ importers:
       typebox:
         specifier: 1.1.38
         version: 1.1.38
+
+  packages/aperture:
+    dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: 0.82.0
+        version: 0.82.0(ws@8.21.0)(zod@4.4.3)
 
   packages/completion:
     dependencies:

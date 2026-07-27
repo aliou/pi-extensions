@@ -35,6 +35,7 @@
     "@aliou/sesame": "^0.11.0",
     "@aliou/sh": "^0.2.0",
     "@harness/agent-kit": "workspace:*",
+    "@harness/aperture": "workspace:*",
     "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",
     "@harness/image-formats": "workspace:*",

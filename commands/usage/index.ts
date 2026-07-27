@@ -2,15 +2,12 @@ import {
   BorderedLoader,
   type ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
+import { getApertureBaseUrl, setApertureBaseUrl } from "@harness/aperture";
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
   once,
 } from "@harness/events";
-import {
-  getApertureBaseUrl,
-  setApertureBaseUrl,
-} from "@harness/provider-usage";
 import { UsagePanel } from "./panel";
 import { loadUsageDashboard } from "./service";
 
@@ -31,7 +28,7 @@ async function isApertureReachable(baseUrl: string): Promise<boolean> {
 /**
  * Ensure an Aperture base URL is configured. On first run (or if the stored
  * value is empty), prompts the user, validates it against `/v1/models`, and
- * persists it to `~/.pi/agent/extensions/provider-usage.json`.
+ * persists it to `~/.pi/agent/extensions/aperture.json`.
  *
  * Returns the resolved base URL, or `undefined` if the user cancelled or the
  * endpoint is unreachable.

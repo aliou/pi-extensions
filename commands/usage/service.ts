@@ -1,3 +1,4 @@
+import { getApertureBaseUrl } from "@harness/aperture";
 import {
   appendUsageHistory,
   buildProjectionHints,
@@ -5,7 +6,6 @@ import {
   writeUsageCache,
 } from "@harness/models/usage";
 import {
-  getApertureBaseUrl,
   type ProviderUsageClient,
   type ProviderUsageFetchContext,
   ProviderUsageHttpError,
