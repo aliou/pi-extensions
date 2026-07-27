@@ -1,0 +1,22 @@
+diff --git a/dist/modes/interactive/theme/theme.js b/dist/modes/interactive/theme/theme.js
+index 0000000000000000000000000000000000000000..0000000000000000000000000000000000000000 100644
+--- a/dist/modes/interactive/theme/theme.js
++++ b/dist/modes/interactive/theme/theme.js
+@@ -936,6 +936,17 @@ export function getLanguageFromPath(filePath) {
+     if (!ext)
+         return undefined;
+     const extToLang = {
++        astro: "astro",
++        diff: "diff",
++        hujson: "json",
++        jsonc: "json",
++        jsonl: "json",
++        justfile: "makefile",
++        mdx: "markdown",
++        mts: "typescript",
++        nix: "nix",
++        nu: "nu",
++        zig: "zig",
+         ts: "typescript",
+         tsx: "typescript",
+         js: "javascript",

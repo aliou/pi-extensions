@@ -4,10 +4,12 @@
   "type": "module",
   "dependencies": {
     "@earendil-works/pi-ai": "0.82.0",
+    "@earendil-works/pi-coding-agent": "0.82.0",
     "@earendil-works/pi-tui": "0.82.0"
   },
   "pnpm": {
     "patchedDependencies": {
+      "@earendil-works/pi-coding-agent@0.82.0": "pi-coding-agent--nix-highlighting/patch.diff",
       "@earendil-works/pi-tui@0.82.0": "pi-tui--markdown-code-block/patch.diff"
     }
   }
