@@ -45,6 +45,12 @@
           "file": "events.js"
         },
         {
+          "package": "@harness/aperture",
+          "imports": ["@harness/aperture"],
+          "entry": "packages/aperture/index.ts",
+          "file": "aperture.js"
+        },
+        {
           "package": "@harness/provider-usage",
           "imports": ["@harness/provider-usage"],
           "entry": "packages/provider-usage/index.ts",
