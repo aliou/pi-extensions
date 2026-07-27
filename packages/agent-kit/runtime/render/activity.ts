@@ -2,17 +2,19 @@ import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
 import { Markdown, Text } from "@earendil-works/pi-tui";
 import { formatDisplayPath } from "@harness/utils";
 import type { SubagentToolCall } from "../types";
-import { extractParagraphs } from "./utils";
 
 export function renderThinking(
   running: boolean,
   content: string,
   theme: Theme,
+  expanded: boolean,
 ) {
   const indicator = running
     ? theme.fg("accent", "·")
     : theme.fg("success", "✓");
-  const reasoning = extractParagraphs(content, 1) || "Thinking";
+  const trimmed = content.trim();
+  const reasoning =
+    (expanded ? trimmed : trimmed.split(/\n\s*\n/, 1)[0]) || "Thinking";
   return new Markdown(`${indicator} ${reasoning}`, 0, 0, getMarkdownTheme());
 }
 

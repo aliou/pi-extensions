@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  extractParagraphs,
   isScaffoldingParagraph,
   selectCollapsedPreview,
   splitParagraphs,
@@ -18,12 +17,6 @@ describe("splitParagraphs", () => {
 
   it("trims and returns an empty array for blank input", () => {
     expect(splitParagraphs("   \n\n  ")).toEqual([]);
-  });
-});
-
-describe("extractParagraphs", () => {
-  it("returns the first N paragraphs joined by blank lines", () => {
-    expect(extractParagraphs("a\n\nb\n\nc", 2)).toBe("a\n\nb");
   });
 });
 

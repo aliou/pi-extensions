@@ -7,6 +7,7 @@ import { Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
 import type { SubagentConfig } from "../../types";
 import type { SubagentDetails, SubagentToolCall } from "../types";
 import { renderThinking, renderToolCall } from "./activity";
+import { CollapsedLine } from "./collapsed-line";
 import { formatCollapsedHint } from "./footer";
 import { Separator } from "./separator";
 import type { ToolRenderContext } from "./types";
@@ -165,18 +166,34 @@ function renderActivityItems(
 
   for (const item of items) {
     switch (item.type) {
-      case "thinking":
+      case "thinking": {
+        const thinking = renderThinking(
+          item.endedAt === null,
+          item.content,
+          theme,
+          options.expanded,
+        );
         container.addChild(
-          renderThinking(item.endedAt === null, item.content, theme),
+          options.expanded ? thinking : new CollapsedLine(thinking),
         );
         renderedCount += 1;
         break;
+      }
       case "tool_call": {
         const toolCall = toolCallsById.get(item.toolCallId);
         if (!toolCall) break;
 
+        const renderedToolCall = renderConfiguredToolCall(
+          config,
+          toolCall,
+          options,
+          theme,
+          cwd,
+        );
         container.addChild(
-          renderConfiguredToolCall(config, toolCall, options, theme, cwd),
+          options.expanded
+            ? renderedToolCall
+            : new CollapsedLine(renderedToolCall),
         );
         renderedCount += 1;
         break;

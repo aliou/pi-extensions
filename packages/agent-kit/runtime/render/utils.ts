@@ -2,15 +2,6 @@ import type { Maybe } from "@harness/utils";
 import { isNil } from "@harness/utils";
 import type { SubagentModel } from "../../types";
 
-export function extractParagraphs(content: string, count: number) {
-  return content
-    .trim()
-    .split(/\n\s*\n/)
-    .slice(0, count)
-    .join("\n\n")
-    .trim();
-}
-
 export function splitParagraphs(text: string) {
   return text
     .trim()
