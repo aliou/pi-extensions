@@ -23,6 +23,16 @@ type DangerousNotification = AdNotifyDangerousEvent & {
 
 const activeBlocks = new Map<string, ActiveBlock>();
 
+// True while an agent run is in progress (between agent_start and
+// agent_settled). Retries fire a new agent_start inside the same run, so
+// only the first agent_start after a settle is a fresh user turn.
+let runActive = false;
+
+export function _resetForTesting(): void {
+  activeBlocks.clear();
+  runActive = false;
+}
+
 function block(
   pi: ExtensionAPI,
   key: string,
@@ -83,24 +93,16 @@ function handleAttention(pi: ExtensionAPI): () => void {
 }
 
 function handleError(pi: ExtensionAPI): () => void {
-  const stopListening = pi.events.on(AD_NOTIFY_DONE_EVENT, (data) => {
+  return pi.events.on(AD_NOTIFY_DONE_EVENT, (data) => {
     const payload = data as AdNotifyDoneEvent;
-    if (payload.status !== "error") return;
-
-    block(pi, "error", { kind: "error" }, "An error occurred");
+    if (payload.status === "error") {
+      block(pi, "error", { kind: "error" }, "An error occurred");
+    } else if (payload.status === "ok") {
+      // A successful run resolves a prior error block (e.g. a retry that
+      // recovered). No-op when no error block is active.
+      unblock(pi, "error");
+    }
   });
-
-  // A retry starts a new low-level agent run.
-  pi.on("agent_start", () => {
-    unblockWhere(pi, ({ kind }) => kind === "error");
-  });
-
-  // No agent_start follows the final failed retry, so settle the error here.
-  pi.on("agent_settled", () => {
-    unblockWhere(pi, ({ kind }) => kind === "error");
-  });
-
-  return stopListening;
 }
 
 export default function herdr(pi: ExtensionAPI): void {
@@ -119,14 +121,24 @@ export default function herdr(pi: ExtensionAPI): void {
   });
 
   pi.on("agent_start", () => {
+    // A retry continues the same agent run: agent_start fires again before
+    // agent_settled, so only the first agent_start of a user turn is fresh.
+    // Error blocks persist across retries; clear one only on a fresh turn.
+    const freshTurn = !runActive;
+    runActive = true;
     unblockWhere(pi, ({ kind, toolCallId }) => kind !== "error" && !toolCallId);
+    if (freshTurn) unblock(pi, "error");
   });
 
   pi.on("agent_settled", () => {
+    runActive = false;
+    // Non-error blocks (attention/dangerous) are per-run. Error blocks
+    // persist until a successful run, the next user turn, or shutdown.
     unblockWhere(pi, ({ kind }) => kind !== "error");
   });
 
   pi.on("session_shutdown", () => {
+    runActive = false;
     unblockWhere(pi, () => true);
     for (const stop of stopListening) stop();
   });
