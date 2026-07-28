@@ -18,11 +18,18 @@ const Params = Type.Object({
   ),
 });
 
-const CACHE_ROOT = `${process.env.HOME}/.cache/checkouts`;
+function cacheRoot(): string {
+  const base =
+    process.env.HARNESS_CACHE_HOME ||
+    process.env.XDG_CACHE_HOME ||
+    `${process.env.HOME}/.cache`;
+  return `${base}/checkouts`;
+}
+
 const FETCH_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes
 
 export interface ParsedRef {
-  /** Absolute path on disk: ~/.cache/checkouts/<host>/<org>/<repo> */
+  /** Absolute path on disk: <cache root>/checkouts/<host>/<org>/<repo> */
   cachePath: string;
   /** Clone URL (https or ssh). */
   cloneUrl: string;
@@ -51,7 +58,7 @@ export function parseRef(repository: string): ParsedRef {
     const host = sshMatch[1];
     const path = sshMatch[2];
     return {
-      cachePath: `${CACHE_ROOT}/${host}/${path}`,
+      cachePath: `${cacheRoot()}/${host}/${path}`,
       cloneUrl: trimmed,
       label: `${host}/${path}`,
     };
@@ -63,7 +70,7 @@ export function parseRef(repository: string): ParsedRef {
     const host = url.hostname;
     const path = url.pathname.replace(/^\/+/, "").replace(/\.git$/, "");
     return {
-      cachePath: `${CACHE_ROOT}/${host}/${path}`,
+      cachePath: `${cacheRoot()}/${host}/${path}`,
       cloneUrl: trimmed,
       label: `${host}/${path}`,
     };
@@ -72,7 +79,7 @@ export function parseRef(repository: string): ParsedRef {
   // Bare host-less "owner/repo" → default to github.com
   if (/^[^/]+\/[^/]+$/.test(trimmed)) {
     return {
-      cachePath: `${CACHE_ROOT}/github.com/${trimmed}`,
+      cachePath: `${cacheRoot()}/github.com/${trimmed}`,
       cloneUrl: `https://github.com/${trimmed}.git`,
       label: `github.com/${trimmed}`,
     };
@@ -84,7 +91,7 @@ export function parseRef(repository: string): ParsedRef {
     const host = parts[0];
     const path = parts.slice(1).join("/");
     return {
-      cachePath: `${CACHE_ROOT}/${host}/${path}`,
+      cachePath: `${cacheRoot()}/${host}/${path}`,
       cloneUrl: `https://${host}/${path}.git`,
       label: `${host}/${path}`,
     };

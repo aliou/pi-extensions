@@ -17,8 +17,11 @@ let db: Database | null = null;
 /** Get the singleton DB connection, opening it on first call. */
 export function getDb(): Database {
   if (!db) {
-    const paths = getXDGPaths();
-    const dbPath = join(paths.data, "index.sqlite");
+    const dataHome =
+      process.env.HARNESS_DATA_HOME ||
+      process.env.SESAME_DATA_DIR ||
+      getXDGPaths().data;
+    const dbPath = join(dataHome, "index.sqlite");
     db = openDatabase(dbPath);
   }
   return db;

@@ -194,6 +194,16 @@ Workspace packages:
 | `packages/ui/` | `@harness/ui` | Shared TUI components/helpers |
 | `packages/utils/` | `@harness/utils` | Shared generic utilities |
 
+## Instance isolation
+
+To run multiple harness instances on the same machine, override these env vars per instance (alongside Pi's own `PI_CODING_AGENT_DIR`, which already isolates everything under the agent dir):
+
+| Variable | Default | Used by |
+|---|---|---|
+| `HARNESS_CACHE_HOME` | `$XDG_CACHE_HOME` or `~/.cache` | Provider usage cache (`packages/models/usage/cache.ts`), librarian repo checkouts (`tools/librarian/tools/checkout-repo.ts`) |
+| `HARNESS_STATE_HOME` | `$XDG_STATE_HOME` or `~/.local/state` | Provider usage history (`packages/models/usage/history.ts`) |
+| `HARNESS_DATA_HOME` | `$SESAME_DATA_DIR` or `~/.local/share/sesame` | Sesame session-search SQLite index (`packages/session-store/db.ts`) |
+
 ## Patches
 
 `patches/` is a standalone pnpm project (its own `pnpm-workspace.yaml` + `package.json`, isolated from the repo workspace) that holds local patches applied on top of Pi and its dependencies. One directory per patch, named `PACKAGE--SLUG` where PACKAGE is the package's unscoped name and SLUG describes the change (e.g. `pi-tui--markdown-code-block/`). The directory name carries no version — the tested version is whatever `patches/package.json` pins. Each patch directory contains:
