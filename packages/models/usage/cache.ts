@@ -195,7 +195,10 @@ function enqueueCacheWrite(operation: () => Promise<void>): Promise<void> {
 }
 
 function cachePath(): string {
-  const base = process.env.XDG_CACHE_HOME || join(homedir(), ".cache");
+  const base =
+    process.env.HARNESS_CACHE_HOME ||
+    process.env.XDG_CACHE_HOME ||
+    join(homedir(), ".cache");
   return join(base, "pi-harness", "provider-usage", "cache.json");
 }
 

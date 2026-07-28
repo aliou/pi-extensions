@@ -211,7 +211,10 @@ function historyPathForDate(date: Date): string {
 }
 
 function historyDir(): string {
-  const base = process.env.XDG_STATE_HOME || join(homedir(), ".local", "state");
+  const base =
+    process.env.HARNESS_STATE_HOME ||
+    process.env.XDG_STATE_HOME ||
+    join(homedir(), ".local", "state");
   return join(base, "pi-harness", "provider-usage", "history");
 }
 
