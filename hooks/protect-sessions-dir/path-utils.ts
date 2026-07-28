@@ -2,11 +2,22 @@
  * Session directory path utilities and approval state.
  */
 
-import { isAbsolute, relative, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { isInSessionsDir as _isInSessionsDir } from "@harness/session-store/paths";
 
 // Re-export for local consumers (e.g. gate.ts)
 export { _isInSessionsDir as isInSessionsDir };
+
+/**
+ * Path fragment marking a sessions-dir reference (e.g. "/.pi/agent/sessions").
+ * Derived from the resolved agent dir, so PI_CODING_AGENT_DIR overrides are
+ * honored. Used to flag relative/ambiguous paths that can't be resolved
+ * against the sessions dir directly.
+ */
+export function sessionsDirMarker(): string {
+  return `/${join(getAgentDir(), "sessions").split("/").slice(-2).join("/")}`;
+}
 
 // ---------------------------------------------------------------------------
 // Approval state (module scope, per Pi runtime)

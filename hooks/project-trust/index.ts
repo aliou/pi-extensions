@@ -3,7 +3,8 @@
  *
  * Listens to the `project_trust` event and returns a "yes" decision
  * (with `remember: true`) when the cwd falls under one of the trusted
- * prefixes configured in `~/.pi/agent/settings/trust-paths.json`.
+ * prefixes configured in the trust-paths config
+ * (`$PI_CODING_AGENT_DIR/settings/trust-paths.json`).
  *
  * If no prefix matches, returns "undecided" so the core flow handles
  * it: core checks trust.json (with parent-directory inheritance since

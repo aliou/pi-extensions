@@ -7,7 +7,8 @@
  * inline reference. On submission, every known reference becomes a separate
  * skill context message while the skill name remains in the user's prose.
  *
- * The root paths are configured in `~/.pi/agent/settings/completion.json`:
+ * The root paths are configured in the completion config file
+ * (`$PI_CODING_AGENT_DIR/settings/completion.json`):
  * ```json
  * {
  *   "skillsRoots": [
@@ -31,7 +32,7 @@ import {
   AD_HEADER_REGISTER_COMPLETION_EVENT,
   once,
 } from "@harness/events";
-import { resolveSkillsRoots } from "./config";
+import { getCompletionConfigPath, resolveSkillsRoots } from "./config";
 import { createSkillAutocompleteEditor } from "./editor";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider } from "./provider";
@@ -91,7 +92,7 @@ export default async function (pi: ExtensionAPI) {
 
     if (valid.length === 0 && missing.length === 0) {
       ctx.ui.notify(
-        "Skill autocomplete not configured. Set skillsRoots in ~/.pi/agent/settings/completion.json",
+        `Skill autocomplete not configured. Set skillsRoots in ${getCompletionConfigPath()}`,
         "warning",
       );
       return;

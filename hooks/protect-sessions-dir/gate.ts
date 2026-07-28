@@ -6,7 +6,7 @@ import { isAbsolute, resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
 import { extractBashTargets } from "./bash-parser";
-import { isInSessionsDir } from "./path-utils";
+import { isInSessionsDir, sessionsDirMarker } from "./path-utils";
 import type { SessionAccessRequest } from "./types";
 
 export const BLOCK_MESSAGE =
@@ -61,7 +61,7 @@ export function extractSessionTargets(
   }
 
   // Relative path containing sessions dir reference — suspicious, block.
-  if (rawPath.includes("/.pi/agent/sessions")) {
+  if (rawPath.includes(sessionsDirMarker())) {
     return { targets: [], displayTarget: rawPath, ambiguous: true };
   }
 

@@ -17,6 +17,7 @@ import type {
   WordPart,
 } from "@aliou/sh";
 import { parse } from "@aliou/sh";
+import { sessionsDirMarker } from "./path-utils";
 import type { SessionAccessRequest } from "./types";
 
 /**
@@ -34,7 +35,7 @@ export function extractBashTargets(
   }
 
   // Zero paths extracted — check for ambiguous references.
-  if (command.includes("/.pi/agent/sessions")) {
+  if (command.includes(sessionsDirMarker())) {
     return { targets: [], displayTarget: command, ambiguous: true };
   }
 

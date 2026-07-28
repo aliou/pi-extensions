@@ -28,7 +28,7 @@ async function isApertureReachable(baseUrl: string): Promise<boolean> {
 /**
  * Ensure an Aperture base URL is configured. On first run (or if the stored
  * value is empty), prompts the user, validates it against `/v1/models`, and
- * persists it to `~/.pi/agent/extensions/aperture.json`.
+ * persists it to the aperture config (`$PI_CODING_AGENT_DIR/extensions/aperture.json`).
  *
  * Returns the resolved base URL, or `undefined` if the user cancelled or the
  * endpoint is unreachable.
