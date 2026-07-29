@@ -36,6 +36,7 @@
     "@aliou/sh": "^0.2.0",
     "@harness/agent-kit": "workspace:*",
     "@harness/aperture": "workspace:*",
+    "@harness/audio-player": "workspace:*",
     "@harness/completion": "workspace:*",
     "@harness/events": "workspace:*",
     "@harness/image-formats": "workspace:*",

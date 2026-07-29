@@ -74,6 +74,12 @@ def validate-manifest-entry-path [extension: string] {
   }
 }
 
+def validate-entrypoint-name [entrypoint: string] {
+  if ($entrypoint | path basename) != $entrypoint or not ($entrypoint | str ends-with ".ts") {
+    fail $"Manifest entrypoint must be a flat .ts filename: ($entrypoint)"
+  }
+}
+
 def select-entries [manifest: record, extension?: string] {
   if $extension == null {
     return $manifest.extensions
@@ -259,7 +265,9 @@ def build-unit [
 
 def build-entry [entry: record] {
   validate-manifest-entry-path $entry.path
-  let entrypoint = ([ $REPO_ROOT $entry.path "index.ts" ] | path join)
+  let entrypoint_name = ($entry.entrypoint? | default "index.ts")
+  validate-entrypoint-name $entrypoint_name
+  let entrypoint = ([ $REPO_ROOT $entry.path $entrypoint_name ] | path join)
   if not ($entrypoint | path exists) {
     fail $"Missing extension entrypoint: ($entrypoint)"
   }

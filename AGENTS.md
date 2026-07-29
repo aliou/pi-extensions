@@ -183,6 +183,7 @@ Workspace packages:
 |---|---|---|
 | `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks; returns nested model usage for Pi session accounting, and fresh runs can replace the model preference roster for evals |
 | `packages/aperture/` | `@harness/aperture` | Shared access to the global pi-ts-aperture config and gateway base URL |
+| `packages/audio-player/` | `@harness/audio-player` | Shared alert sound paths and best-effort audio playback with binary fallback |
 | `packages/completion/` | `@harness/completion` | Completion logic |
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
 | `packages/image-formats/` | `@harness/image-formats` | Image MIME detection and format conversion |
