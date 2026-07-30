@@ -6,10 +6,13 @@ import type {
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
+  AD_HEADER_REGISTER_SHORTCUT_EVENT,
   once,
 } from "@harness/events";
 
 const PROCEED_CUSTOM_TYPE = "harness:proceed";
+
+export const PROCEED_SHORTCUT = "ctrl+p";
 
 export const PROCEED_DESCRIPTION =
   "Resume the agentic loop without sending prompt text to the LLM";
@@ -124,10 +127,28 @@ export default function proceedCommand(pi: ExtensionAPI): void {
     },
   });
 
+  pi.registerShortcut(PROCEED_SHORTCUT, {
+    description: "Fill the editor with /proceed",
+    handler: async (ctx) => {
+      if (ctx.ui.getEditorText().length > 0) {
+        ctx.ui.notify(
+          "proceed: editor is not empty; stash it first (ctrl+shift+s)",
+          "warning",
+        );
+        return;
+      }
+      ctx.ui.setEditorText("/proceed");
+    },
+  });
+
   once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
       name: "proceed",
       description: "resume without prompt text",
+    });
+    pi.events.emit(AD_HEADER_REGISTER_SHORTCUT_EVENT, {
+      key: PROCEED_SHORTCUT,
+      description: "fill editor with /proceed",
     });
   });
 }
