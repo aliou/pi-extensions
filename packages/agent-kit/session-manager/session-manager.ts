@@ -258,7 +258,6 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     modelPreferences: readonly SubagentModelPreference[] = this.config
       .modelPreferences,
   ): Promise<SubagentModelChoice> {
-    await ctx.modelRegistry.refresh();
     const selection = pickModel(ctx.modelRegistry, modelPreferences);
     if (!selection) {
       throw new Error(`No model available for ${this.config.label} subagent`);
@@ -272,7 +271,6 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     ctx: ExtensionContext,
     record?: SubagentSessionRecord,
   ): Promise<SubagentModelChoice> {
-    await ctx.modelRegistry.refresh();
     const selection = resolveModel(
       ctx.modelRegistry,
       this.config.modelPreferences,
