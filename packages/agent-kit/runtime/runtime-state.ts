@@ -4,7 +4,7 @@ import type {
   AgentSessionEvent,
 } from "@earendil-works/pi-coding-agent";
 import type { TSchema } from "typebox";
-import type { SubagentConfig } from "../types";
+import type { ResolvedSubagentConfig } from "../types";
 import {
   emptyUsage,
   isAssistantMessage,
@@ -21,7 +21,7 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
   private lastAssistantMessage?: AssistantMessage;
   private details: SubagentDetails;
 
-  constructor(config: SubagentConfig<Params>, session: AgentSession) {
+  constructor(config: ResolvedSubagentConfig<Params>, session: AgentSession) {
     this.details = {
       sessionId: session.sessionId,
       sessionFile: session.sessionFile ?? "",
@@ -32,7 +32,7 @@ export class SubagentRuntimeState<Params extends TSchema = TSchema> {
             model: session.model.id,
             thinking: session.thinkingLevel,
           }
-        : config.modelPreferences?.find(
+        : config.modelPreferences.find(
             (model) =>
               model.model === session.model?.id &&
               model.provider === session.model?.provider,

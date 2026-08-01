@@ -8,7 +8,7 @@ import type {
 import { isBlank } from "@harness/utils";
 import type { Optional } from "@harness/utils/types";
 import type { Static, TSchema } from "typebox";
-import type { SubagentConfig } from "../types";
+import type { ResolvedSubagentConfig } from "../types";
 import { buildBlankResponseError } from "./blank-response";
 import { appendSubagentSessionFooter, textContent } from "./content";
 import { SubagentRuntimeState } from "./runtime-state";
@@ -22,7 +22,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
   private limitAbort = false;
 
   constructor(
-    private config: SubagentConfig<Params>,
+    private config: ResolvedSubagentConfig<Params>,
     private session: AgentSession,
     private signal: Optional<AbortSignal>,
   ) {

@@ -1,6 +1,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
+import {
+  configuredSubagent,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
 import { ARTISAN_SYSTEM_PROMPT, buildPrompt } from "./prompt";
 import {
   artisanToolRenderers,
@@ -36,6 +40,7 @@ const extensionPaths = ["./tools", "npm:@aliou/pi-synthetic"];
 export default async function artisan(pi: ExtensionAPI): Promise<void> {
   const subagent = createSubagent(pi, {
     name: "artisan",
+    modelPreferences: () => getSubagentModelPreferences("artisan"),
     label: "Artisan",
     description:
       "Zero-shot product design and frontend craft advisor. Give the UI goal, users, constraints, files/screenshots, and the concrete design decision you need.",
@@ -57,27 +62,16 @@ export default async function artisan(pi: ExtensionAPI): Promise<void> {
     resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
-    // Primary: gpt-5.5 at medium (vision-capable; sees screenshots natively).
-    // Fallback: synthetic Kimi-K2.7-Code (vision) so artisan keeps image input
-    // when openai-codex is down. GLM-5.2 is text-only and would blind artisan's
-    // screenshot analysis on fallback, so Kimi is used here instead of the
-    // GLM-5.2 fallback that oracle/reviewer use. Kimi-K2.7-Code is thinking-only:
-    // "low" clamps to "medium" (its sole level). ~9% bleed at weight 0.1.
-    modelPreferences: [
-      {
-        provider: "openai-codex",
-        model: "gpt-5.5",
-        thinking: "medium",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "hf:moonshotai/Kimi-K2.7-Code",
-        thinking: "low",
-        weight: 0.1,
-      },
-    ],
   });
 
-  subagent.register();
+  await subagent.ready;
+  const { register, notifyOnSessionStart } = configuredSubagent(
+    pi,
+    "artisan",
+    "Artisan",
+    subagent,
+    subagent.configured,
+  );
+  register();
+  notifyOnSessionStart();
 }

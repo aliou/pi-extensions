@@ -6,7 +6,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { describe, expect, it, vi } from "vitest";
-import type { SubagentConfig } from "../types";
+import type { ResolvedSubagentConfig } from "../types";
 import { SubagentRuntime } from "./runtime";
 
 const Params = Type.Object({ task: Type.String() });
@@ -85,13 +85,14 @@ describe("SubagentRuntime", () => {
       getLastAssistantText: vi.fn(() => "Finished"),
       dispose: vi.fn(),
     } as unknown as AgentSession;
-    const config: SubagentConfig<typeof Params> = {
+    const config: ResolvedSubagentConfig<typeof Params> = {
       name: "reviewer",
       label: "Reviewer",
       description: "Review code",
       systemPrompt: "Review code",
       tools: [],
       modelPreferences: [],
+      configured: true,
       parameters: Params,
       buildPrompt: () => ({ text: "Review this diff" }),
     };
@@ -127,13 +128,14 @@ describe("SubagentRuntime", () => {
       getLastAssistantText: vi.fn(() => undefined),
       dispose: vi.fn(),
     } as unknown as AgentSession;
-    const config: SubagentConfig<typeof Params> = {
+    const config: ResolvedSubagentConfig<typeof Params> = {
       name: "reviewer",
       label: "Reviewer",
       description: "Review code",
       systemPrompt: "Review code",
       tools: [],
       modelPreferences: [],
+      configured: true,
       parameters: Params,
       buildPrompt: () => ({ text: "Review this diff" }),
     };

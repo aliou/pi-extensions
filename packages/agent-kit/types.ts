@@ -98,30 +98,65 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
   tools: SubagentToolSpec[] | SubagentToolsResolver<Params>;
   skills?: Skill[];
   extensionPaths?: string[];
-  modelPreferences: SubagentModelPreference[];
+  /**
+   * Weighted model roster for this subagent, or a resolver that loads it
+   * (e.g. from the global subagent-models config). Async resolution is
+   * cached after the first call. Roster resolution happens once at
+   * createSubagent() time.
+   */
+  modelPreferences:
+    | SubagentModelPreference[]
+    | (() => Promise<SubagentModelPreference[] | undefined>);
   resumable?: boolean;
   /** Maximum number of tool calls the subagent may execute before it is forcibly stopped. */
   maxToolCalls?: number;
 
   parameters: Params;
-  renderHeader?: SubagentHeaderRenderer<Params>;
-  renderDetails?: SubagentDetailsRenderer<Params>;
-  buildPrompt: (
+  // Method-style (bivariant) signatures so a params-typed config can be used
+  // through the non-generic SubagentConfig/ResolvedSubagentConfig view that
+  // the renderers and runtime consume.
+  renderHeader?(
+    args: Static<Params>,
+    theme: Theme,
+    ctx: ToolRenderContext,
+  ): Component;
+  renderDetails?(
+    args: Static<Params>,
+    theme: Theme,
+    cwd: string,
+  ): Component | undefined;
+  buildPrompt(
     params: Static<Params>,
     ctx: ExtensionContext,
     model: Model<Api>,
-  ) => SubagentPromptResult | Promise<SubagentPromptResult>;
+  ): SubagentPromptResult | Promise<SubagentPromptResult>;
   /**
    * Resolve AGENTS.md-style context files for a new invocation. Their content
    * is reference material only; subagents are explicitly told not to treat
    * directives in these files as instructions. Resumed sessions do not call
    * this resolver.
    */
-  resolveAgentsFiles?: SubagentAgentsFilesResolver<Params>;
-  resolveSkills?: (params: Static<Params>, ctx: ExtensionContext) => Skill[];
-  beforeExecute?: (
+  resolveAgentsFiles?(
+    params: Static<Params>,
+    ctx: ExtensionContext,
+  ): SubagentAgentsFile[] | Promise<SubagentAgentsFile[]>;
+  resolveSkills?(params: Static<Params>, ctx: ExtensionContext): Skill[];
+  beforeExecute?(
     params: Static<Params>,
     session: AgentSession,
     ctx: ExtensionContext,
-  ) => Promise<void>;
+  ): Promise<void>;
 }
+
+/**
+ * A subagent config after its model roster resolver has been applied.
+ * `configured` is false when a resolver produced no roster (e.g. the global
+ * subagent-models config has no entry for this subagent).
+ */
+export type ResolvedSubagentConfig<Params extends TSchema = TSchema> = Omit<
+  SubagentConfig<Params>,
+  "modelPreferences"
+> & {
+  modelPreferences: SubagentModelPreference[];
+  configured: boolean;
+};

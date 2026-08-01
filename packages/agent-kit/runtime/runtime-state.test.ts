@@ -1,20 +1,21 @@
 import type { AgentSession } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
-import type { SubagentConfig } from "../types";
+import type { ResolvedSubagentConfig } from "../types";
 import { SubagentRuntimeState } from "./runtime-state";
 
 const Params = Type.Object({ task: Type.String() });
 
 describe("SubagentRuntimeState", () => {
   it("records the session model and thinking level", () => {
-    const config: SubagentConfig<typeof Params> = {
+    const config: ResolvedSubagentConfig<typeof Params> = {
       name: "eval-agent",
       label: "Eval Agent",
       description: "Evaluate an agent",
       systemPrompt: "Evaluate the task",
       tools: [],
       modelPreferences: [],
+      configured: true,
       parameters: Params,
       buildPrompt: () => ({ text: "Evaluate" }),
     };

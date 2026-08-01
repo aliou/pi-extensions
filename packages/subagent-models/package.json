@@ -1,0 +1,12 @@
+{
+  "name": "@harness/subagent-models",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "@harness/agent-kit": "workspace:*",
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}

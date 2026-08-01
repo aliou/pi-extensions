@@ -3,6 +3,10 @@ import { resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
 import { convertBmpToPng } from "@harness/image-formats";
+import {
+  configuredSubagent,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
 import { ANALYSIS_SYSTEM_PROMPT } from "./prompt";
 import { renderLookAtDetails, renderLookAtHeader } from "./render";
 import { LookAtParams, type LookAtParamsInput } from "./types";
@@ -26,6 +30,7 @@ function enableTool(pi: ExtensionAPI) {
 export function createLookAtSubagent(pi: ExtensionAPI) {
   return createSubagent(pi, {
     name: TOOL_NAME,
+    modelPreferences: () => getSubagentModelPreferences(TOOL_NAME),
     label: "Look At",
     description: `Analyze an image file using a vision subagent. Returns a text description of the image content.
 
@@ -54,29 +59,6 @@ Always provide a clear objective describing what you want to learn from the imag
     ],
     systemPrompt: ANALYSIS_SYSTEM_PROMPT,
     tools: [],
-    // Co-primaries at equal weight: Gemma 4 31B (neuralwatt) and the small
-    // synthetic vision model syn:small:vision (hf:Qwen/Qwen3.6-27B). If neither
-    // provider can serve those, fall back to Gemma 4 31B on OpenRouter.
-    modelPreferences: [
-      {
-        provider: "neuralwatt",
-        model: "gemma-4-31b",
-        thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "synthetic",
-        model: "syn:small:vision",
-        thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "openrouter",
-        model: "google/gemma-4-31b-it",
-        thinking: "off",
-        weight: 0,
-      },
-    ],
     parameters: LookAtParams,
     renderHeader: renderLookAtHeader,
     renderDetails: renderLookAtDetails,
@@ -113,24 +95,39 @@ Always provide a clear objective describing what you want to learn from the imag
   });
 }
 
-export default function lookAt(pi: ExtensionAPI): void {
+export default async function lookAt(pi: ExtensionAPI): Promise<void> {
   const subagent = createLookAtSubagent(pi);
-  const tool = subagent.asTool();
-  subagent.subscribe();
+  await subagent.ready;
 
-  pi.registerTool({
-    ...tool,
+  const { register, notifyOnSessionStart } = configuredSubagent(
+    pi,
+    TOOL_NAME,
+    "Look At",
+    subagent,
+    subagent.configured,
+    () => {
+      const tool = subagent.asTool();
+      subagent.subscribe();
 
-    async execute(
-      toolCallId,
-      params: LookAtParamsInput,
-      signal,
-      onUpdate,
-      ctx,
-    ) {
-      return tool.execute(toolCallId, params, signal, onUpdate, ctx);
+      pi.registerTool({
+        ...tool,
+
+        async execute(
+          toolCallId,
+          params: LookAtParamsInput,
+          signal,
+          onUpdate,
+          ctx,
+        ) {
+          return tool.execute(toolCallId, params, signal, onUpdate, ctx);
+        },
+      });
     },
-  });
+  );
+  register();
+  notifyOnSessionStart();
+
+  if (!subagent.configured) return;
 
   pi.on("agent_start", (_evt, ctx) => {
     const model = ctx.model;

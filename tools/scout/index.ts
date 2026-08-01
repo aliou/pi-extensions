@@ -1,6 +1,10 @@
 import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
+import {
+  configuredSubagent,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
 import { buildPrompt, SCOUT_SYSTEM_PROMPT } from "./prompt";
 import { renderScoutDetails, renderScoutHeader } from "./render";
 import { createScoutTools } from "./tools";
@@ -13,6 +17,7 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
 
   const subagent = createSubagent(pi, {
     name: "scout",
+    modelPreferences: () => getSubagentModelPreferences("scout"),
     label: "Scout",
     description:
       "Zero-shot local codebase researcher. Give a scoped query, local cwd/root, relevant symbols/paths, and ask for cited evidence.",
@@ -35,22 +40,16 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
       loadAgentsFilesFromCwd(path.resolve(ctx.cwd, params.cwd?.trim() || ".")),
     tools,
     extensionPaths,
-    // Primary: neuralwatt gemma-4-31b. Fallback: openrouter/google/gemma-4-31b-it.
-    modelPreferences: [
-      {
-        provider: "neuralwatt",
-        model: "gemma-4-31b",
-        thinking: "off",
-        weight: 2,
-      },
-      {
-        provider: "openrouter",
-        model: "google/gemma-4-31b-it",
-        thinking: "off",
-        weight: 0,
-      },
-    ],
   });
 
-  subagent.register();
+  await subagent.ready;
+  const { register, notifyOnSessionStart } = configuredSubagent(
+    pi,
+    "scout",
+    "Scout",
+    subagent,
+    subagent.configured,
+  );
+  register();
+  notifyOnSessionStart();
 }

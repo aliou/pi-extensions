@@ -25,8 +25,8 @@ import {
   type SubagentSessionRecordStore,
 } from "../session-records";
 import type {
+  ResolvedSubagentConfig,
   SubagentAgentsFile,
-  SubagentConfig,
   SubagentToolSpec,
 } from "../types";
 
@@ -51,7 +51,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
   private subagentDir = path.join(getAgentDir(), "subagents");
 
   constructor(
-    private config: SubagentConfig<Params>,
+    private config: ResolvedSubagentConfig<Params>,
     private records: SubagentSessionRecordStore,
   ) {}
 
@@ -258,6 +258,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     modelPreferences: readonly SubagentModelPreference[] = this.config
       .modelPreferences,
   ): Promise<SubagentModelChoice> {
+    if (modelPreferences.length === 0) {
+      throw new Error(
+        `${this.config.label} subagent has no configured model roster`,
+      );
+    }
     const selection = pickModel(ctx.modelRegistry, modelPreferences);
     if (!selection) {
       throw new Error(`No model available for ${this.config.label} subagent`);
@@ -271,6 +276,11 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     ctx: ExtensionContext,
     record?: SubagentSessionRecord,
   ): Promise<SubagentModelChoice> {
+    if (this.config.modelPreferences.length === 0) {
+      throw new Error(
+        `${this.config.label} subagent has no configured model roster`,
+      );
+    }
     const selection = resolveModel(
       ctx.modelRegistry,
       this.config.modelPreferences,

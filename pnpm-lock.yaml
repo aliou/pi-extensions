@@ -54,6 +54,9 @@ importers:
       '@harness/session-tools':
         specifier: workspace:*
         version: link:packages/session-tools
+      '@harness/subagent-models':
+        specifier: workspace:*
+        version: link:packages/subagent-models
       '@harness/utils':
         specifier: workspace:*
         version: link:packages/utils
@@ -118,6 +121,9 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 0.82.0
         version: 0.82.0
+      '@harness/subagent-models':
+        specifier: workspace:*
+        version: link:../subagent-models
       '@harness/utils':
         specifier: workspace:*
         version: link:../utils
@@ -190,6 +196,15 @@ importers:
       '@earendil-works/pi-coding-agent':
         specifier: 0.82.0
         version: 0.82.0(ws@8.21.0)(zod@4.4.3)
+
+  packages/subagent-models:
+    dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: 0.82.0
+        version: 0.82.0(ws@8.21.0)(zod@4.4.3)
+      '@harness/agent-kit':
+        specifier: workspace:*
+        version: link:../agent-kit
 
   packages/test-utils:
     dependencies:

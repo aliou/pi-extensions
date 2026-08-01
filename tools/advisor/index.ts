@@ -1,6 +1,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
+import {
+  configuredSubagent,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
 import { ADVISOR_SYSTEM_PROMPT, buildPrompt } from "./prompt";
 import {
   advisorToolRenderers,
@@ -40,6 +44,7 @@ const extensionPaths = [
 export default async function advisor(pi: ExtensionAPI): Promise<void> {
   const subagent = createSubagent(pi, {
     name: "advisor",
+    modelPreferences: () => getSubagentModelPreferences("advisor"),
     label: "Advisor",
     description:
       "Zero-shot strategic advisor. Use for hard decisions, stuck work, risk review, and pre-completion second opinions.",
@@ -62,30 +67,16 @@ export default async function advisor(pi: ExtensionAPI): Promise<void> {
     resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
     tools,
     extensionPaths,
-    // Prefer Opus through direct Anthropic or OpenRouter, with
-    // GPT-5.6 Sol retained as the existing lower-weight fallback.
-    // Do not set non-default sampling parameters; Opus 4.8 rejects them.
-    modelPreferences: [
-      {
-        provider: "anthropic",
-        model: "claude-opus-4-8",
-        thinking: "xhigh",
-        weight: 1,
-      },
-      {
-        provider: "openrouter",
-        model: "anthropic/claude-opus-4.8",
-        thinking: "xhigh",
-        weight: 0,
-      },
-      {
-        provider: "openai-codex",
-        model: "gpt-5.6-sol",
-        thinking: "xhigh",
-        weight: 0,
-      },
-    ],
   });
 
-  subagent.register();
+  await subagent.ready;
+  const { register, notifyOnSessionStart } = configuredSubagent(
+    pi,
+    "advisor",
+    "Advisor",
+    subagent,
+    subagent.configured,
+  );
+  register();
+  notifyOnSessionStart();
 }

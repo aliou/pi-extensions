@@ -1,5 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
+import {
+  configuredSubagent,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
 import { buildPrompt, SYSTEM_PROMPT } from "./prompt";
 import { renderReadSessionHeader, tools } from "./tools";
 import { ReadSessionParams } from "./types";
@@ -7,6 +11,7 @@ import { ReadSessionParams } from "./types";
 export default async function readSession(pi: ExtensionAPI): Promise<void> {
   const subagent = createSubagent(pi, {
     name: "read_session",
+    modelPreferences: () => getSubagentModelPreferences("read_session"),
     label: "Read Session",
     description:
       "Zero-shot past-session extractor. Provide a session ID/path plus a specific extraction goal with names, dates, topics, and expected output.",
@@ -20,23 +25,6 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     ],
     systemPrompt: SYSTEM_PROMPT,
     tools,
-    // Primary: synthetic GLM-4.7-Flash (cheapest measured read_session model,
-    // 38/38). Fallback: neuralwatt glm-5.2-short-fast (reasoning disabled -> off
-    // only). Flash exposes off/medium; "low" clamps to "medium". ~9% bleed at 0.1.
-    modelPreferences: [
-      {
-        provider: "synthetic",
-        model: "hf:zai-org/GLM-4.7-Flash",
-        thinking: "low",
-        weight: 1,
-      },
-      {
-        provider: "neuralwatt",
-        model: "glm-5.2-short-fast",
-        thinking: "off",
-        weight: 0.1,
-      },
-    ],
     parameters: ReadSessionParams,
     renderHeader: renderReadSessionHeader,
     buildPrompt,
@@ -51,5 +39,14 @@ export default async function readSession(pi: ExtensionAPI): Promise<void> {
     },
   });
 
-  subagent.register();
+  await subagent.ready;
+  const { register, notifyOnSessionStart } = configuredSubagent(
+    pi,
+    "read_session",
+    "Read Session",
+    subagent,
+    subagent.configured,
+  );
+  register();
+  notifyOnSessionStart();
 }

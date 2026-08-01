@@ -1,5 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
+import {
+  configuredSubagent,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
 import { isBlank } from "@harness/utils/string";
 import { Type } from "typebox";
 import {
@@ -18,20 +22,7 @@ export function createSessionNameSubagent(pi: ExtensionAPI) {
     systemPrompt: SESSION_NAME_SYSTEM_PROMPT,
     tools: createSessionNameTools(pi),
     maxToolCalls: 1,
-    modelPreferences: [
-      {
-        provider: "synthetic",
-        model: "hf:zai-org/GLM-4.7-Flash",
-        thinking: "off",
-        weight: 1,
-      },
-      {
-        provider: "openrouter",
-        model: "z-ai/glm-4.7-flash",
-        thinking: "off",
-        weight: 0,
-      },
-    ],
+    modelPreferences: () => getSubagentModelPreferences("session_name"),
     parameters: Type.Object({
       turns: Type.Array(
         Type.Object({
@@ -52,8 +43,22 @@ interface ActiveRun {
   receivedFirstToken: boolean;
 }
 
-export default function sessionName(pi: ExtensionAPI): void {
+export default async function sessionName(pi: ExtensionAPI): Promise<void> {
   const subagent = createSessionNameSubagent(pi);
+  await subagent.ready;
+
+  const { notifyOnSessionStart } = configuredSubagent(
+    pi,
+    "session_name",
+    "Session Name",
+    subagent,
+    subagent.configured,
+    () => {},
+  );
+  notifyOnSessionStart();
+
+  if (!subagent.configured) return;
+
   let activeRun: ActiveRun | null = null;
 
   /** Abort the in-flight naming run, if any. Idempotent. */

@@ -66,6 +66,20 @@ Tools that spawn a subagent follow a different layout:
 
 Current subagent-based tools include `advisor`, `artisan`, `librarian`, `look-at`, `oracle`, `read-session`, `reviewer`, and `scout`.
 
+### Subagent model rosters
+
+Subagent model rosters are not defined in this repository. They live in the global config file `$PI_CODING_AGENT_DIR/settings/subagent-models.json`, a map of subagent name to its full weighted roster:
+
+```json
+{
+  "advisor": [
+    { "provider": "anthropic", "model": "claude-opus-4-8", "thinking": "xhigh", "weight": 1 }
+  ]
+}
+```
+
+`@harness/subagent-models` owns the path, the async cached loader, and validation. Each subagent passes `modelPreferences: () => getSubagentModelPreferences("<name>")` to `createSubagent` and awaits `subagent.ready`. There are no built-in defaults: when the file is missing/invalid or has no roster for a name, the subagent stays disabled — registration is a no-op (via `configuredSubagent`) and the user gets a single session-start warning. Execution-time roster replacement for evals (`SubagentRunOptions.modelPreferences`) is unchanged.
+
 ### Parent prompts for subagents
 
 Subagents are zero-shot: only their final response is returned to the parent. Parent agents should make each subagent call self-contained.
@@ -191,6 +205,7 @@ Workspace packages:
 | `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients, live response-header parsers, and normalized usage abstractions |
 | `packages/session-store/` | `@harness/session-store` | Session directory access, Sesame search, and listing |
 | `packages/session-tools/` | `@harness/session-tools` | Pi-agnostic session entry indexing, branch/tree traversal, and bounded read-session helpers |
+| `packages/subagent-models/` | `@harness/subagent-models` | Global subagent model roster config (`settings/subagent-models.json`), async loader, and disabled-subagent registration helper |
 | `packages/test-utils/` | `@harness/test-utils` | Shared Vitest/Pi extension test harness utilities |
 | `packages/ui/` | `@harness/ui` | Shared TUI components/helpers |
 | `packages/utils/` | `@harness/utils` | Shared generic utilities |

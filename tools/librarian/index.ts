@@ -1,5 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent } from "@harness/agent-kit";
+import {
+  configuredSubagent,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
 import { buildPrompt, LIBRAIAN_SYSTEM_PROMPT } from "./prompt";
 import { renderLibrarianDetails, renderLibrarianHeader } from "./render";
 import { createLibrarianTools } from "./tools";
@@ -10,6 +14,7 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
 
   const subagent = createSubagent(pi, {
     name: "librarian",
+    modelPreferences: () => getSubagentModelPreferences("librarian"),
     label: "Librarian",
     description:
       "Zero-shot remote codebase researcher. Give repo names/URLs/orgs, the cross-repo question, branch/version constraints, and ask for cited evidence.",
@@ -29,24 +34,16 @@ export default async function librarian(pi: ExtensionAPI): Promise<void> {
     renderDetails: renderLibrarianDetails,
     buildPrompt,
     tools,
-    // Same model pair as scout: synthetic GLM-5.2 primary, neuralwatt glm-5.2
-    // fallback. "low" clamps to "high" on GLM-5.2 (only off/high/xhigh exposed).
-    // ~9% bleed at weight 0.1.
-    modelPreferences: [
-      {
-        provider: "synthetic",
-        model: "hf:zai-org/GLM-5.2",
-        thinking: "low",
-        weight: 1,
-      },
-      {
-        provider: "neuralwatt",
-        model: "glm-5.2",
-        thinking: "low",
-        weight: 0.1,
-      },
-    ],
   });
 
-  subagent.register();
+  await subagent.ready;
+  const { register, notifyOnSessionStart } = configuredSubagent(
+    pi,
+    "librarian",
+    "Librarian",
+    subagent,
+    subagent.configured,
+  );
+  register();
+  notifyOnSessionStart();
 }

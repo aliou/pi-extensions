@@ -17,6 +17,7 @@ import {
 import { SubagentSessionManager } from "./session-manager";
 import { SubagentSessionRecordStore } from "./session-records";
 import type {
+  ResolvedSubagentConfig,
   SubagentConfig,
   SubagentToolSpec,
   SubagentToolsResolver,
@@ -49,7 +50,19 @@ export function createSubagent<Params extends TSchema>(
   config: SubagentConfig<Params>,
 ) {
   const records = new SubagentSessionRecordStore(pi);
-  const sessions = new SubagentSessionManager(config, records);
+  // Placeholder; populated once by `ready`. All runtime/session-manager
+  // access happens at execution time, after callers have awaited `ready`.
+  const resolved = {
+    ...config,
+    modelPreferences: [],
+    configured: typeof config.modelPreferences !== "function",
+  } as ResolvedSubagentConfig<Params>;
+  const ready = resolveSubagentConfig(config).then((r) => {
+    resolved.modelPreferences = r.modelPreferences;
+    resolved.configured = r.configured;
+    return resolved;
+  });
+  const sessions = new SubagentSessionManager(resolved, records);
 
   const runWithParams = async (
     params: Static<Params>,
@@ -70,7 +83,7 @@ export function createSubagent<Params extends TSchema>(
       invocationTools,
       agentsFiles,
       async (session) => {
-        return new SubagentRuntime(config, session, options.signal).execute(
+        return new SubagentRuntime(resolved, session, options.signal).execute(
           options.callId ?? config.name,
           params,
           options.onUpdate,
@@ -97,7 +110,7 @@ export function createSubagent<Params extends TSchema>(
       invocationTools,
     );
     const runtime = new SubagentRuntime<Params>(
-      config,
+      resolved,
       session,
       options.signal,
     );
@@ -118,9 +131,14 @@ export function createSubagent<Params extends TSchema>(
       promptGuidelines: config.promptGuidelines,
       parameters: config.parameters,
       renderCall: (args, theme, ctx) =>
-        renderSubagentCall(config, args as Record<string, unknown>, theme, ctx),
+        renderSubagentCall(
+          resolved,
+          args as Record<string, unknown>,
+          theme,
+          ctx,
+        ),
       renderResult: (result, options, theme, ctx) =>
-        renderSubagentResult(config, result, options, theme, ctx),
+        renderSubagentResult(resolved, result, options, theme, ctx),
       execute(toolCallId, params, signal, onUpdate, ctx) {
         return runWithParams(params as Static<Params>, {
           callId: toolCallId,
@@ -143,9 +161,9 @@ export function createSubagent<Params extends TSchema>(
       ],
       parameters: createResumeSubagentParamsSchema(config.parameters),
       renderCall: (args, theme, ctx) =>
-        renderSubagentCall(config, args, theme, ctx),
+        renderSubagentCall(resolved, args, theme, ctx),
       renderResult: (result, options, theme, ctx) =>
-        renderSubagentResult(config, result, options, theme, ctx),
+        renderSubagentResult(resolved, result, options, theme, ctx),
 
       async execute(
         toolCallId,
@@ -161,7 +179,7 @@ export function createSubagent<Params extends TSchema>(
           ctx,
         );
         const session = await sessions.resume(sessionId, ctx, invocationTools);
-        const runtime = new SubagentRuntime<Params>(config, session, signal);
+        const runtime = new SubagentRuntime<Params>(resolved, session, signal);
         return runtime.execute(
           toolCallId,
           restParams as Static<Params>,
@@ -199,6 +217,16 @@ export function createSubagent<Params extends TSchema>(
     asTool,
     subscribe,
     register,
+    /**
+     * Resolves once the model roster has been loaded. Await this before
+     * reading `configured` or executing; renderers and execution paths only
+     * touch the roster after execution starts.
+     */
+    ready,
+    /** False when an async model roster resolver produced no roster. */
+    get configured() {
+      return resolved.configured;
+    },
   };
 }
 
@@ -210,6 +238,43 @@ export async function resolveTools<Params extends TSchema>(
   return typeof tools === "function" ? await tools(params, ctx) : tools;
 }
 
+/**
+ * Resolve a subagent config's model roster. When `modelPreferences` is a
+ * resolver function it is invoked once (async) and the result is cached on
+ * the returned config; the original config object is left untouched.
+ * `configured` is false when a resolver produced no roster.
+ */
+export async function resolveSubagentConfig<Params extends TSchema>(
+  config: SubagentConfig<Params>,
+): Promise<ResolvedSubagentConfig<Params>> {
+  if (typeof config.modelPreferences !== "function") {
+    return {
+      ...config,
+      modelPreferences: config.modelPreferences,
+      configured: true,
+    };
+  }
+
+  const resolved: ResolvedSubagentConfig<Params> = {
+    ...config,
+    modelPreferences: [],
+    configured: false,
+  };
+
+  try {
+    const preferences = await config.modelPreferences();
+    if (preferences && preferences.length > 0) {
+      resolved.modelPreferences = preferences;
+      resolved.configured = true;
+    }
+  } catch (error) {
+    // Leave unconfigured; the extension surfaces the warning.
+    void error;
+  }
+
+  return resolved;
+}
+
 export type { SubagentResolvedModel } from "./models";
 export {
   SUBAGENT_SESSION_CUSTOM_TYPE,
@@ -217,6 +282,7 @@ export {
   SubagentSessionRecordStore,
 } from "./session-records";
 export type {
+  ResolvedSubagentConfig,
   SubagentAgentsFile,
   SubagentAgentsFilesResolver,
 } from "./types";
