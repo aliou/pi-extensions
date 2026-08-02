@@ -69,6 +69,7 @@ export interface CommandContextOverrides {
   sessionManager?: ReadonlySessionManager;
   modelRegistry?: ExtensionCommandContext["modelRegistry"];
   model?: ExtensionCommandContext["model"];
+  scopedModels?: ExtensionCommandContext["scopedModels"];
   isIdle?: () => boolean;
   abort?: () => void;
   hasPendingMessages?: () => boolean;
@@ -108,6 +109,7 @@ export function createCommandContext(
       overrides.modelRegistry ??
       ({} as ExtensionCommandContext["modelRegistry"]),
     model: overrides.model ?? undefined,
+    scopedModels: overrides.scopedModels ?? [],
     isIdle: vi.fn(overrides.isIdle ?? (() => true)),
     abort: vi.fn(overrides.abort ?? (() => {})),
     hasPendingMessages: vi.fn(overrides.hasPendingMessages ?? (() => false)),

@@ -64,11 +64,20 @@ export class SubagentResourceLoader implements ResourceLoader {
     return `${this.systemPrompt}\n\n${AGENTS_FILES_CONTEXT_NOTICE}`;
   }
 
+  getSystemPromptSource(): { path: string } | undefined {
+    // The subagent system prompt is built in memory, not loaded from a file.
+    return undefined;
+  }
+
   getAppendSystemPrompt(): string[] {
     // Subagent tool snippets/guidelines are injected at runtime by the
     // subagent-tool-prompt extension's before_agent_start handler (it reads
     // them off event.systemPromptOptions, which buildSystemPrompt populates
     // but does not render in the customPrompt branch).
+    return [];
+  }
+
+  getAppendSystemPromptSources(): Array<{ path: string }> {
     return [];
   }
 
