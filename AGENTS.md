@@ -222,6 +222,8 @@ To run multiple harness instances on the same machine, override these env vars p
 
 ## Patches
 
+A patch present in `patches/` is a local patch that is **not** upstreamed. If it were upstreamed, it would be removed from this repository; do not infer upstreaming from the running Pi binary, which already has these patches applied. Treat every patch here as required against the pinned `patches/package.json` versions unless you have confirmed otherwise against vanilla upstream source.
+
 `patches/` is a standalone pnpm project (its own `pnpm-workspace.yaml` + `package.json`, isolated from the repo workspace) that holds local patches applied on top of Pi and its dependencies. One directory per patch, named `PACKAGE--SLUG` where PACKAGE is the package's unscoped name and SLUG describes the change (e.g. `pi-tui--markdown-code-block/`). The directory name carries no version — the tested version is whatever `patches/package.json` pins. Each patch directory contains:
 
 - `README.md` - What the patch changes and why.
