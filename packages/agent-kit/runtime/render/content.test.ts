@@ -3,7 +3,7 @@ import type {
   ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import { initTheme } from "@earendil-works/pi-coding-agent";
-import { Text, visibleWidth } from "@earendil-works/pi-tui";
+import { Markdown, Spacer, Text, visibleWidth } from "@earendil-works/pi-tui";
 import { NOOP_THEME } from "@harness/test-utils/theme";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { SubagentConfig } from "../../types";
@@ -90,5 +90,56 @@ describe("renderSubagentResult activity", () => {
 
     expect(output).toContain("Second reasoning paragraph.");
     expect(output).toContain("Full tool detail.");
+  });
+});
+
+describe("renderSubagentResult error", () => {
+  beforeAll(() => {
+    initTheme("dark", false);
+  });
+
+  const errorDetails = {
+    status: "error",
+    error: "Scout subagent did not start within 5s — it produced no output.",
+    response: undefined,
+    activity: [],
+    toolCalls: [],
+    usage: { cost: { total: 0 } },
+    responseTokens: 0,
+    startedAt: 0,
+    endedAt: 1,
+  } as unknown as SubagentDetails;
+
+  const withDetailsConfig = {
+    tools: [],
+    renderDetails: () => new Markdown("**CWD**\n/tmp/repo", 0, 0, {} as never),
+  } as unknown as SubagentConfig;
+
+  function renderResult(expanded: boolean) {
+    const result = {
+      details: errorDetails,
+      content: [{ type: "text", text: errorDetails.error as string }],
+    } as unknown as AgentToolResult<unknown>;
+    const options = { expanded, isPartial: false } as ToolRenderResultOptions;
+    return renderSubagentResult(
+      withDetailsConfig,
+      result,
+      options,
+      NOOP_THEME,
+      ctx,
+    );
+  }
+
+  it("adds an empty line above the error message when expanded with details", () => {
+    const children = renderResult(true).children;
+    // The error message is the last Markdown child (the details block is first).
+    let lastIndex = -1;
+    for (let i = 0; i < children.length; i++) {
+      if (children[i] instanceof Markdown) lastIndex = i;
+    }
+    expect(lastIndex).toBeGreaterThan(0);
+    // The child directly above it must be a Spacer (an empty line), not the
+    // Separator that sits below the details block.
+    expect(children[lastIndex - 1]).toBeInstanceOf(Spacer);
   });
 });

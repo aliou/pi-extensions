@@ -39,12 +39,15 @@ export function renderSubagentResult(
   }
 
   const running = details.status === "running" || options.isPartial;
+  const isError = !running && !details.response && Boolean(details.error);
 
   if (options.expanded) {
     const detailsBlock = config.renderDetails?.(details.params, theme, ctx.cwd);
     if (detailsBlock) {
       container.addChild(detailsBlock);
       container.addChild(new Separator(theme));
+      // Give the error message an empty line of separation from the details.
+      if (isError) container.addChild(new Spacer(1));
     }
   }
 

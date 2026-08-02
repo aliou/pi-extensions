@@ -20,11 +20,18 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
   private state: SubagentRuntimeState;
   private toolCallCount = 0;
   private limitAbort = false;
+  private started = false;
 
   constructor(
     private config: ResolvedSubagentConfig<Params>,
     private session: AgentSession,
     private signal: Optional<AbortSignal>,
+    /**
+     * Invoked once when the subagent first streams output (tokens, thinking,
+     * or a tool call). The orchestration layer uses this to disarm the startup
+     * timeout so a healthy, long-running call is never cancelled.
+     */
+    private onStarted?: () => void,
   ) {
     this.signal = signal;
     this.signal?.addEventListener?.("abort", this.onAbort);
@@ -139,6 +146,17 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
     event: AgentSessionEvent,
     onUpdate: Optional<AgentToolUpdateCallback<SubagentDetails>>,
   ) {
+    // First model output (streaming tokens, thinking, or a tool call) means the
+    // provider transport is delivering — notify the orchestration layer so it
+    // can disarm the startup timeout.
+    if (
+      !this.started &&
+      (event.type === "message_update" || event.type === "tool_execution_start")
+    ) {
+      this.started = true;
+      this.onStarted?.();
+    }
+
     const changed = this.state.applyEvent(event);
     if (!changed) return;
 

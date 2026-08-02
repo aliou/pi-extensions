@@ -16,6 +16,7 @@ import {
 } from "./schemas";
 import { SubagentSessionManager } from "./session-manager";
 import { SubagentSessionRecordStore } from "./session-records";
+import { withStartupTimeout } from "./startup-timeout";
 import type {
   ResolvedSubagentConfig,
   SubagentConfig,
@@ -77,20 +78,29 @@ export function createSubagent<Params extends TSchema>(
       params,
       options.ctx,
     );
-    return sessions.withNewSession(
-      options.ctx,
-      invocationSkills,
-      invocationTools,
-      agentsFiles,
-      async (session) => {
-        return new SubagentRuntime(resolved, session, options.signal).execute(
-          options.callId ?? config.name,
-          params,
-          options.onUpdate,
+    return withStartupTimeout(
+      (started) =>
+        sessions.withNewSession(
           options.ctx,
-        );
-      },
-      options.modelPreferences,
+          invocationSkills,
+          invocationTools,
+          agentsFiles,
+          async (session) => {
+            return new SubagentRuntime(
+              resolved,
+              session,
+              options.signal,
+              started,
+            ).execute(
+              options.callId ?? config.name,
+              params,
+              options.onUpdate,
+              options.ctx,
+            );
+          },
+          options.modelPreferences,
+        ),
+      resolved.label,
     );
   };
 
@@ -104,22 +114,25 @@ export function createSubagent<Params extends TSchema>(
       params,
       options.ctx,
     );
-    const session = await sessions.resume(
-      sessionId,
-      options.ctx,
-      invocationTools,
-    );
-    const runtime = new SubagentRuntime<Params>(
-      resolved,
-      session,
-      options.signal,
-    );
-    return runtime.execute(
-      options.callId ?? config.name,
-      params,
-      options.onUpdate,
-      options.ctx,
-    );
+    return withStartupTimeout(async (started) => {
+      const session = await sessions.resume(
+        sessionId,
+        options.ctx,
+        invocationTools,
+      );
+      const runtime = new SubagentRuntime<Params>(
+        resolved,
+        session,
+        options.signal,
+        started,
+      );
+      return runtime.execute(
+        options.callId ?? config.name,
+        params,
+        options.onUpdate,
+        options.ctx,
+      );
+    }, resolved.label);
   };
 
   const asTool = () =>

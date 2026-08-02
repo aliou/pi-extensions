@@ -65,6 +65,20 @@ function successMessage(): AssistantMessage {
 }
 
 describe("SubagentRuntime", () => {
+  const makeConfig = (
+    overrides: Partial<ResolvedSubagentConfig<typeof Params>> = {},
+  ): ResolvedSubagentConfig<typeof Params> => ({
+    name: "reviewer",
+    label: "Reviewer",
+    description: "Review code",
+    systemPrompt: "Review code",
+    tools: [],
+    modelPreferences: [],
+    configured: true,
+    parameters: Params,
+    buildPrompt: () => ({ text: "Review this diff" }),
+    ...overrides,
+  });
   it("returns nested model usage for parent session accounting", async () => {
     let listener: ((event: AgentSessionEvent) => void) | undefined;
     const message = successMessage();
@@ -153,5 +167,63 @@ describe("SubagentRuntime", () => {
       "Start a new reviewer call with a narrower scope; do not call resume_reviewer",
     );
     expect(session.dispose).toHaveBeenCalledOnce();
+  });
+
+  it("invokes onStarted once on the first streaming event", async () => {
+    let listener: ((event: AgentSessionEvent) => void) | undefined;
+    let resolvePrompt: (() => void) | undefined;
+    const session = {
+      sessionId: "session-id",
+      sessionFile: "/tmp/session.jsonl",
+      model: { provider: "openai-codex", id: "gpt-5.5" },
+      subscribe: vi.fn((next) => {
+        listener = next;
+        return vi.fn();
+      }),
+      prompt: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolvePrompt = resolve;
+          }),
+      ),
+      getLastAssistantText: vi.fn(() => "Finished"),
+      abort: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as AgentSession;
+
+    const onStarted = vi.fn();
+    const runtime = new SubagentRuntime(
+      makeConfig(),
+      session,
+      undefined,
+      onStarted,
+    );
+    const promise = runtime.execute(
+      "call-id",
+      { task: "x" },
+      undefined,
+      {} as ExtensionContext,
+    );
+    // Let execute reach `await session.prompt` so the subscription is wired.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(listener).toBeDefined();
+
+    // Not yet started.
+    expect(onStarted).not.toHaveBeenCalled();
+
+    // First streaming event fires onStarted once; a second event does not.
+    listener?.({
+      type: "message_update",
+      assistantMessageEvent: { type: "thinking_start" },
+    } as never);
+    listener?.({
+      type: "message_update",
+      assistantMessageEvent: { type: "thinking_delta", delta: "hi" },
+    } as never);
+    expect(onStarted).toHaveBeenCalledOnce();
+
+    resolvePrompt?.();
+    await expect(promise).resolves.toBeDefined();
   });
 });
