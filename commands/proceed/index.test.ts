@@ -5,13 +5,9 @@ import {
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
-  AD_HEADER_REGISTER_SHORTCUT_EVENT,
 } from "@harness/events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import setupProceedCommand, {
-  PROCEED_DESCRIPTION,
-  PROCEED_SHORTCUT,
-} from "./index";
+import setupProceedCommand, { PROCEED_DESCRIPTION } from "./index";
 
 function createMockPi() {
   return {
@@ -26,20 +22,6 @@ function createMockPi() {
     registerShortcut: ReturnType<typeof vi.fn>;
     sendMessage: ReturnType<typeof vi.fn>;
   };
-}
-
-function getShortcutHandler(pi: ReturnType<typeof createMockPi>) {
-  const call = pi.registerShortcut.mock.calls.find(
-    ([key]) => key === PROCEED_SHORTCUT,
-  );
-  if (!call) throw new Error("shortcut not registered");
-  return call[1].handler as (ctx: {
-    ui: {
-      notify: ReturnType<typeof vi.fn>;
-      getEditorText: () => string;
-      setEditorText: ReturnType<typeof vi.fn>;
-    };
-  }) => Promise<void>;
 }
 
 function getContextHandler(pi: ReturnType<typeof createMockPi>) {
@@ -91,48 +73,6 @@ describe("/proceed command", () => {
         name: "proceed",
         description: expect.any(String),
       }),
-    );
-  });
-
-  it("registers its shortcut in the header", () => {
-    const emitSpy = vi.spyOn(pi.events, "emit");
-    pi.events.emit(AD_HEADER_COLLECT_EVENT, undefined);
-
-    expect(emitSpy).toHaveBeenCalledWith(
-      AD_HEADER_REGISTER_SHORTCUT_EVENT,
-      expect.objectContaining({
-        key: PROCEED_SHORTCUT,
-        description: expect.any(String),
-      }),
-    );
-  });
-
-  it("fills an empty editor with /proceed", async () => {
-    const handler = getShortcutHandler(pi);
-    const setEditorText = vi.fn();
-    const notify = vi.fn();
-
-    await handler({
-      ui: { notify, getEditorText: () => "", setEditorText },
-    });
-
-    expect(setEditorText).toHaveBeenCalledWith("/proceed");
-    expect(notify).not.toHaveBeenCalled();
-  });
-
-  it("warns instead of overwriting a non-empty editor", async () => {
-    const handler = getShortcutHandler(pi);
-    const setEditorText = vi.fn();
-    const notify = vi.fn();
-
-    await handler({
-      ui: { notify, getEditorText: () => "draft", setEditorText },
-    });
-
-    expect(setEditorText).not.toHaveBeenCalled();
-    expect(notify).toHaveBeenCalledWith(
-      expect.stringContaining("stash"),
-      "warning",
     );
   });
 
