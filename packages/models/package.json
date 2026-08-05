@@ -3,12 +3,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./index.ts",
-    "./usage": "./usage/index.ts"
+    ".": "./index.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "@harness/provider-usage": "workspace:*"
+    "@earendil-works/pi-ai": "*"
   }
 }

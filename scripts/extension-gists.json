@@ -31,40 +31,6 @@
       ]
     },
     {
-      "path": "commands/usage",
-      "packageName": "@aliou/pi-harness-usage",
-      "description": "Provider usage dashboard for Pi",
-      "public": false,
-      "gistId": "3bc8a0652dc7ac6c357dde6da320efc3",
-      "runtimeExecutables": [],
-      "workspaceBundles": [
-        {
-          "package": "@harness/events",
-          "imports": ["@harness/events"],
-          "entry": "packages/events/index.ts",
-          "file": "workspace-events.js"
-        },
-        {
-          "package": "@harness/aperture",
-          "imports": ["@harness/aperture"],
-          "entry": "packages/aperture/index.ts",
-          "file": "workspace-aperture.js"
-        },
-        {
-          "package": "@harness/provider-usage",
-          "imports": ["@harness/provider-usage"],
-          "entry": "packages/provider-usage/index.ts",
-          "file": "workspace-provider-usage.js"
-        },
-        {
-          "package": "@harness/models",
-          "imports": ["@harness/models/usage"],
-          "entry": "packages/models/usage/index.ts",
-          "file": "workspace-models-usage.js"
-        }
-      ]
-    },
-    {
       "path": "tools/read-url",
       "packageName": "@aliou/pi-harness-read-url",
       "description": "Read URL as Markdown for Pi",

@@ -132,14 +132,13 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 | `review/` | `/review`, `/review:split` | Local review workflow; split mode supports tmux, Herdr, and Ghostty |
 | `spawn/` | `/spawn [note]` | Create a linked child session |
 | `theme/` | `/theme` | Cycle color theme |
-| `usage/` | `/usage` | Interactive provider usage dashboard |
 
 ## Hooks
 
 | Directory | Purpose | Key files |
 |---|---|---|
 | `resource-loader/` | Append `.agents/AGENTS.local.md` (cwd only) to the system prompt; complements Pi's built-in `AGENTS.md`/`CLAUDE.md` discovery which does not consult `.agents/` | `index.ts`, `load.ts` |
-| `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests, requests detailed reasoning summaries from GPT-5.6 Codex models, and merges live Codex quota headers into API-backed cache data | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
+| `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests, requests detailed reasoning summaries from GPT-5.6 Codex models, and adds session-affinity headers | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
 | `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, latest TPS telemetry, cache hit rate, and resume cache freshness | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
@@ -215,13 +214,11 @@ Workspace packages:
 | Directory | Package | Description |
 |---|---|---|
 | `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks; ranks the model roster and fails over to the next entry on pre-start provider failures, returns nested model usage for Pi session accounting, and fresh runs can replace the model preference roster for evals |
-| `packages/aperture/` | `@harness/aperture` | Shared access to the global pi-ts-aperture config and gateway base URL |
 | `packages/audio-player/` | `@harness/audio-player` | Shared alert sound paths and best-effort audio playback with binary fallback |
 | `packages/completion/` | `@harness/completion` | Completion logic |
 | `packages/events/` | `@harness/events` | Shared event names and event payload types |
 | `packages/image-formats/` | `@harness/image-formats` | Image MIME detection and format conversion |
-| `packages/models/` | `@harness/models` | Model groups, model usability, quota-aware broker, usage cache, history, and projections; response-header observations merge into the usage cache |
-| `packages/provider-usage/` | `@harness/provider-usage` | Provider quota clients, live response-header parsers, and normalized usage abstractions |
+| `packages/models/` | `@harness/models` | Model identity helpers (`ModelIdentity`, `knownModelFamily`, `modelKey`) |
 | `packages/session-store/` | `@harness/session-store` | Session directory access, Sesame search, and listing |
 | `packages/session-tools/` | `@harness/session-tools` | Pi-agnostic session entry indexing, branch/tree traversal, and bounded read-session helpers |
 | `packages/subagent-models/` | `@harness/subagent-models` | Global subagent model roster config (`settings/subagent-models.json`), async loader, and disabled-subagent registration helper |
@@ -235,8 +232,7 @@ To run multiple harness instances on the same machine, override these env vars p
 
 | Variable | Default | Used by |
 |---|---|---|
-| `HARNESS_CACHE_HOME` | `$XDG_CACHE_HOME` or `~/.cache` | Provider usage cache (`packages/models/usage/cache.ts`), librarian repo checkouts (`tools/librarian/tools/checkout-repo.ts`) |
-| `HARNESS_STATE_HOME` | `$XDG_STATE_HOME` or `~/.local/state` | Provider usage history (`packages/models/usage/history.ts`) |
+| `HARNESS_CACHE_HOME` | `$XDG_CACHE_HOME` or `~/.cache` | Librarian repo checkouts (`tools/librarian/tools/checkout-repo.ts`) |
 | `HARNESS_DATA_HOME` | `$SESAME_DATA_DIR` or `~/.local/share/sesame` | Sesame session-search SQLite index (`packages/session-store/db.ts`) |
 
 ## Patches

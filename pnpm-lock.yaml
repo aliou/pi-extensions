@@ -27,9 +27,6 @@ importers:
       '@harness/agent-kit':
         specifier: workspace:*
         version: link:packages/agent-kit
-      '@harness/aperture':
-        specifier: workspace:*
-        version: link:packages/aperture
       '@harness/audio-player':
         specifier: workspace:*
         version: link:packages/audio-player
@@ -45,9 +42,6 @@ importers:
       '@harness/models':
         specifier: workspace:*
         version: link:packages/models
-      '@harness/provider-usage':
-        specifier: workspace:*
-        version: link:packages/provider-usage
       '@harness/session-store':
         specifier: workspace:*
         version: link:packages/session-store
@@ -131,12 +125,6 @@ importers:
         specifier: 1.3.7
         version: 1.3.7
 
-  packages/aperture:
-    dependencies:
-      '@earendil-works/pi-coding-agent':
-        specifier: 0.83.0
-        version: 0.83.0(ws@8.21.0)(zod@4.4.3)
-
   packages/audio-player:
     dependencies:
       '@earendil-works/pi-coding-agent':
@@ -164,18 +152,6 @@ importers:
   packages/models:
     dependencies:
       '@earendil-works/pi-ai':
-        specifier: 0.83.0
-        version: 0.83.0(ws@8.21.0)(zod@4.4.3)
-      '@earendil-works/pi-coding-agent':
-        specifier: 0.83.0
-        version: 0.83.0(ws@8.21.0)(zod@4.4.3)
-      '@harness/provider-usage':
-        specifier: workspace:*
-        version: link:../provider-usage
-
-  packages/provider-usage:
-    dependencies:
-      '@earendil-works/pi-coding-agent':
         specifier: 0.83.0
         version: 0.83.0(ws@8.21.0)(zod@4.4.3)
 
