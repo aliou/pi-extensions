@@ -9,6 +9,11 @@ import { isBlank } from "@harness/utils";
 import type { Optional } from "@harness/utils/types";
 import type { Static, TSchema } from "typebox";
 import type { ResolvedSubagentConfig } from "../types";
+import {
+  type AttemptFailure,
+  type AttemptPhase,
+  SubagentAttemptError,
+} from "./attempt";
 import { buildBlankResponseError } from "./blank-response";
 import { appendSubagentSessionFooter, textContent } from "./content";
 import { SubagentRuntimeState } from "./runtime-state";
@@ -21,6 +26,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
   private toolCallCount = 0;
   private limitAbort = false;
   private started = false;
+  private phase: AttemptPhase = "setup";
 
   constructor(
     private config: ResolvedSubagentConfig<Params>,
@@ -45,6 +51,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
     ctx: ExtensionContext,
   ): Promise<AgentToolResult<SubagentDetails>> {
     try {
+      this.phase = "setup";
       this.signal?.throwIfAborted();
       const model = this.session.model;
       if (!model) {
@@ -53,6 +60,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
         );
       }
 
+      this.phase = "build-prompt";
       const promptResult = await this.config.buildPrompt(params, ctx, model);
       this.state.setPrompt(promptResult.text);
       this.state.setParams(params);
@@ -61,6 +69,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
       });
 
       if (this.config.beforeExecute) {
+        this.phase = "before-execute";
         try {
           await this.config.beforeExecute(params, this.session, ctx);
         } catch (err) {
@@ -68,6 +77,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
         }
       }
 
+      this.phase = "prompt";
       await this.session.prompt(promptResult.text, {
         images: promptResult.images,
       });
@@ -77,10 +87,15 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
         throw new Error(this.state.value.error ?? "Subagent aborted");
       }
 
+      this.phase = "blank-response";
       const response = this.session.getLastAssistantText();
-      if (isBlank(response)) {
+      const lastAssistant = this.state.lastAssistant;
+      // A message that carries text but ended in a provider error is a failed
+      // turn, not a short answer: the text is a truncated prefix of an answer
+      // the model never finished.
+      if (isBlank(response) || lastAssistant?.stopReason === "error") {
         throw new Error(
-          buildBlankResponseError(this.state.lastAssistant, this.config.name),
+          buildBlankResponseError(lastAssistant, this.config.name),
         );
       }
       this.state.markSuccess(response);
@@ -131,7 +146,7 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
         this.state.markError("Unknown error");
       }
 
-      throw new Error(this.state.value.error ?? "Unknown error");
+      throw new SubagentAttemptError(this.failure(err));
     } finally {
       if (this.signal && !this.signal.aborted) {
         this.signal.removeEventListener("abort", this.onAbort);
@@ -184,6 +199,19 @@ export class SubagentRuntime<Params extends TSchema = TSchema> {
       content: [textContent(formatSubagentStatus(this.state.value))],
       details: this.state.snapshot(),
     });
+  }
+
+  private failure(cause: unknown): AttemptFailure {
+    return {
+      phase: this.phase,
+      started: this.started,
+      aborted: this.signal?.aborted ?? false,
+      cause,
+      assistant: this.state.lastAssistant,
+      provider: this.session.model?.provider ?? "unknown",
+      model: this.session.model?.id ?? "unknown",
+      message: this.state.value.error ?? "Unknown error",
+    };
   }
 
   private onAbort = () => {

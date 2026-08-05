@@ -1,9 +1,11 @@
 import {
+  type AgentSession,
   defineTool,
   type ExtensionAPI,
   type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
+import { runWithFailover } from "./failover";
 import type { SubagentModelPreference } from "./models";
 import {
   renderSubagentCall,
@@ -16,7 +18,7 @@ import {
 } from "./schemas";
 import { SubagentSessionManager } from "./session-manager";
 import { SubagentSessionRecordStore } from "./session-records";
-import { withStartupTimeout } from "./startup-timeout";
+import { createStartupBudget, withStartupTimeout } from "./startup-timeout";
 import type {
   ResolvedSubagentConfig,
   SubagentConfig,
@@ -78,32 +80,64 @@ export function createSubagent<Params extends TSchema>(
       params,
       options.ctx,
     );
-    return withStartupTimeout(
-      (started) =>
-        sessions.withNewSession(
+
+    // One ranking per invocation, from one preference source: an eval roster
+    // override must never be mixed with the configured roster mid-loop.
+    const candidates = await sessions.rankCandidates(
+      options.ctx,
+      options.modelPreferences,
+    );
+
+    const { result } = await runWithFailover<
+      Awaited<ReturnType<SubagentRuntime<Params>["execute"]>>,
+      AgentSession
+    >({
+      label: resolved.label,
+      candidates,
+      budget: createStartupBudget(),
+      signal: options.signal,
+      notify: (message) => options.ctx.ui.notify(message, "warning"),
+      runAttempt: async ({ choice, signal, started, own }) => {
+        const session = await sessions.createSession(
           options.ctx,
+          choice,
           invocationSkills,
           invocationTools,
           agentsFiles,
-          async (session) => {
-            return new SubagentRuntime(
-              resolved,
-              session,
-              options.signal,
-              started,
-            ).execute(
-              options.callId ?? config.name,
-              params,
-              options.onUpdate,
-              options.ctx,
-            );
-          },
-          options.modelPreferences,
-        ),
-      resolved.label,
-    );
+        );
+        own(session);
+        return new SubagentRuntime(resolved, session, signal, started).execute(
+          options.callId ?? config.name,
+          params,
+          options.onUpdate,
+          options.ctx,
+        );
+      },
+      onSettled: ({ choice, failure, owned: session }) => {
+        if (!session) return;
+        // A session abandoned before its first token has nothing to resume;
+        // one that produced output stays resumable even if the attempt failed.
+        if (!failure || failure.started) {
+          sessions.recordSession(
+            options.ctx,
+            session,
+            choice,
+            invocationSkills,
+          );
+        } else {
+          sessions.forgetSession(session.sessionId);
+        }
+      },
+    });
+
+    return result;
   };
 
+  /**
+   * Resumed runs never fail over: the pinned model owns the session history,
+   * and a fresh session on another model would silently drop it. A failed
+   * resume is fatal and names the provider/model so the parent can decide.
+   */
   const resumeWithParams = async (
     sessionId: string,
     params: Static<Params>,
@@ -186,19 +220,12 @@ export function createSubagent<Params extends TSchema>(
         ctx,
       ) {
         const { sessionId, ...restParams } = params;
-        const invocationTools = await resolveTools(
-          config.tools,
-          restParams as Static<Params>,
-          ctx,
-        );
-        const session = await sessions.resume(sessionId, ctx, invocationTools);
-        const runtime = new SubagentRuntime<Params>(resolved, session, signal);
-        return runtime.execute(
-          toolCallId,
-          restParams as Static<Params>,
+        return resumeWithParams(sessionId, restParams as Static<Params>, {
+          callId: toolCallId,
+          signal,
           onUpdate,
           ctx,
-        );
+        });
       },
     });
 

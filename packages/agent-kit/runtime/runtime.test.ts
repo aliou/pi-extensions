@@ -7,6 +7,7 @@ import type {
 import { Type } from "typebox";
 import { describe, expect, it, vi } from "vitest";
 import type { ResolvedSubagentConfig } from "../types";
+import { isSubagentAttemptError } from "./attempt";
 import { SubagentRuntime } from "./runtime";
 
 const Params = Type.Object({ task: Type.String() });
@@ -167,6 +168,120 @@ describe("SubagentRuntime", () => {
       "Start a new reviewer call with a narrower scope; do not call resume_reviewer",
     );
     expect(session.dispose).toHaveBeenCalledOnce();
+  });
+
+  it("fails a partial response that ended in a provider error", async () => {
+    let listener: ((event: AgentSessionEvent) => void) | undefined;
+    const partial: AssistantMessage = {
+      ...successMessage(),
+      content: [{ type: "text", text: "Here is half an ans" }],
+      stopReason: "error",
+      errorMessage: "502: upstream closed the connection",
+    };
+    const session = {
+      sessionId: "session-id",
+      sessionFile: "/tmp/session.jsonl",
+      model: { provider: "openai-codex", id: "gpt-5.5" },
+      subscribe: vi.fn((next) => {
+        listener = next;
+        return vi.fn();
+      }),
+      prompt: vi.fn(async () => {
+        listener?.({ type: "message_end", message: partial });
+      }),
+      getLastAssistantText: vi.fn(() => "Here is half an ans"),
+      dispose: vi.fn(),
+    } as unknown as AgentSession;
+
+    const runtime = new SubagentRuntime(makeConfig(), session, undefined);
+
+    await expect(
+      runtime.execute(
+        "call-id",
+        { task: "review" },
+        undefined,
+        {} as ExtensionContext,
+      ),
+    ).rejects.toThrow("502: upstream closed the connection");
+  });
+
+  it("reports the failure phase, start state, and model for the failover loop", async () => {
+    let listener: ((event: AgentSessionEvent) => void) | undefined;
+    const session = {
+      sessionId: "session-id",
+      sessionFile: "/tmp/session.jsonl",
+      model: { provider: "neuralwatt", id: "gemma-4-31b" },
+      subscribe: vi.fn((next) => {
+        listener = next;
+        return vi.fn();
+      }),
+      prompt: vi.fn(async () => {
+        listener?.({
+          type: "message_end",
+          message: {
+            ...successMessage(),
+            content: [],
+            stopReason: "error",
+            errorMessage: "402: payment required",
+          },
+        });
+      }),
+      getLastAssistantText: vi.fn(() => undefined),
+      dispose: vi.fn(),
+    } as unknown as AgentSession;
+
+    const runtime = new SubagentRuntime(makeConfig(), session, undefined);
+    const error = await runtime
+      .execute("call-id", { task: "review" }, undefined, {} as ExtensionContext)
+      .catch((err: unknown) => err);
+
+    expect(isSubagentAttemptError(error)).toBe(true);
+    if (!isSubagentAttemptError(error)) return;
+    expect(error.failure).toMatchObject({
+      phase: "blank-response",
+      started: false,
+      aborted: false,
+      provider: "neuralwatt",
+      model: "gemma-4-31b",
+    });
+    expect(error.failure.assistant?.errorMessage).toBe("402: payment required");
+  });
+
+  it("marks a failure as started once output has streamed", async () => {
+    let listener: ((event: AgentSessionEvent) => void) | undefined;
+    const session = {
+      sessionId: "session-id",
+      sessionFile: "/tmp/session.jsonl",
+      model: { provider: "neuralwatt", id: "gemma-4-31b" },
+      subscribe: vi.fn((next) => {
+        listener = next;
+        return vi.fn();
+      }),
+      prompt: vi.fn(async () => {
+        listener?.({
+          type: "message_update",
+          assistantMessageEvent: { type: "thinking_start" },
+        } as never);
+        listener?.({
+          type: "message_end",
+          message: {
+            ...successMessage(),
+            content: [],
+            stopReason: "error",
+            errorMessage: "503: upstream died mid-stream",
+          },
+        });
+      }),
+      getLastAssistantText: vi.fn(() => undefined),
+      dispose: vi.fn(),
+    } as unknown as AgentSession;
+
+    const runtime = new SubagentRuntime(makeConfig(), session, undefined);
+    const error = await runtime
+      .execute("call-id", { task: "review" }, undefined, {} as ExtensionContext)
+      .catch((err: unknown) => err);
+
+    expect(isSubagentAttemptError(error) && error.failure.started).toBe(true);
   });
 
   it("invokes onStarted once on the first streaming event", async () => {

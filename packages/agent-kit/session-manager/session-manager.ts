@@ -13,10 +13,11 @@ import { isNil } from "@harness/utils/nil";
 import type { TSchema } from "typebox";
 import {
   createSubagentModelRuntime,
-  pickModel,
+  rankModels,
   resolveModel,
   type SubagentModelChoice,
   type SubagentModelPreference,
+  type SubagentSkippedModel,
 } from "../models";
 import { SubagentResourceLoader } from "../resources/loader";
 import {
@@ -55,18 +56,41 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     private records: SubagentSessionRecordStore,
   ) {}
 
-  async withNewSession<T>(
+  /**
+   * Candidates for a fresh run, in attempt order. Throws when the roster is
+   * empty or nothing in it is usable; notifies once per skipped entry.
+   */
+  async rankCandidates(
     ctx: ExtensionContext,
+    modelPreferences: readonly SubagentModelPreference[] = this.config
+      .modelPreferences,
+  ): Promise<SubagentModelChoice[]> {
+    if (modelPreferences.length === 0) {
+      throw new Error(
+        `${this.config.label} subagent has no configured model roster`,
+      );
+    }
+
+    const ranking = rankModels(ctx.modelRegistry, modelPreferences);
+    if (ranking.candidates.length === 0) {
+      this.notifySkipped(ctx, ranking.skipped);
+      throw new Error(`No model available for ${this.config.label} subagent`);
+    }
+
+    this.notifySkipped(ctx, ranking.skipped);
+    return ranking.candidates;
+  }
+
+  /** Create a fresh session bound to one candidate. One attempt, one session. */
+  async createSession(
+    ctx: ExtensionContext,
+    selection: SubagentModelChoice,
     invocationSkills: Skill[],
     invocationTools: SubagentToolSpec[],
     agentsFiles: SubagentAgentsFile[],
-    fn: (session: AgentSession) => Promise<T>,
-    modelPreferences?: readonly SubagentModelPreference[],
-  ): Promise<T> {
-    const selection = await this.pickModelOrThrow(ctx, modelPreferences);
-    const parentSessionId = ctx.sessionManager.getSessionId();
+  ): Promise<AgentSession> {
     const sessionManager = this.createSessionManager(ctx.cwd);
-    const session = await this.createAgentSession(
+    return this.createAgentSession(
       ctx,
       selection,
       sessionManager,
@@ -74,20 +98,33 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       invocationTools,
       agentsFiles,
     );
+  }
 
-    try {
-      return await fn(session);
-    } finally {
-      this.records.append({
-        type: SUBAGENT_SESSION_CUSTOM_TYPE,
-        name: this.config.name,
-        sessionId: session.sessionId,
-        sessionFile: session.sessionFile ?? "",
-        parentSessionId,
-        model: selection.preference,
-        skills: invocationSkills,
-      });
-    }
+  /**
+   * Persist the record that makes a session resumable. Only called for an
+   * attempt that answered (or at least produced output): a session abandoned
+   * before its first token has nothing to resume.
+   */
+  recordSession(
+    ctx: ExtensionContext,
+    session: AgentSession,
+    selection: SubagentModelChoice,
+    invocationSkills: Skill[],
+  ): void {
+    this.records.append({
+      type: SUBAGENT_SESSION_CUSTOM_TYPE,
+      name: this.config.name,
+      sessionId: session.sessionId,
+      sessionFile: session.sessionFile ?? "",
+      parentSessionId: ctx.sessionManager.getSessionId(),
+      model: selection.preference,
+      skills: invocationSkills,
+    });
+  }
+
+  /** Drop an abandoned attempt from the resume cache. */
+  forgetSession(sessionId: string): void {
+    this.sessionFilesById.delete(sessionId);
   }
 
   async resume(
@@ -253,25 +290,6 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     return SessionManager.open(sessionFile);
   }
 
-  private async pickModelOrThrow(
-    ctx: ExtensionContext,
-    modelPreferences: readonly SubagentModelPreference[] = this.config
-      .modelPreferences,
-  ): Promise<SubagentModelChoice> {
-    if (modelPreferences.length === 0) {
-      throw new Error(
-        `${this.config.label} subagent has no configured model roster`,
-      );
-    }
-    const selection = pickModel(ctx.modelRegistry, modelPreferences);
-    if (!selection) {
-      throw new Error(`No model available for ${this.config.label} subagent`);
-    }
-
-    this.notifySkippedModels(ctx, selection);
-    return selection;
-  }
-
   private async resolveModelOrThrow(
     ctx: ExtensionContext,
     record?: SubagentSessionRecord,
@@ -290,17 +308,17 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       throw new Error(`No model available for ${this.config.label} subagent`);
     }
 
-    this.notifySkippedModels(ctx, selection);
+    this.notifySkipped(ctx, selection.skipped);
     return selection;
   }
 
-  private notifySkippedModels(
+  private notifySkipped(
     ctx: ExtensionContext,
-    selection: SubagentModelChoice,
+    skipped: readonly SubagentSkippedModel[],
   ) {
-    for (const skipped of selection.skipped) {
+    for (const entry of skipped) {
       ctx.ui.notify(
-        `[model] skipped ${skipped.preference.provider}/${skipped.preference.model}: ${skipped.reason}`,
+        `[model] skipped ${entry.preference.provider}/${entry.preference.model}: ${entry.reason}`,
         "warning",
       );
     }

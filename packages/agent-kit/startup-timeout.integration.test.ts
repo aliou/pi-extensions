@@ -16,8 +16,10 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { describe, expect, it, vi } from "vitest";
+import { runWithFailover } from "./failover";
+import { ProviderCooldown, type SubagentModelChoice } from "./models";
 import { SubagentRuntime } from "./runtime";
-import { withStartupTimeout } from "./startup-timeout";
+import { createStartupBudget, withStartupTimeout } from "./startup-timeout";
 import type { ResolvedSubagentConfig } from "./types";
 
 const Params = Type.Object({ task: Type.String() });
@@ -37,6 +39,15 @@ function makeConfig(): ResolvedSubagentConfig<typeof Params> {
     configured: true,
     parameters: Params,
     buildPrompt: () => ({ text: "q" }),
+  };
+}
+
+function choice(provider: string, model: string): SubagentModelChoice {
+  return {
+    model: { id: model, provider } as never,
+    thinking: "off",
+    preference: { provider, model, thinking: "off" },
+    skipped: [],
   };
 }
 
@@ -147,5 +158,87 @@ describe("withStartupTimeout + SubagentRuntime (real clock)", () => {
 
     expect(result.content).toBeDefined();
     expect(session.abort).not.toHaveBeenCalled();
+  });
+});
+
+describe("runWithFailover + SubagentRuntime (real clock)", () => {
+  it("abandons a stalled provider, answers on the next one, and cools the stalled one", async () => {
+    const ATTEMPT_MS = 50;
+    const STALL_MS = 2_000; // far longer than the attempt window
+
+    const stalled = {
+      sessionId: "stalled-session",
+      sessionFile: "/tmp/stalled.jsonl",
+      model: { provider: "neuralwatt", id: "gemma-4-31b" },
+      subscribe: vi.fn(() => vi.fn()),
+      // Connect-but-no-tokens: in flight, but nothing ever streams.
+      prompt: vi.fn(() => sleep(STALL_MS)),
+      getLastAssistantText: vi.fn(() => undefined),
+      abort: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as AgentSession;
+
+    let listener: ((event: AgentSessionEvent) => void) | undefined;
+    const healthy = {
+      sessionId: "healthy-session",
+      sessionFile: "/tmp/healthy.jsonl",
+      model: { provider: "synthetic", id: "flash" },
+      subscribe: vi.fn((next) => {
+        listener = next;
+        return vi.fn();
+      }),
+      prompt: vi.fn(async () => {
+        listener?.({
+          type: "message_update",
+          assistantMessageEvent: { type: "thinking_start" },
+        } as never);
+        listener?.({ type: "message_end", message: successMessage() });
+      }),
+      getLastAssistantText: vi.fn(() => "Finished"),
+      abort: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as AgentSession;
+
+    const cooldown = new ProviderCooldown();
+    const notes: string[] = [];
+    const startedAt = Date.now();
+
+    const outcome = await runWithFailover({
+      label: "Read Session",
+      candidates: [
+        choice("neuralwatt", "gemma-4-31b"),
+        choice("synthetic", "flash"),
+      ],
+      budget: createStartupBudget({ totalMs: 10_000, attemptMs: ATTEMPT_MS }),
+      cooldown,
+      notify: (message) => notes.push(message),
+      runAttempt: ({ choice: attemptChoice, signal, started }) => {
+        const session =
+          attemptChoice.preference.provider === "neuralwatt"
+            ? stalled
+            : healthy;
+        return new SubagentRuntime(
+          makeConfig(),
+          session,
+          signal,
+          started,
+        ).execute("call-id", { task: "x" }, undefined, {} as ExtensionContext);
+      },
+    });
+
+    expect(outcome.choice.preference.provider).toBe("synthetic");
+    expect(outcome.attempted).toEqual([
+      "neuralwatt/gemma-4-31b",
+      "synthetic/flash",
+    ]);
+    // The whole run finished long before the stall would have settled.
+    expect(Date.now() - startedAt).toBeLessThan(STALL_MS / 2);
+    expect(notes).toEqual([
+      "[model] neuralwatt/gemma-4-31b failed (no output), trying synthetic/flash",
+    ]);
+    expect(cooldown.isCooled("neuralwatt")).toBe(true);
+    expect(cooldown.isCooled("synthetic")).toBe(false);
+    // The abandoned attempt is told to stop rather than left streaming.
+    expect(stalled.abort).toHaveBeenCalled();
   });
 });

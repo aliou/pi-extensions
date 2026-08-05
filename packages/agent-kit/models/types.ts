@@ -24,3 +24,10 @@ export interface SubagentModelChoice {
   preference: SubagentResolvedModel;
   skipped: SubagentSkippedModel[];
 }
+
+export interface SubagentModelRanking {
+  /** Candidates in attempt order; empty when nothing in the roster is usable. */
+  candidates: SubagentModelChoice[];
+  /** Roster entries excluded before ranking, with the reason. */
+  skipped: SubagentSkippedModel[];
+}

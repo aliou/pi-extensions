@@ -80,6 +80,25 @@ Subagent model rosters are not defined in this repository. They live in the glob
 
 `@harness/subagent-models` owns the path, the async cached loader, and validation. Each subagent passes `modelPreferences: () => getSubagentModelPreferences("<name>")` to `createSubagent` and awaits `subagent.ready`. There are no built-in defaults: when the file is missing/invalid or has no roster for a name, the subagent stays disabled — registration is a no-op (via `configuredSubagent`) and the user gets a single session-start warning. Execution-time roster replacement for evals (`SubagentRunOptions.modelPreferences`) is unchanged.
 
+#### Weight semantics
+
+A roster is a ranking, not a single draw. `rankModels` filters out entries the registry does not know or cannot auth, then orders the survivors:
+
+- **Positive weights** are ranked by weighted random sampling without replacement. The first entry follows the same distribution as a plain weighted draw (`weight 2` leads twice as often as `weight 1`), and the rest are a fair continuation of it. Two `weight 1` entries are a deliberate 50/50 split.
+- **Zero and negative weights are never drawn.** They are appended after every positive-weight entry, in roster order, as last-resort fallbacks. Roster order is the only thing that breaks ties between them, so list credit-based providers last.
+
+There is no `enabled` flag: to stop using a model, remove it from the roster.
+
+#### Failover
+
+A fresh run walks the ranking until a model answers. Only failures **before the first streamed token** advance to the next entry — quota/billing exhaustion, transient 429/5xx, transport errors, deterministic model rejections, and connect-but-no-tokens stalls. Once output has streamed, a failure is fatal, because a fresh session on another model would silently drop what the caller already saw. Context overflow, aborts, prompt-build failures, and clean-but-empty completions are never retried.
+
+A provider-scoped failure (quota, transient, or stall) also drops that provider's remaining entries for the invocation and arms a 5-minute in-process cooldown, so the next spawn skips it instead of re-probing. When every usable candidate is cooled the cooldown is ignored — one probe beats no subagent.
+
+The startup (time-to-first-token) timeout is armed **per attempt** (25s), under an invocation-wide budget (60s) that keeps several stalling providers from stacking full windows. Both disarm permanently on the first streamed output. Fatal subagent errors name the provider/model that produced them.
+
+Resumed runs never fail over: the pinned model owns the session history, so a failed resume is fatal and names the provider/model.
+
 ### Parent prompts for subagents
 
 Subagents are zero-shot: only their final response is returned to the parent. Parent agents should make each subagent call self-contained.
@@ -195,7 +214,7 @@ Workspace packages:
 
 | Directory | Package | Description |
 |---|---|---|
-| `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks; returns nested model usage for Pi session accounting, and fresh runs can replace the model preference roster for evals |
+| `packages/agent-kit/` | `@harness/agent-kit` | Subagent framework used by harness tools and hooks; ranks the model roster and fails over to the next entry on pre-start provider failures, returns nested model usage for Pi session accounting, and fresh runs can replace the model preference roster for evals |
 | `packages/aperture/` | `@harness/aperture` | Shared access to the global pi-ts-aperture config and gateway base URL |
 | `packages/audio-player/` | `@harness/audio-player` | Shared alert sound paths and best-effort audio playback with binary fallback |
 | `packages/completion/` | `@harness/completion` | Completion logic |
