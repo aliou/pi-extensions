@@ -229,7 +229,7 @@ describe("extension statuses", () => {
     const lines = fixture.component.render(120);
 
     expect(lines).toHaveLength(3);
-    expect(lines[2]).toBe("a-status z-status");
+    expect(lines[0]).toBe("a-status z-status");
   });
 
   it("sanitizes control characters out of status text", () => {
@@ -238,7 +238,7 @@ describe("extension statuses", () => {
     });
     const lines = fixture.component.render(120);
 
-    expect(lines[2]).toBe("line one line two spaced");
+    expect(lines[0]).toBe("line one line two spaced");
   });
 
   it("omits the third line when every status is empty", () => {

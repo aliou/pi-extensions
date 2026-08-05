@@ -252,9 +252,9 @@ export function createCustomFooter(pi: ExtensionAPI) {
     if (statusLine === undefined) return [line1, line2];
 
     return [
+      truncateToWidth(statusLine, width, theme.fg("thinkingMinimal", "...")),
       line1,
       line2,
-      truncateToWidth(statusLine, width, theme.fg("thinkingMinimal", "...")),
     ];
   };
 
