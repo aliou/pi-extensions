@@ -3,6 +3,7 @@
  *
  * Line 1: Path (left) + Stats (right aligned)
  * Line 2: Session name (left) + Model (right aligned)
+ * Line 3: Extension statuses (only when an extension set one)
  */
 
 import type {
@@ -21,6 +22,7 @@ import {
   type TpsTelemetry,
 } from "@harness/events";
 import { getCacheFreshness } from "../lib/cache-status";
+import { buildStatusLine } from "../lib/extension-status";
 import { GitStatusWatcher } from "../lib/git-status";
 import {
   buildModelIdLine,
@@ -243,7 +245,17 @@ export function createCustomFooter(pi: ExtensionAPI) {
       }
     }
 
-    return [line1, line2];
+    // Extension statuses set via ctx.ui.setStatus(). The built-in footer
+    // renders these on their own line; a custom footer must too, or they
+    // are silently dropped.
+    const statusLine = buildStatusLine(footer_data.getExtensionStatuses());
+    if (statusLine === undefined) return [line1, line2];
+
+    return [
+      line1,
+      line2,
+      truncateToWidth(statusLine, width, theme.fg("thinkingMinimal", "...")),
+    ];
   };
 
   return {

@@ -25,12 +25,16 @@ const theme = {
   bold: (text: string) => text,
 } as unknown as Theme;
 
-const footerData = {
-  getGitBranch: () => null,
-  getExtensionStatuses: () => new Map<string, string>(),
-  getAvailableProviderCount: () => 1,
-  onBranchChange: () => () => {},
-} as unknown as ReadonlyFooterDataProvider;
+function createFooterData(
+  statuses?: Map<string, string>,
+): ReadonlyFooterDataProvider {
+  return {
+    getGitBranch: () => null,
+    getExtensionStatuses: () => statuses ?? new Map<string, string>(),
+    getAvailableProviderCount: () => 1,
+    onBranchChange: () => () => {},
+  } as unknown as ReadonlyFooterDataProvider;
+}
 
 interface Captured {
   render(width: number): string[];
@@ -51,6 +55,7 @@ function createFixture(
   options: {
     showResumeCacheFreshness?: boolean;
     compactedAfterAssistant?: boolean;
+    statuses?: Map<string, string>;
   } = {},
 ): Fixture {
   // First assistant entry is the branch leaf; getBranch() returns it so
@@ -131,7 +136,7 @@ function createFixture(
       ) => {
         // cleanup() calls setFooter(undefined) to restore the default footer.
         if (typeof factory === "function") {
-          captured = factory({}, theme, footerData);
+          captured = factory({}, theme, createFooterData(options.statuses));
         }
       },
     },
@@ -202,5 +207,51 @@ describe("custom footer width safety", () => {
     expect(lines[1]).not.toContain("∅ ?");
     expect(lines[1]).not.toContain("≡");
     expect(lines[1]).not.toContain("0%");
+  });
+});
+
+describe("extension statuses", () => {
+  let fixture: Fixture;
+  afterEach(() => fixture?.dispose());
+
+  it("stays two lines when no extension set a status", () => {
+    fixture = createFixture();
+    expect(fixture.component.render(120)).toHaveLength(2);
+  });
+
+  it("renders statuses on a third line, sorted by key", () => {
+    fixture = createFixture({
+      statuses: new Map([
+        ["zeta", "z-status"],
+        ["alpha", "a-status"],
+      ]),
+    });
+    const lines = fixture.component.render(120);
+
+    expect(lines).toHaveLength(3);
+    expect(lines[2]).toBe("a-status z-status");
+  });
+
+  it("sanitizes control characters out of status text", () => {
+    fixture = createFixture({
+      statuses: new Map([["a", "line one\nline\ttwo\r\n  spaced  "]]),
+    });
+    const lines = fixture.component.render(120);
+
+    expect(lines[2]).toBe("line one line two spaced");
+  });
+
+  it("omits the third line when every status is empty", () => {
+    fixture = createFixture({ statuses: new Map([["a", "   "]]) });
+    expect(fixture.component.render(120)).toHaveLength(2);
+  });
+
+  it("never emits a status line wider than the terminal", () => {
+    fixture = createFixture({
+      statuses: new Map([["a", "x".repeat(200)]]),
+    });
+    for (const line of fixture.component.render(40)) {
+      expect(visibleWidth(line)).toBeLessThanOrEqual(40);
+    }
   });
 });
