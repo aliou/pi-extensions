@@ -1,8 +1,6 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 import type { CacheFreshness } from "./cache-status";
 
-const FAST_SYMBOL = "\u26A1";
-
 /**
  * Cache-hit-rate color tiers for the footer.
  *   90–100%: success (green)
@@ -11,25 +9,6 @@ const FAST_SYMBOL = "\u26A1";
  */
 export const CACHE_HIT_RATE_WARNING_THRESHOLD = 90;
 export const CACHE_HIT_RATE_ERROR_THRESHOLD = 80;
-
-/**
- * Set of providers with fast mode currently enabled.
- * Updated by the chrome footer via the AD_MODEL_FAST_MODE_CHANGED_EVENT.
- */
-const fastModeProviders = new Set<string>();
-
-export function setFastModeProvider(provider: string, enabled: boolean): void {
-  if (enabled) {
-    fastModeProviders.add(provider);
-  } else {
-    fastModeProviders.delete(provider);
-  }
-}
-
-function getFastPrefix(provider: string | undefined): string {
-  if (!provider || !fastModeProviders.has(provider)) return "";
-  return `${FAST_SYMBOL} `;
-}
 
 const THINKING_LEVEL_COLOR_MAP: Record<string, ThemeColor> = {
   off: "thinkingOff",
@@ -47,8 +26,7 @@ function thinkingLevelToColorToken(level: string): ThemeColor {
 /**
  * Build the cache hit rate segment for the model line.
  *
- * Rendered before the fast-mode symbol so it sits to the left of the model
- * name. Colored by tier:
+ * Colored by tier:
  *   90–100%: success (green)
  *   80–90%:  warning (orange)
  *   below 80%: error (red)
@@ -124,9 +102,8 @@ export function buildModelLine(
   cacheHitRate?: number | undefined,
   cacheFreshness?: CacheFreshness | undefined,
 ): string {
-  const prefix = getFastPrefix(provider);
   const cachePart = buildCachePart(theme, cacheHitRate, cacheFreshness);
-  const providerName = `${prefix}${provider ?? "unknown"}`;
+  const providerName = provider ?? "unknown";
   const modelPart = `${providerName}/${modelId ?? "no-model"}:`;
 
   if (hasReasoning) {
@@ -155,8 +132,6 @@ export function buildModelLine(
 export function buildModelIdLine(
   theme: Theme,
   modelId: string | undefined,
-  provider?: string | undefined,
 ): string {
-  const prefix = getFastPrefix(provider);
-  return theme.fg("thinkingMinimal", `${prefix}${modelId ?? "no-model"}`);
+  return theme.fg("thinkingMinimal", modelId ?? "no-model");
 }

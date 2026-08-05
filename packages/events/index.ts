@@ -41,13 +41,6 @@ export interface AdNotifyDoneEvent {
 
 export const AD_TERMINAL_TITLE_ATTENTION_EVENT = "ad:terminal-title:attention";
 
-export const AD_MODEL_FAST_MODE_CHANGED_EVENT = "ad:model-fast-mode:changed";
-
-export type AdModelFastModeChangedEvent = {
-  provider: string;
-  enabled: boolean;
-};
-
 export const AD_EDITOR_STASH_CHANGED_EVENT = "ad:editor-stash:changed";
 
 export type AdEditorStashChangedEvent = {

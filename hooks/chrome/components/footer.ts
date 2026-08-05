@@ -15,20 +15,14 @@ import type {
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
   AD_EDITOR_STASH_CHANGED_EVENT,
-  AD_MODEL_FAST_MODE_CHANGED_EVENT,
   AD_TPS_TELEMETRY_EVENT,
   type AdEditorStashChangedEvent,
-  type AdModelFastModeChangedEvent,
   type TpsTelemetry,
 } from "@harness/events";
 import { getCacheFreshness } from "../lib/cache-status";
 import { buildStatusLine } from "../lib/extension-status";
 import { GitStatusWatcher } from "../lib/git-status";
-import {
-  buildModelIdLine,
-  buildModelLine,
-  setFastModeProvider,
-} from "../lib/model";
+import { buildModelIdLine, buildModelLine } from "../lib/model";
 import { buildPathParts } from "../lib/path-parts";
 import {
   buildMinimalStatsParts,
@@ -60,13 +54,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
   pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
     const event = data as AdEditorStashChangedEvent;
     stashHasContent = event.hasContent;
-    if (!ctx) return;
-    requestRender?.();
-  });
-
-  pi.events.on(AD_MODEL_FAST_MODE_CHANGED_EVENT, (data: unknown) => {
-    const event = data as AdModelFastModeChangedEvent;
-    setFastModeProvider(event.provider, event.enabled);
     if (!ctx) return;
     requestRender?.();
   });
@@ -180,11 +167,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
 
     let line2: string;
     if (useMinimal) {
-      const modelIdLine = buildModelIdLine(
-        theme,
-        ctx.model?.id,
-        ctx.model?.provider,
-      );
+      const modelIdLine = buildModelIdLine(theme, ctx.model?.id);
       line2 = truncateToWidth(modelIdLine, width, "...");
     } else {
       const left_parts2: string[] = [sessionName ?? ""].filter(Boolean);

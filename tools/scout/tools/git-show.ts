@@ -3,7 +3,7 @@ import type {
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { execGit } from "../../librarian/tools/git-exec";
+import { execGit } from "./git-exec";
 
 const DEFAULT_MAX_BYTES = 64 * 1024;
 
