@@ -83,19 +83,7 @@ describe("getCumulativeUsage", () => {
 });
 
 describe("buildStatsParts", () => {
-  it("places TPS before cost", () => {
-    expect(buildStatsParts(theme, usage, contextUsage, 42.25)).toEqual([
-      "42.3 tps $0.123 10.0% 27.2k/272k",
-    ]);
-  });
-
-  it("omits TPS when latest telemetry is null", () => {
-    expect(buildStatsParts(theme, usage, contextUsage, null)).toEqual([
-      "$0.123 10.0% 27.2k/272k",
-    ]);
-  });
-
-  it("omits TPS before telemetry arrives", () => {
+  it("shows cost and context usage", () => {
     expect(buildStatsParts(theme, usage, contextUsage)).toEqual([
       "$0.123 10.0% 27.2k/272k",
     ]);
@@ -103,9 +91,9 @@ describe("buildStatsParts", () => {
 });
 
 describe("buildMinimalStatsParts", () => {
-  // Mirrors the production crash inputs (terminal width 40): full stats line
-  // "142.0 tps $0.009 ($0.140) 5.0% 10.0k/200k" is 41 wide and overflowed the
-  // viewport. Minimal mode must drop tps and the cumulative-cost parenthetical.
+  // Mirrors the production crash inputs (terminal width 40): the full stats
+  // line with a cumulative-cost parenthetical was too wide for the viewport.
+  // Minimal mode must drop the parenthetical.
   const splitUsage = {
     totalCost: 0.14,
     branchCost: 0.009,
@@ -118,7 +106,7 @@ describe("buildMinimalStatsParts", () => {
     display: "5.0% 10.0k/200k",
   };
 
-  it("drops TPS and the cumulative-cost parenthetical", () => {
+  it("drops the cumulative-cost parenthetical", () => {
     expect(
       buildMinimalStatsParts(theme, splitUsage, splitContextUsage),
     ).toEqual(["$0.009 5.0% 10.0k/200k"]);
@@ -126,8 +114,7 @@ describe("buildMinimalStatsParts", () => {
 
   it("is narrower than the full stats line", () => {
     const full =
-      buildStatsParts(theme, splitUsage, splitContextUsage, 142.0)[0]?.length ??
-      0;
+      buildStatsParts(theme, splitUsage, splitContextUsage)[0]?.length ?? 0;
     const minimal =
       buildMinimalStatsParts(theme, splitUsage, splitContextUsage)[0]?.length ??
       0;

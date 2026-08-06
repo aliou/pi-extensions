@@ -5,7 +5,6 @@ import type {
   Theme,
 } from "@earendil-works/pi-coding-agent";
 import { visibleWidth } from "@earendil-works/pi-tui";
-import { AD_TPS_TELEMETRY_EVENT } from "@harness/events";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Avoid real fs watchers and git subprocesses in the render test.
@@ -47,9 +46,8 @@ interface Fixture {
 }
 
 /**
- * Build a footer against the production crash inputs: a turn that streamed at
- * 142.0 tps with branch cost $0.009 and total cost $0.140, context 5% of a
- * 200k window, model glm-5.2-short.
+ * Build a footer against the production crash inputs: branch cost $0.009 and
+ * total cost $0.140, context 5% of a 200k window, model glm-5.2-short.
  */
 function createFixture(
   options: {
@@ -146,12 +144,6 @@ function createFixture(
   footer.setup(ctx, {
     showResumeCacheFreshness: options.showResumeCacheFreshness === true,
   });
-
-  // Feed the crashing TPS telemetry. Emitted before setup set ctx, but the
-  // handler records latestTps before the early `if (!ctx) return` guard.
-  for (const handler of handlers.get(AD_TPS_TELEMETRY_EVENT) ?? []) {
-    handler({ tps: 142.0 });
-  }
 
   if (!captured) throw new Error("footer component was not captured");
   const component = captured;

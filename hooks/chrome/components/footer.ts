@@ -15,9 +15,7 @@ import type {
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
   AD_EDITOR_STASH_CHANGED_EVENT,
-  AD_TPS_TELEMETRY_EVENT,
   type AdEditorStashChangedEvent,
-  type TpsTelemetry,
 } from "@harness/events";
 import { getCacheFreshness } from "../lib/cache-status";
 import { buildStatusLine } from "../lib/extension-status";
@@ -48,19 +46,11 @@ export function createCustomFooter(pi: ExtensionAPI) {
   let requestRender: (() => void) | undefined;
   let gitStatusWatcher: GitStatusWatcher | undefined;
   let stashHasContent = false;
-  let latestTps: number | null | undefined;
   let showResumeCacheFreshness = false;
 
   pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
     const event = data as AdEditorStashChangedEvent;
     stashHasContent = event.hasContent;
-    if (!ctx) return;
-    requestRender?.();
-  });
-
-  pi.events.on(AD_TPS_TELEMETRY_EVENT, (data: unknown) => {
-    const event = data as TpsTelemetry;
-    latestTps = event.tps;
     if (!ctx) return;
     requestRender?.();
   });
@@ -81,7 +71,7 @@ export function createCustomFooter(pi: ExtensionAPI) {
     const gitStatus = gitStatusWatcher?.getStatus();
     const pathData = buildPathParts(theme, branch, gitStatus, stashHasContent);
 
-    const statsParts = buildStatsParts(theme, usage, contextUsage, latestTps);
+    const statsParts = buildStatsParts(theme, usage, contextUsage);
     const statsLine = statsParts.join(" ");
     const statsWidth = visibleWidth(statsLine);
     const minPadding = 2;
