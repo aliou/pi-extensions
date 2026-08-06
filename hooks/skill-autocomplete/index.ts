@@ -12,14 +12,14 @@
  * ```json
  * {
  *   "skillsRoots": [
- *     "~/skills",
+ *     { "path": "~/skills", "label": "personal" },
  *     { "path": "~/code/src/skill-library", "label": "library" }
  *   ]
  * }
  * ```
- * Each entry is either a bare path (label derived from the directory name) or
- * an object with an explicit `label`. The label is shown as a `[label]` prefix
- * on each skill's description, mirroring pi's source tagging.
+ * Each entry is an object with a required `path` and `label`. The label is
+ * shown as a `[label]` prefix on each skill's description, mirroring pi's
+ * source tagging. Any other shape (bare strings, missing fields) fails loudly.
  *
  * If the config file doesn't exist or any configured path doesn't exist,
  * a notification is shown on session start. The provider is still registered
@@ -32,7 +32,11 @@ import {
   AD_HEADER_REGISTER_COMPLETION_EVENT,
   once,
 } from "@harness/events";
-import { getCompletionConfigPath, resolveSkillsRoots } from "./config";
+import {
+  getCompletionConfigPath,
+  type ResolvedSkillsRoots,
+  resolveSkillsRoots,
+} from "./config";
 import { createSkillAutocompleteEditor } from "./editor";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider } from "./provider";
@@ -87,7 +91,20 @@ export default async function (pi: ExtensionAPI) {
   });
 
   pi.on("session_start", async (_event, ctx) => {
-    const { valid, missing } = resolveSkillsRoots();
+    let resolved: ResolvedSkillsRoots;
+    try {
+      resolved = resolveSkillsRoots();
+    } catch (error) {
+      skillsRoots = [];
+      const message = error instanceof Error ? error.message : String(error);
+      ctx.ui.notify(
+        `Skill autocomplete disabled — invalid config in ${getCompletionConfigPath()}: ${message}`,
+        "error",
+      );
+      return;
+    }
+
+    const { valid, missing } = resolved;
     skillsRoots = valid;
 
     if (valid.length === 0 && missing.length === 0) {

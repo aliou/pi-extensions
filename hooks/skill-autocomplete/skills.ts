@@ -1,7 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename } from "node:path";
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
-import { collapseHomePath, expandHomePath } from "@harness/utils/path";
+import { collapseHomePath } from "@harness/utils/path";
 
 interface SkillFrontmatter {
   description?: string;
@@ -29,13 +28,6 @@ export interface SkillInfo {
   directory: string;
   /** Label of the root this skill was loaded from. */
   sourceLabel: string;
-}
-
-/** Derive a short, stable label for a skill root from its path. */
-export function deriveRootLabel(rawPath: string): string {
-  const expanded = expandHomePath(rawPath);
-  const base = basename(expanded);
-  return base || collapseHomePath(expanded);
 }
 
 /**
