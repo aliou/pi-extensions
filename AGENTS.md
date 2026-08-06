@@ -15,6 +15,7 @@ When adding new content or changing existing behavior, update the closest releva
 - `commands/` - Slash commands and command-like UI flows.
 - `hooks/` - Event hooks, lifecycle behavior, autocomplete providers, chrome, and background behavior.
 - `tools/` - Agent tools exposed to Pi sessions.
+- `skills/` - Skills shipped with the harness and loaded via the `pi.skills` manifest entry in `package.json`.
 - `evals/` - Live model evals that run separately from unit tests; shared eval infrastructure lives in `evals/lib/`.
 - `packages/` - Shared internal workspace packages. Each package lives in `packages/<name>/` and is imported through its `@harness/*` workspace package name.
 - `patches/` - Local patches on top of Pi and its dependencies. One directory per patch (see Patches below).
@@ -29,6 +30,7 @@ New functionality should be added as one of:
 - `hooks/<name>/` for event-driven behavior, UI chrome, autocomplete, lifecycle hooks, or background observers.
 - `tools/<name>/` for agent-callable tools.
 - `packages/<name>/` for shared internal code.
+- `skills/<name>/` for skills shipped with the harness (declared in `package.json` under `pi.skills`).
 
 Avoid cross-imports between `commands/`, `hooks/`, and `tools/`. If code needs to be shared across those areas:
 

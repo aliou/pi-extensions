@@ -14,6 +14,9 @@
       "./commands",
       "./hooks",
       "./tools"
+    ],
+    "skills": [
+      "./skills"
     ]
   },
   "scripts": {
