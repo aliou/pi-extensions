@@ -1,5 +1,6 @@
 import type { Api, Model } from "@earendil-works/pi-ai";
 import {
+  CredentialSynchronizationError,
   type ModelRegistry,
   ModelRuntime,
 } from "@earendil-works/pi-coding-agent";
@@ -23,7 +24,16 @@ export async function createSubagentModelRuntime(
 
   const apiKey = await registry.getApiKeyForProvider(model.provider);
   if (apiKey && !registry.isUsingOAuth(model)) {
-    await runtime.setRuntimeApiKey(model.provider, apiKey);
+    try {
+      await runtime.setRuntimeApiKey(model.provider, apiKey);
+    } catch (error) {
+      // The credential is committed to the runtime's overlay even when this
+      // throws; only the opportunistic local catalog refresh failed (e.g. a
+      // provider extension's refreshModels callback erroring). Treat it as
+      // non-fatal so a stale or broken provider catalog refresh cannot take
+      // down subagent creation, matching Pi's own login/logout handling.
+      if (!(error instanceof CredentialSynchronizationError)) throw error;
+    }
   }
 
   return runtime;

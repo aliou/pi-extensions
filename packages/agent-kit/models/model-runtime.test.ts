@@ -1,7 +1,8 @@
 import type { Api, Model } from "@earendil-works/pi-ai";
-import type {
-  ModelRegistry,
-  ModelRuntime,
+import {
+  CredentialSynchronizationError,
+  type ModelRegistry,
+  type ModelRuntime,
 } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vitest";
 import { createSubagentModelRuntime } from "./model-runtime";
@@ -72,5 +73,58 @@ describe("createSubagentModelRuntime", () => {
     );
 
     expect(runtime.setRuntimeApiKey).not.toHaveBeenCalled();
+  });
+
+  it("tolerates a committed credential whose local sync failed", async () => {
+    const registry = {
+      getRegisteredProviderConfig: vi.fn(() => undefined),
+      getApiKeyForProvider: vi.fn(async () => "secret"),
+      isUsingOAuth: vi.fn(() => false),
+    } as unknown as ModelRegistry;
+    const runtime = {
+      registerProvider: vi.fn(),
+      setRuntimeApiKey: vi.fn(async () => {
+        throw new CredentialSynchronizationError(
+          "neuralwatt",
+          "setRuntimeApiKey",
+          { type: "api_key", key: "secret" },
+          { cause: new Error("refresh failed") },
+        );
+      }),
+    } as unknown as ModelRuntime;
+
+    const result = await createSubagentModelRuntime(
+      registry,
+      { provider: "neuralwatt", id: "model" } as Model<Api>,
+      async () => runtime,
+    );
+
+    expect(result).toBe(runtime);
+    expect(runtime.setRuntimeApiKey).toHaveBeenCalledWith(
+      "neuralwatt",
+      "secret",
+    );
+  });
+
+  it("rethrows other setRuntimeApiKey failures", async () => {
+    const registry = {
+      getRegisteredProviderConfig: vi.fn(() => undefined),
+      getApiKeyForProvider: vi.fn(async () => "secret"),
+      isUsingOAuth: vi.fn(() => false),
+    } as unknown as ModelRegistry;
+    const runtime = {
+      registerProvider: vi.fn(),
+      setRuntimeApiKey: vi.fn(async () => {
+        throw new Error("boom");
+      }),
+    } as unknown as ModelRuntime;
+
+    await expect(
+      createSubagentModelRuntime(
+        registry,
+        { provider: "custom", id: "model" } as Model<Api>,
+        async () => runtime,
+      ),
+    ).rejects.toThrow("boom");
   });
 });
