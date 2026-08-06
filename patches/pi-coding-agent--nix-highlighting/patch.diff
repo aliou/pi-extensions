@@ -1,8 +1,6 @@
-diff --git a/dist/modes/interactive/theme/theme.js b/dist/modes/interactive/theme/theme.js
-index c4b7a40d3ebfaf97090b4f9d85defa61c05b34e2..ad038610ae5f366f318f37e9ff4fd6449f342daf 100644
 --- a/dist/modes/interactive/theme/theme.js
 +++ b/dist/modes/interactive/theme/theme.js
-@@ -936,6 +936,17 @@ export function getLanguageFromPath(filePath) {
+@@ -946,6 +946,17 @@
      if (!ext)
          return undefined;
      const extToLang = {

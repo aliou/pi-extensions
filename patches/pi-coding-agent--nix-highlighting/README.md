@@ -40,7 +40,7 @@ The patch is hardcoded in `patches/package.json` under
 ```json
 "pnpm": {
   "patchedDependencies": {
-    "@earendil-works/pi-coding-agent@0.82.0": "pi-coding-agent--nix-highlighting/patch.diff"
+    "@earendil-works/pi-coding-agent@0.84.0": "pi-coding-agent--nix-highlighting/patch.diff"
   }
 }
 ```
@@ -53,7 +53,7 @@ Run: `pnpm -C patches install && pnpm test:patches`.
 
 ## Testing against a new pi-coding-agent release
 
-Authored against 0.82.0. The `Patches` workflow runs a nightly job that bumps
+Authored against 0.82.0 and verified against 0.84.0. The `Patches` workflow runs a nightly job that bumps
 `patches/package.json` to the latest published Pi release (via
 `scripts/bump-pi-version.mjs`), reinstalls, and re-runs this test. If the patch
 no longer applies to the new version, `pnpm install` fails and the job goes red

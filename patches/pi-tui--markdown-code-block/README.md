@@ -52,7 +52,7 @@ The patch is hardcoded in `patches/package.json` under
 ```json
 "pnpm": {
   "patchedDependencies": {
-    "@earendil-works/pi-tui@0.82.0": "pi-tui--markdown-code-block/patch.diff"
+    "@earendil-works/pi-tui@0.84.0": "pi-tui--markdown-code-block/patch.diff"
   }
 }
 ```
@@ -65,7 +65,7 @@ Run: `pnpm -C patches install && pnpm test:patches`.
 
 ## Testing against a new pi-tui release
 
-Authored against 0.80.2 and verified against 0.82.0. The `Patches` workflow
+Authored against 0.80.2 and verified against 0.84.0. The `Patches` workflow
 runs a nightly job that bumps `patches/package.json` to the latest published
 Pi release (via `scripts/bump-pi-version.mjs`), reinstalls, and re-runs this
 test. If the patch no longer applies to the new version, `pnpm install` fails

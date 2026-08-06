@@ -1,8 +1,6 @@
-diff --git a/dist/components/markdown.js b/dist/components/markdown.js
-index 64766013e0705ff953cbdcfd3b8ac94913c3b623..f7a2b00a9df2fa1d71fd9c0759b10fddcf134eb1 100644
 --- a/dist/components/markdown.js
 +++ b/dist/components/markdown.js
-@@ -95,13 +95,15 @@ export class Markdown {
+@@ -200,13 +200,15 @@
          trimPartialClosingFences(tokens);
          // Convert tokens to styled terminal output
          const renderedLines = [];
@@ -19,7 +17,7 @@ index 64766013e0705ff953cbdcfd3b8ac94913c3b623..f7a2b00a9df2fa1d71fd9c0759b10fdd
          }
          // Wrap lines (NO padding, NO background yet)
          const wrappedLines = [];
-@@ -221,7 +223,43 @@ export class Markdown {
+@@ -326,7 +328,43 @@
              stylePrefix: this.getDefaultStylePrefix(),
          };
      }
@@ -64,9 +62,9 @@ index 64766013e0705ff953cbdcfd3b8ac94913c3b623..f7a2b00a9df2fa1d71fd9c0759b10fdd
          const lines = [];
          switch (token.type) {
              case "heading": {
-@@ -262,25 +300,8 @@ export class Markdown {
-                 lines.push(this.renderInlineTokens([token], styleContext));
+@@ -380,25 +418,8 @@
                  break;
+             }
              case "code": {
 -                const indent = this.theme.codeBlockIndent ?? "  ";
 -                lines.push(this.theme.codeBlockBorder(`\`\`\`${token.lang || ""}`));
@@ -92,7 +90,7 @@ index 64766013e0705ff953cbdcfd3b8ac94913c3b623..f7a2b00a9df2fa1d71fd9c0759b10fdd
                  break;
              }
              case "list": {
-@@ -350,7 +371,11 @@ export class Markdown {
+@@ -468,7 +489,11 @@
                  }
                  break;
              case "space":
