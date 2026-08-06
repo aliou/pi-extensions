@@ -21,12 +21,6 @@ export const REFERENCE_CONTEXT_WINDOW = 272_000;
 interface CumulativeUsage {
   totalCost: number;
   branchCost: number;
-  /**
-   * Cache hit rate of the latest assistant message, as a percentage
-   * (cacheRead / (input + cacheRead + cacheWrite) * 100).
-   * Undefined when no cache activity has been recorded yet.
-   */
-  latestCacheHitRate?: number | undefined;
 }
 
 interface ContextUsage {
@@ -42,23 +36,10 @@ interface ContextUsage {
 export function getCumulativeUsage(ctx: ExtensionContext): CumulativeUsage {
   let totalCost = 0;
   let branchCost = 0;
-  let latestCacheHitRate: number | undefined;
-  let hasReportedCacheActivity = false;
 
   for (const entry of ctx.sessionManager.getEntries()) {
     if (entry.type === "message" && entry.message.role === "assistant") {
       totalCost += entry.message.usage.cost.total;
-
-      // Mirror the default footer's cache-hit-rate calc: use the latest
-      // assistant message's usage so a cold start or context reset is
-      // reflected promptly.
-      const usage = entry.message.usage;
-      hasReportedCacheActivity ||= usage.cacheRead + usage.cacheWrite > 0;
-      const promptTokens = usage.input + usage.cacheRead + usage.cacheWrite;
-      latestCacheHitRate =
-        hasReportedCacheActivity && promptTokens > 0
-          ? (usage.cacheRead / promptTokens) * 100
-          : undefined;
     }
   }
 
@@ -71,7 +52,6 @@ export function getCumulativeUsage(ctx: ExtensionContext): CumulativeUsage {
   return {
     totalCost,
     branchCost,
-    latestCacheHitRate,
   };
 }
 

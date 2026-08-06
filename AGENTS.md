@@ -138,7 +138,7 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 |---|---|---|
 | `resource-loader/` | Append `.agents/AGENTS.local.md` (cwd only) to the system prompt; complements Pi's built-in `AGENTS.md`/`CLAUDE.md` discovery which does not consult `.agents/` | `index.ts`, `load.ts` |
 | `provider-tweaks/` | Provider-specific tweaks; injects `x-session-id` on Anthropic requests, requests detailed reasoning summaries from GPT-5.6 Codex models, and adds session-affinity headers | `index.ts`, `anthropic.ts`, `openai-codex.ts` |
-| `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost, context, cache hit rate, and resume cache freshness | `hooks/`, `components/`, `lib/`, `native/` |
+| `chrome/` | Header, footer, terminal title, notifications, auto-naming; footer shows cost and context | `hooks/`, `components/`, `lib/`, `native/` |
 | `default-settings/` | Default settings setup | `index.ts` |
 | `event-compat/` | Backwards-compatible event aliases | `index.ts` |
 | `models-overrides/` | Override model props in models.json | `index.ts` |

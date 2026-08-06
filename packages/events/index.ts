@@ -76,8 +76,6 @@ export const AD_TPS_TELEMETRY_EVENT = "ad:tps:telemetry";
 export interface TpsCost {
   input: number;
   output: number;
-  cacheRead: number;
-  cacheWrite: number;
   total: number;
 }
 
@@ -86,8 +84,6 @@ export interface TpsTelemetry {
   tokens: {
     input: number;
     output: number;
-    cacheRead: number;
-    cacheWrite: number;
     total: number;
   };
   timing: {

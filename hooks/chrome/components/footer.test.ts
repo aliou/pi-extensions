@@ -50,11 +50,7 @@ interface Fixture {
  * total cost $0.140, context 5% of a 200k window, model glm-5.2-short.
  */
 function createFixture(
-  options: {
-    showResumeCacheFreshness?: boolean;
-    compactedAfterAssistant?: boolean;
-    statuses?: Map<string, string>;
-  } = {},
+  options: { statuses?: Map<string, string> } = {},
 ): Fixture {
   // First assistant entry is the branch leaf; getBranch() returns it so
   // branchCost diverges from totalCost and the stats line carries the
@@ -83,16 +79,7 @@ function createFixture(
       usage: { input: 100, cacheRead: 0, cacheWrite: 0, cost: { total: 0.14 } },
     },
   };
-  const compactionEntry = {
-    type: "compaction",
-    timestamp: new Date(1_000).toISOString(),
-    summary: "summary",
-    firstKeptEntryId: "assistant-entry",
-    tokensBefore: 10_000,
-  };
-  const branchEntries = options.compactedAfterAssistant
-    ? [branchEntry, compactionEntry]
-    : [branchEntry];
+  const branchEntries = [branchEntry];
 
   const handlers = new Map<string, ((data: unknown) => void)[]>();
   const pi = {
@@ -141,9 +128,7 @@ function createFixture(
   } as unknown as ExtensionContext;
 
   const footer = createCustomFooter(pi);
-  footer.setup(ctx, {
-    showResumeCacheFreshness: options.showResumeCacheFreshness === true,
-  });
+  footer.setup(ctx);
 
   if (!captured) throw new Error("footer component was not captured");
   const component = captured;
@@ -175,30 +160,6 @@ describe("custom footer width safety", () => {
     for (const line of lines) {
       expect(visibleWidth(line)).toBeLessThanOrEqual(10);
     }
-  });
-
-  it("shows only empty set when cache is stale, dropping hit rate", () => {
-    fixture = createFixture({ showResumeCacheFreshness: true });
-    const lines = fixture.component.render(120);
-
-    expect(lines[1]).toContain("∅");
-    expect(lines[1]).not.toMatch(/∅ \d+[smhd]/);
-    expect(lines[1]).not.toContain("≡");
-    expect(lines[1]).not.toContain("0%");
-    expect(lines[1]).not.toContain("?");
-  });
-
-  it("shows only empty set after compaction", () => {
-    fixture = createFixture({
-      showResumeCacheFreshness: true,
-      compactedAfterAssistant: true,
-    });
-    const lines = fixture.component.render(120);
-
-    expect(lines[1]).toContain("∅");
-    expect(lines[1]).not.toContain("∅ ?");
-    expect(lines[1]).not.toContain("≡");
-    expect(lines[1]).not.toContain("0%");
   });
 });
 

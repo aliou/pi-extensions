@@ -17,7 +17,6 @@ import {
   AD_EDITOR_STASH_CHANGED_EVENT,
   type AdEditorStashChangedEvent,
 } from "@harness/events";
-import { getCacheFreshness } from "../lib/cache-status";
 import { buildStatusLine } from "../lib/extension-status";
 import { GitStatusWatcher } from "../lib/git-status";
 import { buildModelIdLine, buildModelLine } from "../lib/model";
@@ -30,15 +29,6 @@ import {
 } from "../lib/stats";
 
 /**
- * Interval at which the footer re-renders while resume-cache freshness is
- * shown. The remaining cache TTL ticks down on each render until it reaches
- * 0, at which point the segment flips to the stale color. Without this
- * timer the countdown would only advance when some other event (TPS, stash,
- * branch change) happened to trigger a render.
- */
-const CACHE_FRESHNESS_RENDER_INTERVAL_MS = 30_000;
-
-/**
  * Create a footer component with 2-line layout.
  */
 export function createCustomFooter(pi: ExtensionAPI) {
@@ -46,7 +36,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
   let requestRender: (() => void) | undefined;
   let gitStatusWatcher: GitStatusWatcher | undefined;
   let stashHasContent = false;
-  let showResumeCacheFreshness = false;
 
   pi.events.on(AD_EDITOR_STASH_CHANGED_EVENT, (data: unknown) => {
     const event = data as AdEditorStashChangedEvent;
@@ -171,17 +160,12 @@ export function createCustomFooter(pi: ExtensionAPI) {
 
       const thinkingLevel = pi.getThinkingLevel();
       const hasReasoning = !!ctx.model?.reasoning;
-      const cacheFreshness = showResumeCacheFreshness
-        ? getCacheFreshness(ctx.sessionManager.getBranch())
-        : undefined;
       const modelLine = buildModelLine(
         theme,
         ctx.model?.provider,
         ctx.model?.id,
         hasReasoning,
         thinkingLevel ?? "off",
-        usage.latestCacheHitRate,
-        cacheFreshness,
       );
       const modelWidth = visibleWidth(modelLine);
 
@@ -232,12 +216,8 @@ export function createCustomFooter(pi: ExtensionAPI) {
   };
 
   return {
-    setup: (
-      context: ExtensionContext,
-      options: { showResumeCacheFreshness?: boolean } = {},
-    ) => {
+    setup: (context: ExtensionContext) => {
       ctx = context;
-      showResumeCacheFreshness = options.showResumeCacheFreshness === true;
       ctx.ui.setFooter((tui, theme, footerData) => {
         requestRender = () => tui.requestRender?.();
 
@@ -250,19 +230,9 @@ export function createCustomFooter(pi: ExtensionAPI) {
           requestRender?.();
         });
 
-        // Keep the cache-freshness countdown live even when no other event
-        // triggers a render. Cleared on dispose.
-        const cacheFreshnessTimer = showResumeCacheFreshness
-          ? setInterval(
-              () => requestRender?.(),
-              CACHE_FRESHNESS_RENDER_INTERVAL_MS,
-            )
-          : undefined;
-
         return {
           dispose: () => {
             requestRender = undefined;
-            if (cacheFreshnessTimer) clearInterval(cacheFreshnessTimer);
             gitStatusWatcher?.dispose();
             gitStatusWatcher = undefined;
             unsub();
@@ -278,7 +248,6 @@ export function createCustomFooter(pi: ExtensionAPI) {
       if (ctx) {
         ctx.ui.setFooter(undefined);
         ctx = undefined;
-        showResumeCacheFreshness = false;
       }
     },
   };

@@ -4,7 +4,6 @@ import {
   buildMinimalStatsParts,
   buildStatsParts,
   getContextUsage,
-  getCumulativeUsage,
 } from "./stats";
 
 const theme = {
@@ -40,45 +39,6 @@ describe("getContextUsage", () => {
     expect(result.percent).toBe(10);
     expect(result.colorPercent).toBeCloseTo(36.76, 2);
     expect(result.display).toBe("10.0% 100k/1.0M");
-  });
-});
-
-describe("getCumulativeUsage", () => {
-  function contextWithUsage(
-    usages: Array<{ input: number; cacheRead: number; cacheWrite: number }>,
-  ): ExtensionContext {
-    const entries = usages.map((usage) => ({
-      type: "message",
-      message: {
-        role: "assistant",
-        usage: { ...usage, cost: { total: 0 } },
-      },
-    }));
-    return {
-      sessionManager: {
-        getEntries: () => entries,
-        getBranch: () => entries,
-      },
-    } as unknown as ExtensionContext;
-  }
-
-  it("hides hit rate until cache activity has been reported", () => {
-    const result = getCumulativeUsage(
-      contextWithUsage([{ input: 100, cacheRead: 0, cacheWrite: 0 }]),
-    );
-
-    expect(result.latestCacheHitRate).toBeUndefined();
-  });
-
-  it("shows the latest hit rate after cache activity has been reported", () => {
-    const result = getCumulativeUsage(
-      contextWithUsage([
-        { input: 20, cacheRead: 80, cacheWrite: 0 },
-        { input: 100, cacheRead: 0, cacheWrite: 0 },
-      ]),
-    );
-
-    expect(result.latestCacheHitRate).toBe(0);
   });
 });
 

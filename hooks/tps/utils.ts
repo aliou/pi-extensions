@@ -22,13 +22,9 @@ export function buildTelemetry(
 ): TpsTelemetry | null {
   let input = 0;
   let output = 0;
-  let cacheRead = 0;
-  let cacheWrite = 0;
   let totalTokens = 0;
   let costInput = 0;
   let costOutput = 0;
-  let costCacheRead = 0;
-  let costCacheWrite = 0;
   let costTotal = 0;
   let hasCost = false;
   let model: { provider: string; modelId: string } | null = null;
@@ -36,14 +32,10 @@ export function buildTelemetry(
   for (const message of timing.assistantMessages) {
     input += message.usage.input || 0;
     output += message.usage.output || 0;
-    cacheRead += message.usage.cacheRead || 0;
-    cacheWrite += message.usage.cacheWrite || 0;
     totalTokens += message.usage.totalTokens || 0;
     if (message.usage.cost) {
       costInput += message.usage.cost.input || 0;
       costOutput += message.usage.cost.output || 0;
-      costCacheRead += message.usage.cost.cacheRead || 0;
-      costCacheWrite += message.usage.cost.cacheWrite || 0;
       costTotal += message.usage.cost.total || 0;
       hasCost = true;
     }
@@ -123,7 +115,7 @@ export function buildTelemetry(
 
   return {
     model,
-    tokens: { input, output, cacheRead, cacheWrite, total: totalTokens },
+    tokens: { input, output, total: totalTokens },
     timing: {
       ttftMs: timing.firstTokenMs - timing.turnStartMs,
       totalMs,
@@ -139,8 +131,6 @@ export function buildTelemetry(
       ? {
           input: costInput,
           output: costOutput,
-          cacheRead: costCacheRead,
-          cacheWrite: costCacheWrite,
           total: costTotal,
         }
       : null,
