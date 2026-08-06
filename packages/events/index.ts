@@ -69,6 +69,22 @@ export type AdHeaderRegisterCompletionEvent = {
   description: string;
 };
 
+export const WORKSPACE_METADATA_CUSTOM_TYPE = "workspace-metadata";
+export const AD_WORKSPACE_METADATA_CAPTURED_EVENT =
+  "ad:workspace-metadata:captured";
+
+export interface WorkspaceRemote {
+  name: string;
+  host: string;
+  repo: string;
+}
+
+export interface WorkspaceMetadata {
+  hostname: string;
+  cwd: string;
+  remotes: WorkspaceRemote[];
+}
+
 // ─── TPS telemetry (hooks/tps) ─────────────────────────────────────────────
 
 export const AD_TPS_TELEMETRY_EVENT = "ad:tps:telemetry";

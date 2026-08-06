@@ -1,6 +1,7 @@
 import { realpath } from "node:fs/promises";
 import { hostname } from "node:os";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { AD_WORKSPACE_METADATA_CAPTURED_EVENT } from "@harness/events";
 import { parseGitRemotes, shouldCaptureWorkspaceMetadata } from "./helpers";
 import {
   WORKSPACE_METADATA_CUSTOM_TYPE,
@@ -41,10 +42,13 @@ export default function workspaceMetadata(pi: ExtensionAPI): void {
       remotes = [];
     }
 
-    pi.appendEntry<WorkspaceMetadata>(WORKSPACE_METADATA_CUSTOM_TYPE, {
+    const metadata: WorkspaceMetadata = {
       hostname: hostname(),
       cwd,
       remotes,
-    });
+    };
+
+    pi.appendEntry<WorkspaceMetadata>(WORKSPACE_METADATA_CUSTOM_TYPE, metadata);
+    pi.events.emit(AD_WORKSPACE_METADATA_CAPTURED_EVENT, metadata);
   });
 }

@@ -1,26 +1,51 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  SessionEntry,
+} from "@earendil-works/pi-coding-agent";
 import {
   AD_HEADER_COLLECT_EVENT,
   AD_HEADER_REGISTER_COMMAND_EVENT,
   AD_HEADER_REGISTER_COMPLETION_EVENT,
   AD_HEADER_REGISTER_LOGO_EVENT,
   AD_HEADER_REGISTER_SHORTCUT_EVENT,
+  AD_WORKSPACE_METADATA_CAPTURED_EVENT,
   type AdHeaderRegisterCommandEvent,
   type AdHeaderRegisterCompletionEvent,
   type AdHeaderRegisterShortcutEvent,
+  WORKSPACE_METADATA_CUSTOM_TYPE,
+  type WorkspaceMetadata,
 } from "@harness/events";
 import { createCustomHeader, type HeaderData } from "../components/header";
 
+export function findLatestWorkspaceMetadata(
+  entries: readonly SessionEntry[],
+): WorkspaceMetadata | undefined {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (
+      entry?.type === "custom" &&
+      entry.customType === WORKSPACE_METADATA_CUSTOM_TYPE
+    ) {
+      return entry.data as WorkspaceMetadata;
+    }
+  }
+  return undefined;
+}
+
 export function setupHeaderHook(pi: ExtensionAPI) {
   const header = createCustomHeader();
+  let offWorkspaceMetadata: (() => void) | undefined;
 
   pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
+
+    offWorkspaceMetadata?.();
 
     const commands: AdHeaderRegisterCommandEvent[] = [];
     const shortcuts: AdHeaderRegisterShortcutEvent[] = [];
     const completions: AdHeaderRegisterCompletionEvent[] = [];
     let logo = "pi";
+    let logoRegistered = false;
 
     const seenCmds = new Set<string>();
     const offCmd = pi.events.on(AD_HEADER_REGISTER_COMMAND_EVENT, (data) => {
@@ -53,7 +78,10 @@ export function setupHeaderHook(pi: ExtensionAPI) {
     );
 
     const offLogo = pi.events.on(AD_HEADER_REGISTER_LOGO_EVENT, (data) => {
-      if (typeof data === "string") logo = data;
+      if (typeof data === "string") {
+        logo = data;
+        logoRegistered = true;
+      }
     });
 
     // Ask every loaded extension to announce its header items.
@@ -66,11 +94,29 @@ export function setupHeaderHook(pi: ExtensionAPI) {
     offCompletion();
     offLogo();
 
-    const data: HeaderData = { logo, commands, shortcuts, completions };
+    const data: HeaderData = {
+      logo,
+      logoRegistered,
+      commands,
+      shortcuts,
+      completions,
+    };
+    data.workspaceMetadata = findLatestWorkspaceMetadata(
+      ctx.sessionManager.getEntries(),
+    );
     header.setup(ctx, data);
+
+    offWorkspaceMetadata = pi.events.on(
+      AD_WORKSPACE_METADATA_CAPTURED_EVENT,
+      (data) => {
+        header.setWorkspaceMetadata(data as WorkspaceMetadata);
+      },
+    );
   });
 
   pi.on("session_shutdown", async (_event, ctx) => {
+    offWorkspaceMetadata?.();
+    offWorkspaceMetadata = undefined;
     header.cleanup(ctx);
   });
 }

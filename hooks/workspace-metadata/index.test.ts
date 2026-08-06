@@ -5,6 +5,7 @@ import type {
   SessionEntry,
   SessionStartEvent,
 } from "@earendil-works/pi-coding-agent";
+import { AD_WORKSPACE_METADATA_CAPTURED_EVENT } from "@harness/events";
 import { vol } from "memfs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import workspaceMetadata from "./index";
@@ -37,6 +38,7 @@ function createFixture() {
       killed: false,
     }),
     appendEntry: vi.fn(),
+    events: { emit: vi.fn() },
   } as unknown as ExtensionAPI;
 
   workspaceMetadata(pi);
@@ -72,6 +74,16 @@ describe("workspace-metadata", () => {
     });
     expect(pi.appendEntry).toHaveBeenCalledWith(
       WORKSPACE_METADATA_CUSTOM_TYPE,
+      {
+        hostname: hostname(),
+        cwd: "/workspace",
+        remotes: [
+          { name: "origin", host: "github.com", repo: "aliou/pi-harness" },
+        ],
+      },
+    );
+    expect(pi.events.emit).toHaveBeenCalledWith(
+      AD_WORKSPACE_METADATA_CAPTURED_EVENT,
       {
         hostname: hostname(),
         cwd: "/workspace",
