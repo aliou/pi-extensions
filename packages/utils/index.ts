@@ -23,6 +23,7 @@ export {
   ok,
   toError,
 } from "./result";
+export { parseSkillDescription, type SkillFrontmatter } from "./skill";
 export { isBlank, isPresent, truncate } from "./string";
 export type { Maybe, Optional } from "./types";
 export { escapeXml } from "./xml";

@@ -22,6 +22,7 @@ import {
   detectImageMimeType,
   isBmpBuffer,
 } from "@harness/image-formats";
+import { parseSkillDescription, truncate } from "@harness/utils";
 
 /**
  * Override the built-in read tool to handle directories, BMP images, and
@@ -34,6 +35,8 @@ import {
  *   (headings, lists, code blocks, links) when expanded and non-error. All
  *   other cases delegate to the native read renderer, so non-markdown files
  *   keep byte-for-byte native behavior.
+ * - Collapsed `SKILL.md` reads preview the parsed frontmatter description
+ *   beneath the call line; the native renderer only shows the directory name.
  */
 export default function (pi: ExtensionAPI): void {
   const cwd = process.cwd();
@@ -89,6 +92,21 @@ export default function (pi: ExtensionAPI): void {
       const expanded = options.expanded;
       const isError = context.isError;
 
+      // Collapsed SKILL.md: preview the parsed frontmatter description instead
+      // of the native empty line, so the skill's purpose shows without expanding.
+      if (!expanded && !isError && isSkillPath(rawPath)) {
+        const description = parseSkillDescription(readTextOutput(result));
+        if (description) {
+          const previewText = `\n${theme.fg("dim", truncateForPreview(description))}`;
+          const existing = context.lastComponent;
+          if (existing instanceof Text) {
+            existing.setText(previewText);
+            return existing;
+          }
+          return new Text(previewText, 0, 0);
+        }
+      }
+
       if (isMarkdown && expanded && !isError) {
         // Render the file text as formatted markdown instead of highlighted source.
         const text = readTextOutput(result);
@@ -127,6 +145,23 @@ function isMarkdownPath(path: string | null | undefined): boolean {
   if (!path) return false;
   const ext = path.split(".").pop()?.toLowerCase();
   return ext === "md" || ext === "markdown";
+}
+
+export function isSkillPath(path: string | null | undefined): boolean {
+  if (!path) return false;
+  const segments = path.split(/[\\/]/);
+  return segments[segments.length - 1]?.toLowerCase() === "skill.md";
+}
+
+/** Collapse a description to a single compact preview line. */
+const SKILL_PREVIEW_MAX = 140;
+export function truncateForPreview(description: string): string {
+  const firstLine =
+    description
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.length > 0) ?? description.trim();
+  return truncate(firstLine, SKILL_PREVIEW_MAX);
 }
 
 function strPath(value: unknown): string | null {

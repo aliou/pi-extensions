@@ -8,11 +8,13 @@
     "./formatters": "./formatters.ts",
     "./nil": "./nil.ts",
     "./path": "./path.ts",
+    "./skill": "./skill.ts",
     "./string": "./string.ts",
     "./types": "./types.ts",
     "./xml": "./xml.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-agent-core": "*"
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-coding-agent": "*"
   }
 }

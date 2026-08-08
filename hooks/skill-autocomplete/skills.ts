@@ -1,11 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
+import { parseSkillDescription } from "@harness/utils";
 import { collapseHomePath } from "@harness/utils/path";
-
-interface SkillFrontmatter {
-  description?: string;
-  [key: string]: unknown;
-}
 
 /** A configured skill root, resolved to an absolute path with a display label. */
 export interface SkillsRoot {
@@ -55,12 +50,12 @@ export function listSkills(skillsRoots: SkillsRoot[]): SkillInfo[] {
       try {
         if (statSync(absolutePath).isDirectory() && existsSync(fullPath)) {
           seenNames.add(name);
-          const { frontmatter } = parseFrontmatter<SkillFrontmatter>(
+          const description = parseSkillDescription(
             readFileSync(fullPath, "utf-8"),
           );
           skills.push({
             name,
-            description: frontmatter.description,
+            description: description ?? undefined,
             fullPath,
             baseDir: absolutePath,
             directory: collapseHomePath(absolutePath),
