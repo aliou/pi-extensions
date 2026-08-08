@@ -46,6 +46,7 @@
     "@harness/session-store": "workspace:*",
     "@harness/session-tools": "workspace:*",
     "@harness/subagent-models": "workspace:*",
+    "@harness/ui": "workspace:*",
     "@harness/utils": "workspace:*"
   },
   "devDependencies": {
@@ -57,7 +58,6 @@
     "@earendil-works/pi-tui": "0.84.0",
     "@golevelup/ts-vitest": "^4.0.0",
     "@harness/test-utils": "workspace:*",
-    "@harness/ui": "workspace:*",
     "@types/node": "^22.0.0",
     "esbuild": "0.28.1",
     "memfs": "^4.64.0",
