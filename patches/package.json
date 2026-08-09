@@ -3,14 +3,14 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@earendil-works/pi-ai": "0.84.0",
-    "@earendil-works/pi-coding-agent": "0.84.0",
-    "@earendil-works/pi-tui": "0.84.0"
+    "@earendil-works/pi-ai": "0.84.1",
+    "@earendil-works/pi-coding-agent": "0.84.1",
+    "@earendil-works/pi-tui": "0.84.1"
   },
   "pnpm": {
     "patchedDependencies": {
-      "@earendil-works/pi-coding-agent@0.84.0": "pi-coding-agent--nix-highlighting/patch.diff",
-      "@earendil-works/pi-tui@0.84.0": "pi-tui--markdown-code-block/patch.diff"
+      "@earendil-works/pi-coding-agent@0.84.1": "combined/pi-coding-agent.diff",
+      "@earendil-works/pi-tui@0.84.1": "combined/pi-tui.diff"
     }
   }
 }

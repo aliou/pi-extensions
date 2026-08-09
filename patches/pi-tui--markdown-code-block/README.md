@@ -38,34 +38,34 @@ top/bottom padding bars (`▀` / `▄`), with no surrounding blank lines:
 ## Files
 
 - `patch.diff` — unified diff applied to the installed package's
-  `dist/components/markdown.js` by `pnpm.patchedDependencies` (declared in
-  `patches/package.json`).
+  `dist/components/markdown.js`.
 - `test.mjs` — imports the patched `Markdown` by package name
   (`@earendil-works/pi-tui/dist/components/markdown.js`) and asserts the new
   rendering. Fails on unpatched code, so it actually guards the patch.
 
 ## How it is applied & tested
 
-The patch is hardcoded in `patches/package.json` under
-`pnpm.patchedDependencies`:
+`patches/manifest.json` lists this directory under `@earendil-works/pi-tui`:
 
 ```json
-"pnpm": {
-  "patchedDependencies": {
-    "@earendil-works/pi-tui@0.84.0": "pi-tui--markdown-code-block/patch.diff"
-  }
-}
+"@earendil-works/pi-tui": [
+  "pi-tui--markdown-code-block"
+]
 ```
 
-`pnpm install` in `patches/` resolves `@earendil-works/pi-tui` and applies
-`patch.diff` to it automatically. The test then imports the patched package by
-name — no extraction, apply, or dep-linking step at test time. Just the test.
+`pnpm patches:sync` flattens that package's patches, in manifest order, into
+`patches/combined/pi-tui.diff` and points `pnpm.patchedDependencies` at it,
+because pnpm accepts only one patch file per package. `pnpm install` in
+`patches/` then applies the combined diff automatically, and the test imports the
+patched package by name — no extraction, apply, or dep-linking step at test time.
+Nix applies each patch directory in succession instead; both produce identical
+output.
 
 Run: `pnpm -C patches install && pnpm test:patches`.
 
 ## Testing against a new pi-tui release
 
-Authored against 0.80.2 and verified against 0.84.0. The `Patches` workflow
+Authored against 0.80.2 and verified against 0.84.1. The `Patches` workflow
 runs a nightly job that bumps `patches/package.json` to the latest published
 Pi release (via `scripts/bump-pi-version.mjs`), reinstalls, and re-runs this
 test. If the patch no longer applies to the new version, `pnpm install` fails

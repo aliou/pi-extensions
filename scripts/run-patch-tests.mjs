@@ -4,7 +4,11 @@
 // Runs each `patches/<name>/test.mjs` with node. Tests import the patched
 // package by name (e.g. `@earendil-works/pi-tui/...`), which resolves from
 // `patches/node_modules` — produced by `pnpm install` in patches/ applying the
-// patches declared in `patches/package.json` via `pnpm.patchedDependencies`.
+// combined diffs generated from `patches/manifest.json` (see
+// scripts/sync-patches.mjs) via `pnpm.patchedDependencies`.
+//
+// The manifest is checked first: a patch added to a directory but never synced
+// would otherwise be silently absent from the installed packages.
 //
 // So there is no apply/extract step here: pnpm install applies the patches,
 // and this script just runs the tests.
@@ -29,6 +33,10 @@ function listTests(targets) {
     .map((d) => path.join(d, "test.mjs"))
     .filter((t) => existsSync(t));
 }
+
+const sync = spawnSync("node", [path.join("scripts", "sync-patches.mjs"), "--check"], { stdio: "inherit" });
+if (sync.error) throw sync.error;
+if (sync.status !== 0) process.exit(sync.status ?? 1);
 
 const tests = listTests(process.argv.slice(2));
 if (tests.length === 0) {

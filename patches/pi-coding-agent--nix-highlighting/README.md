@@ -27,33 +27,36 @@ After: those paths map to a sensible highlight.js language identifier:
 
 ## Files
 
-- `patch.diff` — unified diff applied to the installed package's
-  `dist/modes/interactive/theme/theme.js` by `pnpm.patchedDependencies`.
+- `patch.diff` — unified diff against the installed package's
+  `dist/modes/interactive/theme/theme.js`. Listed in `patches/manifest.json` and
+  concatenated into the generated diff pnpm applies.
 - `test.mjs` — imports the patched `getLanguageFromPath` by package name and
   asserts each new mapping. Fails on unpatched code, so it guards the patch.
 
 ## How it is applied & tested
 
-The patch is hardcoded in `patches/package.json` under
-`pnpm.patchedDependencies`:
+`patches/manifest.json` lists this directory under
+`@earendil-works/pi-coding-agent`:
 
 ```json
-"pnpm": {
-  "patchedDependencies": {
-    "@earendil-works/pi-coding-agent@0.84.0": "pi-coding-agent--nix-highlighting/patch.diff"
-  }
-}
+"@earendil-works/pi-coding-agent": [
+  "pi-coding-agent--nix-highlighting"
+]
 ```
 
-`pnpm install` in `patches/` resolves `@earendil-works/pi-coding-agent` and
-applies `patch.diff` to it automatically. The test then imports the patched
-package by name — no extraction, apply, or dep-linking step at test time.
+`pnpm patches:sync` flattens that package's patches, in manifest order, into
+`patches/combined/pi-coding-agent.diff` and points `pnpm.patchedDependencies` at
+it, because pnpm accepts only one patch file per package. `pnpm install` in
+`patches/` then applies the combined diff automatically, and the test imports the
+patched package by name — no extraction, apply, or dep-linking step at test time.
+Nix applies each patch directory in succession instead; both produce identical
+output.
 
 Run: `pnpm -C patches install && pnpm test:patches`.
 
 ## Testing against a new pi-coding-agent release
 
-Authored against 0.82.0 and verified against 0.84.0. The `Patches` workflow runs a nightly job that bumps
+Authored against 0.82.0 and verified against 0.84.1. The `Patches` workflow runs a nightly job that bumps
 `patches/package.json` to the latest published Pi release (via
 `scripts/bump-pi-version.mjs`), reinstalls, and re-runs this test. If the patch
 no longer applies to the new version, `pnpm install` fails and the job goes red

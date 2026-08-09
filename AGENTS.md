@@ -19,7 +19,7 @@ When adding new content or changing existing behavior, update the closest releva
 - `evals/` - Live model evals that run separately from unit tests; shared eval infrastructure lives in `evals/lib/`.
 - `packages/` - Shared internal workspace packages. Each package lives in `packages/<name>/` and is imported through its `@harness/*` workspace package name.
 - `patches/` - Local patches on top of Pi and its dependencies. One directory per patch (see Patches below).
-- `scripts/` - Maintenance, native build, patch test, and extension Gist release scripts.
+- `scripts/` - Maintenance, native build, patch sync/test, and extension Gist release scripts.
 - `tests/` - Test setup and docs. Shared test utilities live in `packages/test-utils`.
 
 ## New feature placement
@@ -236,10 +236,18 @@ A patch present in `patches/` is a local patch that is **not** upstreamed. If it
 `patches/` is a standalone pnpm project (its own `pnpm-workspace.yaml` + `package.json`, isolated from the repo workspace) that holds local patches applied on top of Pi and its dependencies. One directory per patch, named `PACKAGE--SLUG` where PACKAGE is the package's unscoped name and SLUG describes the change (e.g. `pi-tui--markdown-code-block/`). The directory name carries no version — the tested version is whatever `patches/package.json` pins. Each patch directory contains:
 
 - `README.md` - What the patch changes and why.
-- `patch.diff` - The unified diff. Applied by pnpm (see below).
+- `patch.diff` - The unified diff, against the published package's `dist/**`. Applied via the manifest (see below).
 - `test.mjs` - Imports the patched package by name (e.g. `@earendil-works/pi-tui/dist/components/markdown.js`) and asserts the patched behavior. Fails on unpatched code so it actually guards the patch.
 
-Patches are hardcoded in `patches/package.json` under `pnpm.patchedDependencies` (the pnpm-native mechanism), keyed by `package@version` and pointing at the patch dir's `patch.diff`. `pnpm -C patches install` resolves the packages and applies the patches automatically; the tests then import the patched packages by name — no extraction/apply/link step at test time, just the tests. Run all patch tests with `pnpm test:patches` (after `pnpm -C patches install`).
+`patches/manifest.json` is the source of truth: it maps each patched package to its ordered list of patch directories. Versions live only in `patches/package.json`, so the manifest and the directory names stay version-free.
+
+pnpm's `patchedDependencies` accepts exactly one patch file per `package@version`, which cannot express several patches for one package. `pnpm patches:sync` (`scripts/sync-patches.mjs`) bridges that: it concatenates each package's patches, in manifest order, into a generated `patches/combined/<package>.diff` and rewrites `pnpm.patchedDependencies` to point at it. Run it after adding, removing, or reordering a patch, and commit the generated files. `pnpm test:patches` runs `--check` first and fails when the generated output is stale, so drift cannot go unnoticed.
+
+Because a package's patches are concatenated, **two patches for the same package must not touch the same file**. The sync script rejects that, and also rejects a patch directory that is missing from the manifest.
+
+`pnpm -C patches install` applies the combined diffs; the tests then import the patched packages by name — no extraction/apply/link step at test time, just the tests. Run all patch tests with `pnpm test:patches` (after `pnpm -C patches install`).
+
+The Nix package `pkgs/pi-cli-patched` in the homelab repo reads the same manifest and applies each patch directory in succession, so a failure names the individual patch rather than a combined blob. Both paths produce byte-identical output.
 
 The `Patches` workflow (`.github/workflows/patches.yml`) runs `pnpm test:patches` on push/PR. A nightly schedule (04:00 UTC) plus `workflow_dispatch` drive a `test-patches-latest` job that bumps `patches/package.json` to the latest published pi (or the `pi-version` dispatch input) via `scripts/bump-pi-version.mjs`, reinstalls, and re-runs the tests — this is how we notice a patch no longer applies or its test breaks on a new pi release (a failed `pnpm install` = patch needs rebasing). To pin a new version locally, run `node scripts/bump-pi-version.mjs` (or `PI_VERSION=<ver> node scripts/bump-pi-version.mjs`), review the `patches/package.json` diff, and commit.
 
