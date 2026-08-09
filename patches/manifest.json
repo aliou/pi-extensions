@@ -1,5 +1,11 @@
 {
   "//": "Ordered list of patch directories per patched package. This is the source of truth for which patches exist and in what order they apply. Versions are not listed here: the tested version is whatever patches/package.json pins. Run `pnpm patches:sync` after editing.",
-  "@earendil-works/pi-coding-agent": ["pi-coding-agent--nix-highlighting"],
-  "@earendil-works/pi-tui": ["pi-tui--markdown-code-block"]
+  "@earendil-works/pi-coding-agent": [
+    "pi-coding-agent--nix-highlighting",
+    "pi-coding-agent--scrollbar-markers"
+  ],
+  "@earendil-works/pi-tui": [
+    "pi-tui--markdown-code-block",
+    "pi-tui--scrollbar-markers"
+  ]
 }
