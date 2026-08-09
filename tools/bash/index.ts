@@ -1,11 +1,9 @@
-import { homedir as getHomedir } from "node:os";
 import { resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createBashToolDefinition } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
+import { collapseHomePath, expandHomePath } from "@harness/utils/path";
 import { Type } from "typebox";
-
-const homedir = getHomedir();
 
 /**
  * Override the built-in bash tool to add a cwd parameter.
@@ -55,9 +53,7 @@ export default function (pi: ExtensionAPI): void {
       const cwdArg = args.cwd as string | undefined;
 
       const commandDisplay = command ? command : theme.fg("toolOutput", "...");
-      const cwdDisplay = cwdArg?.startsWith(homedir)
-        ? `~${cwdArg.slice(homedir.length)}`
-        : cwdArg;
+      const cwdDisplay = cwdArg ? collapseHomePath(cwdArg) : cwdArg;
       const cwdSuffix = cwdDisplay
         ? theme.fg("muted", ` (cwd: ${cwdDisplay})`)
         : "";
@@ -73,7 +69,8 @@ export default function (pi: ExtensionAPI): void {
       return text;
     },
     async execute(toolCallId, params, signal, onUpdate, ctx) {
-      const effectiveCwd = params.cwd ? resolve(ctx.cwd, params.cwd) : ctx.cwd;
+      const cwdArg = params.cwd ? expandHomePath(params.cwd) : undefined;
+      const effectiveCwd = cwdArg ? resolve(ctx.cwd, cwdArg) : ctx.cwd;
       const bashForCwd = createBashToolDefinition(effectiveCwd);
       return bashForCwd.execute(
         toolCallId,
