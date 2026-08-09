@@ -1,8 +1,5 @@
 import { join } from "node:path";
-import {
-  createCommandContext,
-  createToolContext,
-} from "@harness/test-utils/pi-context";
+import { createCommandContext } from "@harness/test-utils/pi-context";
 import { createPiTestHarness } from "@harness/test-utils/pi-test-harness";
 import { vol } from "memfs";
 import { assert, beforeEach, describe, expect, it, vi } from "vitest";
@@ -171,8 +168,9 @@ describe("defaults edit tool", () => {
 
   it("keeps native edit behavior after sanitizing args", async () => {
     const pi = await createPiTestHarness(editExtension);
-    const tool = pi.tool("edit").registered;
-    assert(tool.prepareArguments, "prepareArguments should be defined");
+    const tool = pi.tool("edit");
+    const registered = tool.registered;
+    assert(registered.prepareArguments, "prepareArguments should be defined");
 
     const cwd = "/tmp/pi-edit-tool-cwd";
     vol.mkdirSync(cwd, { recursive: true });
@@ -181,7 +179,7 @@ describe("defaults edit tool", () => {
     const absolutePath = join(cwd, relativePath);
     vol.writeFileSync(absolutePath, "hello\nworld\n");
 
-    const prepared = tool.prepareArguments({
+    const prepared = registered.prepareArguments({
       path: absolutePath,
       edits: [
         {
@@ -192,13 +190,7 @@ describe("defaults edit tool", () => {
       ],
     });
 
-    const result = await tool.execute(
-      "tc_1",
-      prepared,
-      undefined,
-      undefined,
-      createToolContext({ cwd }),
-    );
+    const result = await tool.execute(prepared, { cwd });
 
     const content = vol.readFileSync(absolutePath, "utf8") as string;
 
@@ -248,7 +240,7 @@ describe("kimi edit tool", () => {
   async function kimiTool() {
     const pi = await createPiTestHarness(editExtension);
     await routeModel(pi, { provider: "neuralwatt", id: "kimi-k2.7-code" });
-    return pi.tool("edit").registered;
+    return pi.tool("edit");
   }
 
   it("replaces a unique occurrence", async () => {
@@ -259,15 +251,12 @@ describe("kimi edit tool", () => {
     vol.writeFileSync(absolutePath, "hello\nworld\n");
 
     const result = await tool.execute(
-      "tc_1",
       {
         path: "sample.txt",
         old_string: "world",
         new_string: "kimi",
       },
-      undefined,
-      undefined,
-      createToolContext({ cwd }),
+      { cwd },
     );
 
     expect(vol.readFileSync(absolutePath, "utf8")).toBe("hello\nkimi\n");
@@ -288,21 +277,15 @@ describe("kimi edit tool", () => {
 
     await expect(
       tool.execute(
-        "tc_1",
         { path: "sample.txt", old_string: "", new_string: "x" },
-        undefined,
-        undefined,
-        createToolContext({ cwd }),
+        { cwd },
       ),
     ).rejects.toThrow("old_string must not be empty");
 
     await expect(
       tool.execute(
-        "tc_2",
         { path: "sample.txt", old_string: "hello", new_string: "hello" },
-        undefined,
-        undefined,
-        createToolContext({ cwd }),
+        { cwd },
       ),
     ).rejects.toThrow("No changes to make");
   });
@@ -316,25 +299,19 @@ describe("kimi edit tool", () => {
 
     await expect(
       tool.execute(
-        "tc_1",
         { path: "sample.txt", old_string: "same", new_string: "new" },
-        undefined,
-        undefined,
-        createToolContext({ cwd }),
+        { cwd },
       ),
     ).rejects.toThrow("old_string is not unique");
 
     await tool.execute(
-      "tc_2",
       {
         path: "sample.txt",
         old_string: "same",
         new_string: "new",
         replace_all: true,
       },
-      undefined,
-      undefined,
-      createToolContext({ cwd }),
+      { cwd },
     );
 
     expect(vol.readFileSync(absolutePath, "utf8")).toBe("new\nother\nnew\n");
@@ -348,11 +325,8 @@ describe("kimi edit tool", () => {
 
     await expect(
       tool.execute(
-        "tc_1",
         { path: "../outside.txt", old_string: "secret", new_string: "x" },
-        undefined,
-        undefined,
-        createToolContext({ cwd }),
+        { cwd },
       ),
     ).rejects.toThrow("escapes the working directory");
   });
@@ -365,15 +339,12 @@ describe("kimi edit tool", () => {
     vol.writeFileSync(absolutePath, "alpha\r\nbeta\r\n");
 
     await tool.execute(
-      "tc_1",
       {
         path: "sample.txt",
         old_string: "alpha\nbeta",
         new_string: "one\ntwo",
       },
-      undefined,
-      undefined,
-      createToolContext({ cwd }),
+      { cwd },
     );
 
     expect(vol.readFileSync(absolutePath, "utf8")).toBe("one\r\ntwo\r\n");
@@ -388,18 +359,12 @@ describe("kimi edit tool", () => {
 
     await Promise.all([
       tool.execute(
-        "tc_1",
         { path: "sample.txt", old_string: "alpha", new_string: "ALPHA" },
-        undefined,
-        undefined,
-        createToolContext({ cwd }),
+        { cwd },
       ),
       tool.execute(
-        "tc_2",
         { path: "sample.txt", old_string: "beta", new_string: "BETA" },
-        undefined,
-        undefined,
-        createToolContext({ cwd }),
+        { cwd },
       ),
     ]);
 
@@ -417,11 +382,8 @@ describe("kimi edit tool", () => {
 
     await expect(
       tool.execute(
-        "tc_1",
         { path: "sample.txt", old_string: "before", new_string: "after" },
-        controller.signal,
-        undefined,
-        createToolContext({ cwd }),
+        { cwd, signal: controller.signal },
       ),
     ).rejects.toThrow();
 

@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { createToolContext } from "@harness/test-utils/pi-context";
+import { executeToolDefinition } from "@harness/test-utils/pi-context";
 import { vol } from "memfs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -447,15 +447,13 @@ describe("apply_patch tool", () => {
   it("parses and applies a patch end-to-end", async () => {
     vol.writeFileSync(join(cwd, "app.ts"), "export const X = 1;\n");
     const tool = createApplyPatchToolDefinition(cwd);
-    const result = await tool.execute(
-      "tc1",
+    const result = await executeToolDefinition(
+      tool,
       {
         input:
           "*** Begin Patch\n*** Update File: app.ts\n@@\n-export const X = 1;\n+export const X = 2;\n*** End Patch",
       },
-      undefined,
-      undefined,
-      createToolContext({ cwd }),
+      { cwd },
     );
     expect(vol.readFileSync(join(cwd, "app.ts"), "utf8")).toBe(
       "export const X = 2;\n",
@@ -475,14 +473,12 @@ describe("apply_patch tool", () => {
   }) => {
     vol.writeFileSync(join(cwd, path), content);
     const tool = createApplyPatchToolDefinition(cwd);
-    const result = await tool.execute(
-      "tc1",
+    const result = await executeToolDefinition(
+      tool,
       {
         input: `*** Begin Patch\n*** Delete File: ${path}\n*** End Patch`,
       },
-      undefined,
-      undefined,
-      createToolContext({ cwd }),
+      { cwd },
     );
 
     expect(result.details?.fileDiffs).toEqual([
@@ -493,14 +489,12 @@ describe("apply_patch tool", () => {
   it("keeps valid UTF-8 text diffable even when it starts with GIF", async () => {
     vol.writeFileSync(join(cwd, "notes.txt"), "GIF notes\n");
     const tool = createApplyPatchToolDefinition(cwd);
-    const result = await tool.execute(
-      "tc1",
+    const result = await executeToolDefinition(
+      tool,
       {
         input: "*** Begin Patch\n*** Delete File: notes.txt\n*** End Patch",
       },
-      undefined,
-      undefined,
-      createToolContext({ cwd }),
+      { cwd },
     );
 
     expect(result.details?.fileDiffs).toEqual([
@@ -511,13 +505,7 @@ describe("apply_patch tool", () => {
   it("surfaces parse errors as thrown errors", async () => {
     const tool = createApplyPatchToolDefinition(cwd);
     await expect(
-      tool.execute(
-        "tc1",
-        { input: "not a patch" },
-        undefined,
-        undefined,
-        createToolContext({ cwd }),
-      ),
+      executeToolDefinition(tool, { input: "not a patch" }, { cwd }),
     ).rejects.toThrow(ApplyPatchParseError);
   });
 
@@ -525,8 +513,8 @@ describe("apply_patch tool", () => {
     vol.writeFileSync(join(cwd, "a.ts"), "export const A = 1;\n");
     const tool = createApplyPatchToolDefinition(cwd);
     const updates: unknown[] = [];
-    await tool.execute(
-      "tc1",
+    await executeToolDefinition(
+      tool,
       {
         input:
           "*** Begin Patch\n" +
@@ -534,9 +522,7 @@ describe("apply_patch tool", () => {
           "*** Update File: a.ts\n@@\n-export const A = 1;\n+export const A = 3;\n" +
           "*** End Patch",
       },
-      undefined,
-      (partial) => updates.push(partial),
-      createToolContext({ cwd }),
+      { cwd, onUpdate: (partial) => updates.push(partial) },
     );
 
     // One partial per committed hunk. Each carries the renderable details

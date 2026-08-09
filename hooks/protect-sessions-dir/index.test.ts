@@ -2,10 +2,12 @@ import { join, resolve } from "node:path";
 import type {
   ExtensionAPI,
   ExtensionContext,
+  ExtensionUIContext,
   ToolCallEvent,
 } from "@earendil-works/pi-coding-agent";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { AD_NOTIFY_ATTENTION_EVENT } from "@harness/events";
+import { createCommandContext } from "@harness/test-utils/pi-context";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import protectSessionsDirHook, { _resetForTesting } from "./index";
 
@@ -54,22 +56,13 @@ function createMockPi(): {
 function createMockCtx(
   overrides: { hasUI?: boolean; customResult?: string } = {},
 ) {
-  return {
+  const custom = vi.fn(<T>(_factory: unknown, _options: unknown) =>
+    Promise.resolve((overrides.customResult ?? "allow-once") as T),
+  ) as unknown as ExtensionUIContext["custom"];
+  return createCommandContext({
     hasUI: overrides.hasUI ?? true,
-    ui: {
-      custom: vi.fn(async () => overrides.customResult ?? "allow-once"),
-      select: vi.fn(),
-      confirm: vi.fn(),
-      input: vi.fn(),
-      notify: vi.fn(),
-      onTerminalInput: vi.fn(),
-      setEditorText: vi.fn(),
-      getEditorText: vi.fn(),
-      setToolsExpanded: vi.fn(),
-    },
-    cwd: process.cwd(),
-    signal: undefined,
-  } as unknown as ExtensionContext;
+    ui: { custom },
+  });
 }
 
 /** Create a tool_call event for file tools. */

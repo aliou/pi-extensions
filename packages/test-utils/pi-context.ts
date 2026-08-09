@@ -8,6 +8,8 @@
  */
 
 import type {
+  AgentToolResult,
+  AgentToolUpdateCallback,
   ExtensionAPI,
   ExtensionCommandContext,
   ExtensionUIContext,
@@ -66,6 +68,13 @@ export interface CommandContextOverrides {
   hasUI?: boolean;
   mode?: ExtensionCommandContext["mode"];
   ui?: UIOverrides;
+  /**
+   * Session entries returned by the stub sessionManager's `getEntries`.
+   * Ignored when `sessionManager` is provided.
+   */
+  entries?: unknown[];
+  branch?: unknown[];
+  sessionName?: string;
   sessionManager?: ReadonlySessionManager;
   modelRegistry?: ExtensionCommandContext["modelRegistry"];
   model?: ExtensionCommandContext["model"];
@@ -74,7 +83,7 @@ export interface CommandContextOverrides {
   abort?: () => void;
   hasPendingMessages?: () => boolean;
   shutdown?: () => void;
-  getContextUsage?: () => undefined;
+  getContextUsage?: ExtensionCommandContext["getContextUsage"];
   compact?: () => void;
   getSystemPrompt?: () => string;
   getSystemPromptOptions?: () => ExtensionCommandContext["getSystemPromptOptions"] extends () => infer R
@@ -104,7 +113,13 @@ export function createCommandContext(
     mode: overrides.mode ?? "tui",
     ui,
     signal: undefined,
-    sessionManager: overrides.sessionManager ?? stubSessionManager(),
+    sessionManager:
+      overrides.sessionManager ??
+      stubSessionManager({
+        entries: overrides.entries,
+        branch: overrides.branch,
+        sessionName: overrides.sessionName,
+      }),
     modelRegistry:
       overrides.modelRegistry ??
       ({} as ExtensionCommandContext["modelRegistry"]),
@@ -147,6 +162,13 @@ export function createCommandContext(
 export interface ToolContextOverrides {
   cwd?: string;
   sessionManager?: ReadonlySessionManager;
+  /**
+   * Session entries returned by the stub sessionManager's `getEntries`.
+   * Ignored when `sessionManager` is provided.
+   */
+  entries?: unknown[];
+  branch?: unknown[];
+  sessionName?: string;
   model?: ToolContext["model"];
   thinkingLevel?: ToolContext["thinkingLevel"];
 }
@@ -166,10 +188,52 @@ export function createToolContext(
   return {
     cwd: overrides.cwd ?? process.cwd(),
     signal: undefined,
-    sessionManager: overrides.sessionManager ?? stubSessionManager(),
+    sessionManager:
+      overrides.sessionManager ??
+      stubSessionManager({
+        entries: overrides.entries,
+        branch: overrides.branch,
+        sessionName: overrides.sessionName,
+      }),
     model: overrides.model ?? undefined,
     thinkingLevel: overrides.thinkingLevel ?? undefined,
   } as ToolContext;
+}
+
+type ExecutableToolDefinition<TDetails> = {
+  execute(
+    toolCallId: string,
+    params: never,
+    signal: AbortSignal | undefined,
+    onUpdate: AgentToolUpdateCallback<TDetails> | undefined,
+    ctx: ToolContext,
+  ): Promise<AgentToolResult<TDetails>>;
+};
+
+export interface ExecuteToolDefinitionOptions<TDetails = unknown>
+  extends ToolContextOverrides {
+  toolCallId?: string;
+  signal?: AbortSignal;
+  onUpdate?: AgentToolUpdateCallback<TDetails>;
+}
+
+export function executeToolDefinition<TDetails = unknown>(
+  definition: ExecutableToolDefinition<TDetails>,
+  params: unknown,
+  {
+    toolCallId = "tc_1",
+    signal,
+    onUpdate,
+    ...contextOverrides
+  }: ExecuteToolDefinitionOptions<TDetails> = {},
+): Promise<AgentToolResult<TDetails>> {
+  return definition.execute(
+    toolCallId,
+    params as never,
+    signal,
+    onUpdate,
+    createToolContext(contextOverrides),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -181,7 +245,15 @@ export function createToolContext(
  * with session state at all. Every method is a vi.fn() returning a safe
  * default.
  */
-function stubSessionManager(): ReadonlySessionManager {
+function stubSessionManager({
+  entries = [],
+  branch = [],
+  sessionName,
+}: {
+  entries?: unknown[];
+  branch?: unknown[];
+  sessionName?: string;
+} = {}): ReadonlySessionManager {
   return {
     getCwd: vi.fn(() => process.cwd()),
     getSessionDir: vi.fn(() => ""),
@@ -191,11 +263,11 @@ function stubSessionManager(): ReadonlySessionManager {
     getLeafEntry: vi.fn(() => undefined),
     getEntry: vi.fn(() => undefined),
     getLabel: vi.fn(() => undefined),
-    getBranch: vi.fn(() => []),
+    getBranch: vi.fn(() => branch),
     buildContextEntries: vi.fn(() => []),
     getHeader: vi.fn(() => undefined),
-    getEntries: vi.fn(() => []),
+    getEntries: vi.fn(() => entries),
     getTree: vi.fn(() => []),
-    getSessionName: vi.fn(() => undefined),
+    getSessionName: vi.fn(() => sessionName),
   } as unknown as ReadonlySessionManager;
 }

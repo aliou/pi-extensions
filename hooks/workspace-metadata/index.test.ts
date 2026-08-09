@@ -6,6 +6,7 @@ import type {
   SessionStartEvent,
 } from "@earendil-works/pi-coding-agent";
 import { AD_WORKSPACE_METADATA_CAPTURED_EVENT } from "@harness/events";
+import { createCommandContext } from "@harness/test-utils/pi-context";
 import { vol } from "memfs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import workspaceMetadata from "./index";
@@ -50,12 +51,7 @@ function createContext(
   cwd: string,
   entries: readonly SessionEntry[] = [],
 ): ExtensionContext {
-  return {
-    cwd,
-    sessionManager: {
-      getEntries: () => entries,
-    },
-  } as unknown as ExtensionContext;
+  return createCommandContext({ cwd, entries: [...entries] });
 }
 
 describe("workspace-metadata", () => {

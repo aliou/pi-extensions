@@ -1,10 +1,11 @@
 import type {
   ExtensionAPI,
-  ExtensionContext,
+  ExtensionUIContext,
   ReadonlyFooterDataProvider,
   Theme,
 } from "@earendil-works/pi-coding-agent";
 import { visibleWidth } from "@earendil-works/pi-tui";
+import { createCommandContext } from "@harness/test-utils/pi-context";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Avoid real fs watchers and git subprocesses in the render test.
@@ -94,38 +95,33 @@ function createFixture(
   } as unknown as ExtensionAPI;
 
   let captured: Captured | undefined;
-  const ctx = {
+  const ctx = createCommandContext({
     model: {
       id: "glm-5.2-short",
       provider: "zai",
       contextWindow: 200_000,
       reasoning: false,
-    },
-    sessionManager: {
-      getSessionName: () => undefined,
-      getEntries: () => [branchEntry, totalEntry],
-      getBranch: () => branchEntries,
-    },
+    } as never,
+    entries: [branchEntry, totalEntry],
+    branch: branchEntries,
     getContextUsage: () => ({
       contextWindow: 200_000,
       percent: 5,
       tokens: 9999,
     }),
     ui: {
-      setFooter: (
-        factory?: (
-          tui: unknown,
-          thm: Theme,
-          data: ReadonlyFooterDataProvider,
-        ) => Captured,
-      ) => {
+      setFooter: ((factory) => {
         // cleanup() calls setFooter(undefined) to restore the default footer.
         if (typeof factory === "function") {
-          captured = factory({}, theme, createFooterData(options.statuses));
+          captured = factory(
+            {} as never,
+            theme,
+            createFooterData(options.statuses),
+          ) as Captured;
         }
-      },
+      }) as ExtensionUIContext["setFooter"],
     },
-  } as unknown as ExtensionContext;
+  });
 
   const footer = createCustomFooter(pi);
   footer.setup(ctx);

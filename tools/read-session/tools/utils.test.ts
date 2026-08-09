@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { createToolContext } from "@harness/test-utils/pi-context";
 import { vol } from "memfs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getTargetSessionPath } from "./utils";
@@ -28,17 +29,15 @@ const FILE_B = `2026-05-04T19-45-20-754Z_${UUID_B}.jsonl`;
 const FILE_C = `2026-05-04T20-10-00-000Z_${UUID_C}.jsonl`;
 
 function makeCtx(targetSessionId: string): ExtensionContext {
-  return {
-    sessionManager: {
-      getEntries: () => [
-        {
-          type: "custom",
-          customType: "read-session-state",
-          data: { targetSessionId, goal: "test" },
-        },
-      ],
-    },
-  } as unknown as ExtensionContext;
+  return createToolContext({
+    entries: [
+      {
+        type: "custom",
+        customType: "read-session-state",
+        data: { targetSessionId, goal: "test" },
+      },
+    ],
+  });
 }
 
 beforeEach(() => {

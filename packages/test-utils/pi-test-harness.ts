@@ -23,6 +23,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
   AgentToolResult,
+  AgentToolUpdateCallback,
   Extension,
   ExtensionCommandContext,
   ExtensionFactory,
@@ -96,7 +97,15 @@ export interface CommandHandle {
 export interface ToolHandle {
   /** The ToolDefinition that was registered (has execute, renderCall, etc). */
   registered: ToolDefinition;
-  execute(params: Record<string, unknown>): Promise<AgentToolResult<unknown>>;
+  execute(
+    params: unknown,
+    options?: ToolExecuteOptions,
+  ): Promise<AgentToolResult<unknown>>;
+}
+
+export interface ToolExecuteOptions extends ToolContextOverrides {
+  signal?: AbortSignal;
+  onUpdate?: AgentToolUpdateCallback<unknown>;
 }
 
 export interface PiTestHarnessOptions {
@@ -243,10 +252,23 @@ export async function createPiTestHarness(
     const definition = entry.definition;
     return {
       registered: definition,
-      execute(params: Record<string, unknown>) {
+      execute(
+        params: unknown,
+        { signal, onUpdate, ...overrides }: ToolExecuteOptions = {},
+      ) {
         const id = `tc_${++toolCallCounter}`;
-        const ctx = createToolContext({ cwd, ...options.toolContext });
-        return definition.execute(id, params, undefined, undefined, ctx);
+        const ctx = createToolContext({
+          cwd,
+          ...options.toolContext,
+          ...overrides,
+        });
+        return definition.execute(
+          id,
+          params as Record<string, unknown>,
+          signal,
+          onUpdate,
+          ctx,
+        );
       },
     };
   }

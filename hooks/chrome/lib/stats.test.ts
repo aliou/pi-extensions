@@ -1,4 +1,5 @@
-import type { ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
+import type { Theme } from "@earendil-works/pi-coding-agent";
+import { createCommandContext } from "@harness/test-utils/pi-context";
 import { assert, describe, expect, it } from "vitest";
 import {
   buildMinimalStatsParts,
@@ -24,13 +25,14 @@ const contextUsage = {
 
 describe("getContextUsage", () => {
   it("displays the real window but color-calibrates large windows", () => {
-    const ctx = {
-      model: { contextWindow: 1_000_000 },
+    const ctx = createCommandContext({
+      model: { contextWindow: 1_000_000 } as never,
       getContextUsage: () => ({
         contextWindow: 1_000_000,
+        percent: 10,
         tokens: 100_000,
       }),
-    } as unknown as ExtensionContext;
+    });
 
     const result = getContextUsage(ctx);
 
