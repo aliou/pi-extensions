@@ -13,13 +13,18 @@ export const DEFAULT_ENABLED_MODELS: Array<readonly [string, string]> = [
   ["anthropic", "claude-opus-5"],
 ];
 
+/**
+ * Collect default enabled models that are both available (auth configured in
+ * the model registry) and missing from settings.json.
+ */
 export function collectMissingEnabledModels(
   config: SettingsJsonConfig,
+  available: Set<string>,
 ): string[] {
   const current = new Set(config.enabledModels ?? []);
-  return DEFAULT_ENABLED_MODELS.map(formatModel).filter(
-    (model) => !current.has(model),
-  );
+  return DEFAULT_ENABLED_MODELS.map(formatModel)
+    .filter((model) => available.has(model))
+    .filter((model) => !current.has(model));
 }
 
 export function applyDefaultSettings(config: SettingsJsonConfig): void {

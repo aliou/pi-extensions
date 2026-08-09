@@ -57,7 +57,12 @@ export default function defaultSettings(pi: ExtensionAPI): void {
 
     const settingsJsonPath = join(getAgentDir(), "settings.json");
     const settings = readSettingsJson(settingsJsonPath);
-    const missingModels = collectMissingEnabledModels(settings);
+    const available = new Set(
+      ctx.modelRegistry
+        .getAvailable()
+        .map((model) => `${model.provider}/${model.id}`),
+    );
+    const missingModels = collectMissingEnabledModels(settings, available);
 
     if (missingModels.length === 0) return;
 
