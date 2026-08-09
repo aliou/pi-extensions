@@ -146,6 +146,9 @@ export function createCommandContext(
 
 export interface ToolContextOverrides {
   cwd?: string;
+  sessionManager?: ReadonlySessionManager;
+  model?: ToolContext["model"];
+  thinkingLevel?: ToolContext["thinkingLevel"];
 }
 
 type ToolContext = NonNullable<
@@ -153,7 +156,9 @@ type ToolContext = NonNullable<
 >;
 
 /**
- * Build a minimal tool execution context. Tools typically only need `cwd`.
+ * Build a minimal tool execution context. Tools typically only need `cwd`;
+ * tools that inspect session state (e.g. bash's PI_* env vars) also get a
+ * stubbed sessionManager.
  */
 export function createToolContext(
   overrides: ToolContextOverrides = {},
@@ -161,6 +166,9 @@ export function createToolContext(
   return {
     cwd: overrides.cwd ?? process.cwd(),
     signal: undefined,
+    sessionManager: overrides.sessionManager ?? stubSessionManager(),
+    model: overrides.model ?? undefined,
+    thinkingLevel: overrides.thinkingLevel ?? undefined,
   } as ToolContext;
 }
 

@@ -22,6 +22,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
+  AgentToolResult,
   Extension,
   ExtensionCommandContext,
   ExtensionFactory,
@@ -41,6 +42,7 @@ import {
   type CommandContextOverrides,
   createCommandContext,
   createToolContext,
+  type ToolContextOverrides,
 } from "./pi-context";
 
 export interface PiTestHarness {
@@ -94,7 +96,7 @@ export interface CommandHandle {
 export interface ToolHandle {
   /** The ToolDefinition that was registered (has execute, renderCall, etc). */
   registered: ToolDefinition;
-  execute(params: Record<string, unknown>): Promise<unknown>;
+  execute(params: Record<string, unknown>): Promise<AgentToolResult<unknown>>;
 }
 
 export interface PiTestHarnessOptions {
@@ -106,6 +108,8 @@ export interface PiTestHarnessOptions {
    * overrides deep-merged so harness-level and per-call spies coexist.
    */
   context?: CommandContextOverrides;
+  /** Overrides for the tool execution context. */
+  toolContext?: ToolContextOverrides;
 }
 
 /**
@@ -241,7 +245,7 @@ export async function createPiTestHarness(
       registered: definition,
       execute(params: Record<string, unknown>) {
         const id = `tc_${++toolCallCounter}`;
-        const ctx = createToolContext({ cwd });
+        const ctx = createToolContext({ cwd, ...options.toolContext });
         return definition.execute(id, params, undefined, undefined, ctx);
       },
     };
