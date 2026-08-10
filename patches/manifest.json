@@ -6,6 +6,7 @@
   ],
   "@earendil-works/pi-tui": [
     "pi-tui--markdown-code-block",
-    "pi-tui--scrollbar-markers"
+    "pi-tui--scrollbar-markers",
+    "pi-tui--disable-fullscreen-copy-on-select"
   ]
 }

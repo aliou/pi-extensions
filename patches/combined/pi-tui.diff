@@ -283,3 +283,14 @@
          this.scrollbarHideDelayMs = Math.max(0, Math.floor(options.scrollbarHideDelayMs ?? 1000));
      }
      get scrollTop() {
+# pi-tui--disable-fullscreen-copy-on-select
+--- a/dist/tui-alt-screen.js
++++ b/dist/tui-alt-screen.js
+@@ -664,7 +664,6 @@
+                 this.requestRender();
+                 return;
+             }
+-            this.copySelectionToClipboard();
+             this.requestRender();
+             return;
+         }
