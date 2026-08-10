@@ -22,6 +22,7 @@ import { createStartupBudget, withStartupTimeout } from "./startup-timeout";
 import type {
   ResolvedSubagentConfig,
   SubagentConfig,
+  SubagentCwdResolver,
   SubagentToolSpec,
   SubagentToolsResolver,
 } from "./types";
@@ -71,6 +72,11 @@ export function createSubagent<Params extends TSchema>(
     params: Static<Params>,
     options: SubagentRunOptions<Params>,
   ) => {
+    const invocationCwd = await resolveCwd(
+      config.resolveCwd,
+      params,
+      options.ctx,
+    );
     const invocationSkills = config.resolveSkills?.(params, options.ctx) ?? [];
     const agentsFiles = config.resolveAgentsFiles
       ? await config.resolveAgentsFiles(params, options.ctx)
@@ -104,6 +110,7 @@ export function createSubagent<Params extends TSchema>(
           invocationSkills,
           invocationTools,
           agentsFiles,
+          invocationCwd,
         );
         own(session);
         return new SubagentRuntime(resolved, session, signal, started).execute(
@@ -143,6 +150,11 @@ export function createSubagent<Params extends TSchema>(
     params: Static<Params>,
     options: SubagentResumeOptions<Params>,
   ) => {
+    const invocationCwd = await resolveCwd(
+      config.resolveCwd,
+      params,
+      options.ctx,
+    );
     const invocationTools = await resolveTools(
       config.tools,
       params,
@@ -153,6 +165,7 @@ export function createSubagent<Params extends TSchema>(
         sessionId,
         options.ctx,
         invocationTools,
+        invocationCwd,
       );
       const runtime = new SubagentRuntime<Params>(
         resolved,
@@ -276,6 +289,14 @@ export async function resolveTools<Params extends TSchema>(
   ctx: ExtensionContext,
 ): Promise<SubagentToolSpec[]> {
   return typeof tools === "function" ? await tools(params, ctx) : tools;
+}
+
+export async function resolveCwd<Params extends TSchema>(
+  resolver: SubagentCwdResolver<Params> | undefined,
+  params: Static<Params>,
+  ctx: ExtensionContext,
+): Promise<string | undefined> {
+  return resolver ? await resolver(params, ctx) : undefined;
 }
 
 /**

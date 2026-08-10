@@ -36,6 +36,8 @@ export default async function scout(pi: ExtensionAPI): Promise<void> {
     renderHeader: renderScoutHeader,
     renderDetails: renderScoutDetails,
     buildPrompt,
+    resolveCwd: (params, ctx) =>
+      params.cwd?.trim() ? path.resolve(ctx.cwd, params.cwd.trim()) : undefined,
     resolveAgentsFiles: (params, ctx) =>
       loadAgentsFilesFromCwd(path.resolve(ctx.cwd, params.cwd?.trim() || ".")),
     tools,

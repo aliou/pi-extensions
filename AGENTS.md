@@ -117,6 +117,8 @@ Model-specific research behind these caller-facing rules lives in `docs/promptin
 
 `buildPrompt` receives the resolved subagent model. Keep model selection in `modelPreferences`, model identity helpers in `@harness/models`, and model-specific prompt compilation inside the tool's `prompt.ts`.
 
+Subagents default to the parent session cwd. If a subagent accepts an invocation-level `cwd` parameter, set `resolveCwd` in its `createSubagent` config so the subagent session and exposed tools use the same effective root.
+
 ## Commands
 
 | Directory | Commands | Notes |

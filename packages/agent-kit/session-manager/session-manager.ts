@@ -88,8 +88,10 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     invocationSkills: Skill[],
     invocationTools: SubagentToolSpec[],
     agentsFiles: SubagentAgentsFile[],
+    cwd?: string,
   ): Promise<AgentSession> {
-    const sessionManager = this.createSessionManager(ctx.cwd);
+    const effectiveCwd = cwd ?? ctx.cwd;
+    const sessionManager = this.createSessionManager(effectiveCwd);
     return this.createAgentSession(
       ctx,
       selection,
@@ -97,6 +99,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       invocationSkills,
       invocationTools,
       agentsFiles,
+      effectiveCwd,
     );
   }
 
@@ -131,6 +134,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     sessionId: string,
     ctx: ExtensionContext,
     invocationTools: SubagentToolSpec[],
+    cwd?: string,
   ) {
     const record = this.records.findBySessionId(
       ctx,
@@ -139,6 +143,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     );
     const selection = await this.resolveModelOrThrow(ctx, record);
     const sessionManager = this.openSessionManager(sessionId, record);
+    const effectiveCwd = cwd ?? ctx.cwd;
 
     return this.createAgentSession(
       ctx,
@@ -147,6 +152,7 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
       record?.skills ?? [],
       invocationTools,
       [],
+      effectiveCwd,
     );
   }
 
@@ -227,8 +233,8 @@ export class SubagentSessionManager<Params extends TSchema = TSchema> {
     invocationSkills: Skill[] = [],
     invocationTools: SubagentToolSpec[] = [],
     agentsFiles: SubagentAgentsFile[] = [],
+    cwd: string = ctx.cwd,
   ) {
-    const cwd = ctx.cwd;
     const tools = invocationTools.map((tool) => tool.name);
     const customTools = invocationTools
       .filter((tool) => tool.type === "custom")

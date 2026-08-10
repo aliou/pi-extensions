@@ -79,6 +79,11 @@ export type SubagentAgentsFilesResolver<Params extends TSchema = TSchema> = (
   ctx: ExtensionContext,
 ) => SubagentAgentsFile[] | Promise<SubagentAgentsFile[]>;
 
+export type SubagentCwdResolver<Params extends TSchema = TSchema> = (
+  params: Static<Params>,
+  ctx: ExtensionContext,
+) => string | undefined | Promise<string | undefined>;
+
 export interface SubagentConfig<Params extends TSchema = TSchema> {
   name: string;
   label: string;
@@ -140,6 +145,11 @@ export interface SubagentConfig<Params extends TSchema = TSchema> {
     params: Static<Params>,
     ctx: ExtensionContext,
   ): SubagentAgentsFile[] | Promise<SubagentAgentsFile[]>;
+  /** Resolve the working directory used for the subagent session and tools. */
+  resolveCwd?(
+    params: Static<Params>,
+    ctx: ExtensionContext,
+  ): string | undefined | Promise<string | undefined>;
   resolveSkills?(params: Static<Params>, ctx: ExtensionContext): Skill[];
   beforeExecute?(
     params: Static<Params>,
