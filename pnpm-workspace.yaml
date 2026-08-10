@@ -2,3 +2,19 @@ packages:
   - "."
   - "packages/*"
   - "!.pi/npm/*"
+
+overrides:
+  "@earendil-works/pi-coding-agent": "0.84.0"
+  "@earendil-works/pi-agent-core": "$@earendil-works/pi-coding-agent"
+  "@earendil-works/pi-ai": "$@earendil-works/pi-coding-agent"
+  "@earendil-works/pi-tui": "$@earendil-works/pi-coding-agent"
+  typebox: "1.3.7"
+
+onlyBuiltDependencies:
+  - "@aliou/sh"
+
+ignoredBuiltDependencies:
+  - "@google/genai"
+  - esbuild
+  - koffi
+  - protobufjs

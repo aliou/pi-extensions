@@ -67,23 +67,5 @@
     "vitest": "^4.1.10",
     "vitest-evals": "^0.15.0"
   },
-  "pnpm": {
-    "overrides": {
-      "@earendil-works/pi-coding-agent": "0.84.0",
-      "@earendil-works/pi-agent-core": "$@earendil-works/pi-coding-agent",
-      "@earendil-works/pi-ai": "$@earendil-works/pi-coding-agent",
-      "@earendil-works/pi-tui": "$@earendil-works/pi-coding-agent",
-      "typebox": "1.3.7"
-    },
-    "onlyBuiltDependencies": [
-      "@aliou/sh"
-    ],
-    "ignoredBuiltDependencies": [
-      "@google/genai",
-      "esbuild",
-      "koffi",
-      "protobufjs"
-    ]
-  },
   "packageManager": "pnpm@10.26.1"
 }
