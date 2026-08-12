@@ -22,6 +22,7 @@ import {
   detectImageMimeType,
   isBmpBuffer,
 } from "@harness/image-formats";
+import { SkillDescriptionPreviewComponent } from "@harness/ui";
 import { parseSkillDescription } from "@harness/utils";
 
 /**
@@ -79,13 +80,12 @@ export default function (pi: ExtensionAPI): void {
       if (!expanded && !isError && isSkillPath(rawPath)) {
         const description = parseSkillDescription(readTextOutput(result));
         if (description) {
-          const previewText = `\n${theme.fg("text", description)}`;
           const existing = context.lastComponent;
-          if (existing instanceof Text) {
-            existing.setText(previewText);
+          if (existing instanceof SkillDescriptionPreviewComponent) {
+            existing.setDescription(description);
             return existing;
           }
-          return new Text(previewText, 0, 0);
+          return new SkillDescriptionPreviewComponent(theme, description, true);
         }
       }
 

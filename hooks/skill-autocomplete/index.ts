@@ -73,7 +73,11 @@ export default async function (pi: ExtensionAPI) {
             customType: SKILL_INVOCATION_MESSAGE_TYPE,
             content: skill.xml,
             display: true,
-            details: { name: skill.name, path: skill.path },
+            details: {
+              name: skill.name,
+              path: skill.path,
+              description: skill.description,
+            },
           },
           deliveryOptions,
         );

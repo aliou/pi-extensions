@@ -15,6 +15,7 @@ export interface SkillExpansionResult {
 export interface ExpandedSkillInvocation {
   name: string;
   path: string;
+  description?: string;
   xml: string;
 }
 
@@ -52,6 +53,7 @@ export function expandSkillReferences(
     skills: [...selected.values()].map((skill) => ({
       name: skill.name,
       path: skill.fullPath,
+      description: skill.description,
       xml: formatSkillBlock(skill),
     })),
   };
