@@ -22,7 +22,7 @@ import {
   detectImageMimeType,
   isBmpBuffer,
 } from "@harness/image-formats";
-import { parseSkillDescription, truncate } from "@harness/utils";
+import { parseSkillDescription } from "@harness/utils";
 
 /**
  * Override the built-in read tool to handle directories, BMP images, and
@@ -79,7 +79,7 @@ export default function (pi: ExtensionAPI): void {
       if (!expanded && !isError && isSkillPath(rawPath)) {
         const description = parseSkillDescription(readTextOutput(result));
         if (description) {
-          const previewText = `\n${theme.fg("dim", truncateForPreview(description))}`;
+          const previewText = `\n${theme.fg("text", description)}`;
           const existing = context.lastComponent;
           if (existing instanceof Text) {
             existing.setText(previewText);
@@ -156,17 +156,6 @@ export function isSkillPath(path: string | null | undefined): boolean {
   if (!path) return false;
   const segments = path.split(/[\\/]/);
   return segments[segments.length - 1]?.toLowerCase() === "skill.md";
-}
-
-/** Collapse a description to a single compact preview line. */
-const SKILL_PREVIEW_MAX = 140;
-export function truncateForPreview(description: string): string {
-  const firstLine =
-    description
-      .split("\n")
-      .map((line) => line.trim())
-      .find((line) => line.length > 0) ?? description.trim();
-  return truncate(firstLine, SKILL_PREVIEW_MAX);
 }
 
 function strPath(value: unknown): string | null {
