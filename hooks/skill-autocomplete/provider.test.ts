@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AutocompleteProvider } from "@earendil-works/pi-tui";
 import { expect, test } from "vitest";
-import { createSkillAutocompleteEditor } from "./editor";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider, extractSkillToken } from "./provider";
 import { listSkills, type SkillsRoot } from "./skills";
@@ -16,6 +15,18 @@ const current = {
 test("recognizes ?? as the force-show skill trigger", () => {
   expect(extractSkillToken("??")).toEqual({ trigger: "??", token: "" });
   expect(extractSkillToken("?vit")).toEqual({ trigger: "?", token: "vit" });
+});
+
+test("shows a ?? prefix item for bare ?", async () => {
+  const provider = createSkillAutocompleteProvider(current, []);
+  const suggestions = await provider.getSuggestions(["?"], 0, 1, {
+    signal: new AbortController().signal,
+  });
+
+  expect(suggestions).toEqual({
+    prefix: "?",
+    items: [{ value: "??", label: "??", description: "show all skills" }],
+  });
 });
 
 test("shows all skills for ??", async () => {
@@ -101,28 +112,4 @@ test("does not partially expand a longer unknown reference", () => {
     prose: "use ?foo_bar",
     skills: [],
   });
-});
-
-test("requests completion when the second ? is typed", async () => {
-  const calls: string[] = [];
-  const editor = createSkillAutocompleteEditor(
-    { requestRender: () => {} } as never,
-    { borderColor: (text: string) => text, selectList: {} } as never,
-    { matches: () => false } as never,
-  );
-  editor.setAutocompleteProvider({
-    triggerCharacters: ["?"],
-    getSuggestions: async (lines) => {
-      calls.push(lines.join("\n"));
-      return null;
-    },
-    applyCompletion: () => ({ lines: [""], cursorLine: 0, cursorCol: 0 }),
-  });
-
-  editor.handleInput("?");
-  await new Promise((resolve) => setTimeout(resolve, 30));
-  editor.handleInput("?");
-  await new Promise((resolve) => setTimeout(resolve, 30));
-
-  expect(calls).toEqual(["?", "??"]);
 });

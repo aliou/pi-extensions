@@ -37,7 +37,6 @@ import {
   type ResolvedSkillsRoots,
   resolveSkillsRoots,
 } from "./config";
-import { createSkillAutocompleteEditor } from "./editor";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider } from "./provider";
 import { renderSkillInvocation, SKILL_INVOCATION_MESSAGE_TYPE } from "./render";
@@ -123,12 +122,6 @@ export default async function (pi: ExtensionAPI) {
     }
 
     if (valid.length === 0) return;
-
-    // Pi only invokes a single-character autocomplete trigger at a token
-    // boundary. Preserve the default editor when another extension owns it.
-    if (!ctx.ui.getEditorComponent()) {
-      ctx.ui.setEditorComponent(createSkillAutocompleteEditor);
-    }
 
     ctx.ui.addAutocompleteProvider((current) =>
       createSkillAutocompleteProvider(current, valid),

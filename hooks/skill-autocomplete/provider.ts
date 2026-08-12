@@ -16,7 +16,10 @@ import type {
   AutocompleteProvider,
   AutocompleteSuggestions,
 } from "@earendil-works/pi-tui";
-import { replaceAutocompletePrefix } from "@harness/completion";
+import {
+  createPrefixCompletionItem,
+  replaceAutocompletePrefix,
+} from "@harness/completion";
 import { listSkills, type SkillsRoot } from "./skills";
 import { SKILL_TOKEN_RE, SKILL_TRIGGER_CONSUMED_RE } from "./types";
 
@@ -70,10 +73,18 @@ export function createSkillAutocompleteProvider(
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
-      // Bare `?` with no filter text — don't show suggestions so
-      // Enter submits the editor naturally.
+      // Bare `?` with no filter text — keep completion open so typing a
+      // second `?` re-queries this provider and shows every skill.
       if (skillToken?.trigger === "?" && skillToken.token === "") {
-        return null;
+        return {
+          prefix: "?",
+          items: [
+            createPrefixCompletionItem({
+              value: "??",
+              description: "show all skills",
+            }),
+          ],
+        };
       }
 
       if (skillToken === undefined) {
@@ -127,6 +138,16 @@ export function createSkillAutocompleteProvider(
       item: AutocompleteItem,
       prefix: string,
     ) {
+      if (prefix === "?" && item.value === "??") {
+        return replaceAutocompletePrefix(
+          lines,
+          cursorLine,
+          cursorCol,
+          prefix,
+          "??",
+        );
+      }
+
       if (prefix.startsWith("?")) {
         return replaceAutocompletePrefix(
           lines,
