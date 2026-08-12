@@ -53,6 +53,7 @@ describe("notifications extension entry", () => {
   it("consumer registration does not duplicate events or sounds", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = false;
+    process.env.HERDR_ENV = "";
 
     const pi = createMockPi();
     notifications(pi);

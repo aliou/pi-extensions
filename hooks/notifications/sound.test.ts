@@ -82,6 +82,7 @@ describe("setupSoundConsumer", () => {
   it("plays Glass once per attention event", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = false;
+    process.env.HERDR_ENV = "";
 
     const pi = createMockPi();
     setupSoundConsumer(pi);
@@ -101,6 +102,7 @@ describe("setupSoundConsumer", () => {
   it("plays Glass once per dangerous event", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = false;
+    process.env.HERDR_ENV = "";
 
     const pi = createMockPi();
     setupSoundConsumer(pi);
@@ -120,6 +122,7 @@ describe("setupSoundConsumer", () => {
   it("plays Funk once for successful done", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = false;
+    process.env.HERDR_ENV = "";
 
     const pi = createMockPi();
     setupSoundConsumer(pi);
@@ -136,6 +139,7 @@ describe("setupSoundConsumer", () => {
   it("plays Basso once for error done", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = false;
+    process.env.HERDR_ENV = "";
 
     const pi = createMockPi();
     setupSoundConsumer(pi);
@@ -152,7 +156,7 @@ describe("setupSoundConsumer", () => {
     );
   });
 
-  it("still plays inside Herdr", () => {
+  it("does not play inside Herdr", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = false;
     process.env.HERDR_ENV = "1";
@@ -162,12 +166,13 @@ describe("setupSoundConsumer", () => {
 
     pi.events.emit(AD_NOTIFY_DONE_EVENT, { status: "ok" });
 
-    expect(pi.exec).toHaveBeenCalledTimes(1);
+    expect(pi.exec).not.toHaveBeenCalled();
   });
 
   it("does not depend on stdout.isTTY", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = true;
+    process.env.HERDR_ENV = "";
 
     const pi = createMockPi();
     setupSoundConsumer(pi);
@@ -180,6 +185,7 @@ describe("setupSoundConsumer", () => {
   it("does not result in duplicate playback for a single event", () => {
     Object.defineProperty(process, "platform", { value: "darwin" });
     process.stdout.isTTY = false;
+    process.env.HERDR_ENV = "";
 
     const pi = createMockPi();
     setupSoundConsumer(pi);

@@ -3,9 +3,8 @@
  *
  * Maps canonical `ad:notify:*` events to macOS alert sounds and plays them
  * via the native `play-alert-sound` binary. Visual delivery is handled
- * elsewhere; this module is intentionally independent of terminal state
- * (isTTY, HERDR_ENV, focus, etc.) so sounds are identical whether Pi runs
- * directly in Ghostty or inside Herdr.
+ * elsewhere. When Pi runs inside Herdr, herdr-cast owns desktop notification
+ * sounds so visual and audible delivery stay together and do not double-play.
  */
 
 import { fileURLToPath } from "node:url";
@@ -49,5 +48,7 @@ export async function playSound(
  * one sound regardless of whether a visual banner is also produced.
  */
 export function setupSoundConsumer(pi: ExtensionAPI): () => void {
+  if (process.env.HERDR_ENV === "1") return () => {};
+
   return setupSoundEvents(pi, [PLAY_ALERT_SOUND_BINARY]);
 }
