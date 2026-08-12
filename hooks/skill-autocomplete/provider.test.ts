@@ -12,9 +12,13 @@ const current = {
   applyCompletion: () => ({ lines: [], cursorLine: 0, cursorCol: 0 }),
 } as AutocompleteProvider;
 
-test("recognizes ?? as the force-show skill trigger", () => {
+test("recognizes skill triggers with filter text", () => {
   expect(extractSkillToken("??")).toEqual({ trigger: "??", token: "" });
   expect(extractSkillToken("?vit")).toEqual({ trigger: "?", token: "vit" });
+  expect(extractSkillToken("??vit")).toEqual({
+    trigger: "??",
+    token: "vit",
+  });
 });
 
 test("shows a ?? prefix item for bare ?", async () => {
@@ -27,6 +31,30 @@ test("shows a ?? prefix item for bare ?", async () => {
     prefix: "?",
     items: [{ value: "??", label: "??", description: "show all skills" }],
   });
+});
+
+test("closes completion after a literal ? followed by space", async () => {
+  let delegated = false;
+  const provider = createSkillAutocompleteProvider(
+    {
+      ...current,
+      getSuggestions: async () => {
+        delegated = true;
+        return {
+          prefix: "",
+          items: [{ value: "fallback", label: "fallback" }],
+        };
+      },
+    },
+    [],
+  );
+
+  const suggestions = await provider.getSuggestions(["? "], 0, 2, {
+    signal: new AbortController().signal,
+  });
+
+  expect(suggestions).toBeNull();
+  expect(delegated).toBe(false);
 });
 
 test("shows all skills for ??", async () => {
@@ -54,6 +82,37 @@ test("shows all skills for ??", async () => {
       items: [
         { label: "alpha", description: "[test] Alpha skill description" },
         { label: "beta", description: "[test] Beta skill description" },
+      ],
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("shows filtered skills for ? token", async () => {
+  const root = mkdtempSync(join(tmpdir(), "skill-autocomplete-"));
+  mkdirSync(join(root, "alpha"));
+  mkdirSync(join(root, "beta"));
+  writeFileSync(
+    join(root, "alpha", "SKILL.md"),
+    "---\nname: alpha\ndescription: Alpha skill description\n---\n\nalpha instructions",
+  );
+  writeFileSync(
+    join(root, "beta", "SKILL.md"),
+    "---\nname: beta\ndescription: Beta skill description\n---\n\nbeta instructions",
+  );
+
+  try {
+    const roots: SkillsRoot[] = [{ path: root, label: "test" }];
+    const provider = createSkillAutocompleteProvider(current, roots);
+    const suggestions = await provider.getSuggestions(["?al"], 0, 3, {
+      signal: new AbortController().signal,
+    });
+
+    expect(suggestions).toMatchObject({
+      prefix: "?al",
+      items: [
+        { label: "alpha", description: "[test] Alpha skill description" },
       ],
     });
   } finally {

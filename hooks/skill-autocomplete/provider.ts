@@ -3,12 +3,12 @@
  *
  * Uses `?` as a dedicated trigger character.
  *
- * - Bare `?` (no filter text): does not show suggestions, so Enter
- *   submits the editor naturally.
- * - `?<token>` (at least one filter character): shows filtered skills;
+ * - Bare `?`: shows a single `??` prefix item so typing the second `?`
+ *   keeps autocomplete active without a custom editor.
+ * - `?<token>` or `??<token>` (at least one filter character): shows filtered skills;
  *   pressing Enter replaces `?<token>` with a stable inline skill reference.
  * - `??`: shows every skill without requiring filter text.
- * - `? ` (space after `?`): bails out entirely.
+ * - `? ` does not show suggestions.
  */
 
 import type {
@@ -63,19 +63,20 @@ export function createSkillAutocompleteProvider(
       const textBeforeCursor = currentLine.slice(0, cursorCol);
       const skillToken = extractSkillToken(textBeforeCursor);
 
-      // `?` was at a token boundary but followed by a space — the trigger
-      // is consumed. Delegate so other providers (e.g. file `@`) still work
-      // instead of swallowing completion for the rest of the line.
+      // `?` was at a token boundary and is immediately followed by a space.
+      // The user is writing a literal question mark, so close completion.
       if (
         skillToken === undefined &&
         SKILL_TRIGGER_CONSUMED_RE.test(textBeforeCursor)
       ) {
+        return null;
+      }
+
+      if (skillToken === undefined) {
         return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
-      // Bare `?` with no filter text — keep completion open so typing a
-      // second `?` re-queries this provider and shows every skill.
-      if (skillToken?.trigger === "?" && skillToken.token === "") {
+      if (skillToken.trigger === "?" && skillToken.token === "") {
         return {
           prefix: "?",
           items: [
@@ -85,10 +86,6 @@ export function createSkillAutocompleteProvider(
             }),
           ],
         };
-      }
-
-      if (skillToken === undefined) {
-        return current.getSuggestions(lines, cursorLine, cursorCol, options);
       }
 
       try {
@@ -108,9 +105,7 @@ export function createSkillAutocompleteProvider(
           return null;
         }
 
-        if (skills.length === 0) {
-          return current.getSuggestions(lines, cursorLine, cursorCol, options);
-        }
+        if (skills.length === 0) return null;
 
         const items: AutocompleteItem[] = skills.map((skill) => ({
           value: skill.name,
@@ -127,7 +122,7 @@ export function createSkillAutocompleteProvider(
         };
       } catch (_error) {
         void _error;
-        return current.getSuggestions(lines, cursorLine, cursorCol, options);
+        return null;
       }
     },
 
