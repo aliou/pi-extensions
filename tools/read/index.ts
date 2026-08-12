@@ -40,27 +40,7 @@ import { parseSkillDescription, truncate } from "@harness/utils";
  */
 export default function (pi: ExtensionAPI): void {
   const cwd = process.cwd();
-  const autoResizeImages = SettingsManager.create(cwd).getImageAutoResize();
-
-  const nativeDef = createReadToolDefinition(cwd, {
-    autoResizeImages,
-    operations: {
-      access: (absolutePath) => fsAccess(absolutePath, constants.R_OK),
-      readFile: async (absolutePath) => {
-        const buffer = await fsReadFile(absolutePath);
-        if (isBmpBuffer(buffer)) {
-          return convertBmpToPng(buffer);
-        }
-        return buffer;
-      },
-      detectImageMimeType: async (absolutePath) => {
-        const mime = await detectImageMimeType(absolutePath);
-        // Report BMP as PNG because the bytes we hand to upstream are PNG.
-        return mime === "image/bmp" ? "image/png" : mime;
-      },
-    },
-  });
-  const nativeLs = createLsTool(cwd);
+  const nativeDef = createNativeReadTool(cwd);
   const mdTheme = getMarkdownTheme();
 
   pi.registerTool({
@@ -72,19 +52,21 @@ export default function (pi: ExtensionAPI): void {
     async execute(toolCallId, params, signal, onUpdate, ctx) {
       const { path } = params;
       const absolutePath = resolve(ctx.cwd, path);
+      const scopedNativeDef = createNativeReadTool(ctx.cwd);
+      const scopedNativeLs = createLsTool(ctx.cwd);
 
       try {
         const stat = await lstat(absolutePath);
 
         if (stat.isDirectory()) {
-          return nativeLs.execute(toolCallId, { path }, signal, onUpdate);
+          return scopedNativeLs.execute(toolCallId, { path }, signal, onUpdate);
         }
       } catch (_error) {
         void _error;
         // Path does not exist or cannot be accessed - let nativeDef handle the error
       }
 
-      return nativeDef.execute(toolCallId, params, signal, onUpdate, ctx);
+      return scopedNativeDef.execute(toolCallId, params, signal, onUpdate, ctx);
     },
     renderResult(result, options, theme, context) {
       const rawPath = strPath(context.args?.path);
@@ -137,6 +119,29 @@ export default function (pi: ExtensionAPI): void {
           nativeCtx,
         ) ?? new Text("", 0, 0)
       );
+    },
+  });
+}
+
+function createNativeReadTool(cwd: string) {
+  const autoResizeImages = SettingsManager.create(cwd).getImageAutoResize();
+
+  return createReadToolDefinition(cwd, {
+    autoResizeImages,
+    operations: {
+      access: (absolutePath) => fsAccess(absolutePath, constants.R_OK),
+      readFile: async (absolutePath) => {
+        const buffer = await fsReadFile(absolutePath);
+        if (isBmpBuffer(buffer)) {
+          return convertBmpToPng(buffer);
+        }
+        return buffer;
+      },
+      detectImageMimeType: async (absolutePath) => {
+        const mime = await detectImageMimeType(absolutePath);
+        // Report BMP as PNG because the bytes we hand to upstream are PNG.
+        return mime === "image/bmp" ? "image/png" : mime;
+      },
     },
   });
 }
