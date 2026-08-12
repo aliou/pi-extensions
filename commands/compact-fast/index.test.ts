@@ -1,8 +1,19 @@
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ModelRegistry } from "@earendil-works/pi-coding-agent";
+import type { SubagentModelPreference } from "@harness/agent-kit/models";
 import { createPiTestHarness } from "@harness/test-utils/pi-test-harness";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import setupCompactFastCommand from "./index";
+
+const mocks = vi.hoisted(() => ({
+  preferences: undefined as SubagentModelPreference[] | undefined,
+  missingReason: "compact_fast roster not configured",
+}));
+
+vi.mock("@harness/subagent-models", () => ({
+  getSubagentModelPreferences: vi.fn(async () => mocks.preferences),
+  describeMissingRoster: vi.fn(async () => mocks.missingReason),
+}));
 
 function createMockModel(provider: string, id: string): Model<Api> {
   return {
@@ -41,6 +52,28 @@ function createMockModelRegistry(
   } as unknown as ModelRegistry;
 }
 
+/**
+ * Build a roster mirroring the production config: the first candidate is the
+ * positive-weight primary, the rest are zero-weight ordered fallbacks. This
+ * keeps `pickModel` deterministic so the asserted candidate is always chosen.
+ */
+function roster(
+  ...candidates: { provider: string; id: string }[]
+): SubagentModelPreference[] {
+  return candidates.map((candidate, index) => ({
+    provider: candidate.provider,
+    model: candidate.id,
+    thinking: "off",
+    weight: index === 0 ? 1 : 0,
+  }));
+}
+
+const FULL_ROSTER = roster(
+  { provider: "neuralwatt", id: "kimi-k2.6-fast" },
+  { provider: "synthetic", id: "syn:small:text" },
+  { provider: "openai-codex", id: "gpt-5.6-luna" },
+);
+
 interface CompactCallbacks {
   onComplete?: () => void;
   onError?: (error: Error) => void;
@@ -61,12 +94,17 @@ function createCompactSpy(): {
 }
 
 describe("/compact:fast command", () => {
+  beforeEach(() => {
+    mocks.preferences = undefined;
+  });
+
   it("registers the command", async () => {
     const pi = await createPiTestHarness(setupCompactFastCommand);
     expect(pi).toHaveRegisteredCommand("compact:fast");
   });
 
-  it("notifies error when no fast model is available", async () => {
+  it("notifies error when no configured model is available", async () => {
+    mocks.preferences = FULL_ROSTER;
     const notify = vi.fn();
     const pi = await createPiTestHarness(setupCompactFastCommand, {
       context: {
@@ -80,13 +118,37 @@ describe("/compact:fast command", () => {
     await pi.command("compact:fast").execute("");
 
     expect(notify).toHaveBeenCalledWith(
-      "No fast compaction model available",
+      "No fast compaction model available: no configured model is available",
+      "error",
+    );
+    expect(pi.runtime.setModel).not.toHaveBeenCalled();
+  });
+
+  it("notifies error when the roster is not configured", async () => {
+    mocks.preferences = undefined;
+    const notify = vi.fn();
+    const pi = await createPiTestHarness(setupCompactFastCommand, {
+      context: {
+        compact: vi.fn() as unknown as () => void,
+        modelRegistry: createMockModelRegistry([
+          { provider: "neuralwatt", id: "kimi-k2.6-fast" },
+        ]),
+        ui: { notify },
+      },
+    });
+    pi.runtime.setModel = vi.fn();
+
+    await pi.command("compact:fast").execute("");
+
+    expect(notify).toHaveBeenCalledWith(
+      "No fast compaction model available: compact_fast roster not configured",
       "error",
     );
     expect(pi.runtime.setModel).not.toHaveBeenCalled();
   });
 
   it("switches to the first available fast model, compacts, and reverts on completion", async () => {
+    mocks.preferences = FULL_ROSTER;
     const notify = vi.fn();
     const originalModel = createMockModel("anthropic", "claude-sonnet-4");
     const fastModel = createMockModel("neuralwatt", "kimi-k2.6-fast");
@@ -127,6 +189,7 @@ describe("/compact:fast command", () => {
   });
 
   it("falls back to the next candidate when the first is unavailable", async () => {
+    mocks.preferences = FULL_ROSTER;
     const notify = vi.fn();
     const originalModel = createMockModel("anthropic", "claude-sonnet-4");
     const fastModel = createMockModel("synthetic", "syn:small:text");
@@ -155,6 +218,7 @@ describe("/compact:fast command", () => {
   });
 
   it("reverts to the original model after a compaction error", async () => {
+    mocks.preferences = FULL_ROSTER;
     const notify = vi.fn();
     const originalModel = createMockModel("openai", "gpt-5");
     const fastModel = createMockModel("neuralwatt", "kimi-k2.6-fast");
@@ -192,6 +256,7 @@ describe("/compact:fast command", () => {
   });
 
   it("stays on the new model when the user changes model during compaction", async () => {
+    mocks.preferences = FULL_ROSTER;
     const notify = vi.fn();
     const originalModel = createMockModel("anthropic", "claude-sonnet-4");
     const changedModel = createMockModel("openai-codex", "gpt-5.6-luna");
@@ -224,6 +289,7 @@ describe("/compact:fast command", () => {
   });
 
   it("stays on the fast model when there is no previous model", async () => {
+    mocks.preferences = FULL_ROSTER;
     const notify = vi.fn();
     const fastModel = createMockModel("neuralwatt", "kimi-k2.6-fast");
     const { compact, callbacks } = createCompactSpy();

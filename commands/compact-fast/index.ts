@@ -9,9 +9,13 @@ import {
   once,
 } from "@harness/events";
 import {
-  FAST_MODEL_CANDIDATES,
-  findFirstAvailableFastModel,
+  describeMissingRoster,
+  getSubagentModelPreferences,
+} from "@harness/subagent-models";
+import {
+  COMPACT_FAST_NAME,
   isSameModel,
+  pickCompactFastModel,
 } from "./helpers";
 
 export default function compactFastCommand(pi: ExtensionAPI): void {
@@ -20,13 +24,17 @@ export default function compactFastCommand(pi: ExtensionAPI): void {
       "Compact the session using a fast model and restore the previous model",
     handler: async (_args, ctx) => {
       const originalModel = ctx.model;
-      const fastModel = findFirstAvailableFastModel(
-        ctx.modelRegistry,
-        FAST_MODEL_CANDIDATES,
-      );
+
+      const preferences = await getSubagentModelPreferences(COMPACT_FAST_NAME);
+      const fastModel = preferences
+        ? pickCompactFastModel(ctx.modelRegistry, preferences)
+        : undefined;
 
       if (!fastModel) {
-        ctx.ui.notify("No fast compaction model available", "error");
+        const reason = preferences
+          ? "no configured model is available"
+          : await describeMissingRoster(COMPACT_FAST_NAME);
+        ctx.ui.notify(`No fast compaction model available: ${reason}`, "error");
         return;
       }
 

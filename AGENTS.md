@@ -82,6 +82,8 @@ Subagent model rosters are not defined in this repository. They live in the glob
 
 `@harness/subagent-models` owns the path, the async cached loader, and validation. Each subagent passes `modelPreferences: () => getSubagentModelPreferences("<name>")` to `createSubagent` and awaits `subagent.ready`. There are no built-in defaults: when the file is missing/invalid or has no roster for a name, the subagent stays disabled — registration is a no-op (via `configuredSubagent`) and the user gets a single session-start warning. Execution-time roster replacement for evals (`SubagentRunOptions.modelPreferences`) is unchanged.
 
+The `compact:fast` command is not a subagent but reuses the same file and ranking. It reads the `compact_fast` roster via `getSubagentModelPreferences` and picks the compaction model with `pickModel`, so the weight semantics and provider cooldown above apply. It is single-shot — no failover walk or startup timeout — and aborts with a UI error when the roster is missing or no entry resolves to an authed model.
+
 #### Weight semantics
 
 A roster is a ranking, not a single draw. `rankModels` filters out entries the registry does not know or cannot auth, then orders the survivors:
