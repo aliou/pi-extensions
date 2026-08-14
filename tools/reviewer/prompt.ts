@@ -101,5 +101,9 @@ function inputLines(params: ReviewerParamsType): string[] {
     );
   }
 
+  if (params.cwd) {
+    lines.push("", `Working directory:`, `<cwd>`, params.cwd, `</cwd>`);
+  }
+
   return lines;
 }

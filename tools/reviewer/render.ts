@@ -1,6 +1,7 @@
 import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
 import { Markdown } from "@earendil-works/pi-tui";
 import {
+  formatSubagentCwd,
   renderHeaderMarkdown,
   renderSubagentToolLine,
   type ToolRenderContext,
@@ -15,13 +16,14 @@ import type { ReviewerParamsType } from "./types";
 export function renderReviewerHeader(
   args: ReviewerParamsType & { sessionId?: string },
   theme: Theme,
-  _ctx: ToolRenderContext,
+  ctx: ToolRenderContext,
 ) {
   return renderHeaderMarkdown({
     label: "Reviewer",
     body: args.diff_description ?? "",
     theme,
     resuming: isNotNil(args.sessionId),
+    cwd: formatSubagentCwd(args.cwd, ctx.cwd),
   });
 }
 
@@ -30,9 +32,16 @@ export function renderReviewerDetails(
   _theme: Theme,
   _cwd: string,
 ) {
-  if (!args.instructions?.trim()) return undefined;
+  const details = [
+    args.cwd ? `**CWD**\n${args.cwd.trim()}` : undefined,
+    args.instructions?.trim()
+      ? `**Instructions**\n${args.instructions.trim()}`
+      : undefined,
+  ].filter(isNotNil);
+
+  if (!details.length) return undefined;
   return new Markdown(
-    `**Instructions**\n${args.instructions.trim()}`,
+    details.join("\n\n"),
     0,
     0,
     getMarkdownTheme(),

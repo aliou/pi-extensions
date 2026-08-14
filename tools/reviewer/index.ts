@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSubagent, loadAgentsFilesFromCwd } from "@harness/agent-kit";
 import type { SubagentToolSpec } from "@harness/agent-kit/types";
@@ -42,6 +43,7 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     promptGuidelines: [
       "reviewer: Use for formal static review of diffs and code changes; do not use for general questions or file reads.",
       "reviewer: Provide an exact diff description or command that works from the current cwd, such as 'git diff --staged' or 'git diff main...HEAD'.",
+      "reviewer: Pass cwd when the diff belongs to another local repository or path; commands and file reads will run there.",
       "reviewer: State the review outcome, severity bar, invariants, risk areas, expected behavior, verification signal, and desired finding format.",
       "reviewer: Do not ask reviewer to fix code, run tests, approve PRs, or leave PR comments; ask for cited findings with severity and concrete remediation.",
       "reviewer: For large diffs, ask for highest-impact findings and explicit residual risks instead of exhaustive commentary.",
@@ -52,7 +54,10 @@ export default async function reviewer(pi: ExtensionAPI): Promise<void> {
     renderHeader: renderReviewerHeader,
     renderDetails: renderReviewerDetails,
     buildPrompt,
-    resolveAgentsFiles: (_params, ctx) => loadAgentsFilesFromCwd(ctx.cwd),
+    resolveCwd: (params, ctx) =>
+      params.cwd?.trim() ? path.resolve(ctx.cwd, params.cwd.trim()) : undefined,
+    resolveAgentsFiles: (params, ctx) =>
+      loadAgentsFilesFromCwd(path.resolve(ctx.cwd, params.cwd?.trim() || ".")),
     tools,
     extensionPaths,
   });
