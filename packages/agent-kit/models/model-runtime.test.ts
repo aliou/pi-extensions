@@ -8,40 +8,39 @@ import { describe, expect, it, vi } from "vitest";
 import { createSubagentModelRuntime } from "./model-runtime";
 
 describe("createSubagentModelRuntime", () => {
-  it("inherits the selected provider registration and resolved API key", async () => {
-    const providerConfig = { baseUrl: "https://example.test" };
+  it("copies the parent's native provider registration and resolved API key", async () => {
+    const nativeProvider = { id: "synthetic" };
     const registry = {
-      getRegisteredProviderConfig: vi.fn(() => providerConfig),
+      getRegisteredNativeProvider: vi.fn(() => nativeProvider),
       getApiKeyForProvider: vi.fn(async () => "secret"),
       isUsingOAuth: vi.fn(() => false),
     } as unknown as ModelRegistry;
     const runtime = {
-      registerProvider: vi.fn(),
+      registerNativeProvider: vi.fn(),
       setRuntimeApiKey: vi.fn(async () => undefined),
     } as unknown as ModelRuntime;
-    const createRuntime = vi.fn(async () => runtime);
-    const model = {
-      provider: "custom",
-      id: "model",
-    } as Model<Api>;
 
-    await createSubagentModelRuntime(registry, model, createRuntime);
-
-    expect(runtime.registerProvider).toHaveBeenCalledWith(
-      "custom",
-      providerConfig,
+    await createSubagentModelRuntime(
+      registry,
+      { provider: "synthetic", id: "model" } as Model<Api>,
+      async () => runtime,
     );
-    expect(runtime.setRuntimeApiKey).toHaveBeenCalledWith("custom", "secret");
+
+    expect(runtime.registerNativeProvider).toHaveBeenCalledWith(nativeProvider);
+    expect(runtime.setRuntimeApiKey).toHaveBeenCalledWith(
+      "synthetic",
+      "secret",
+    );
   });
 
-  it("keeps runtime defaults when the parent has no override or key", async () => {
+  it("keeps runtime defaults when the parent has no native provider or key", async () => {
     const registry = {
-      getRegisteredProviderConfig: vi.fn(() => undefined),
+      getRegisteredNativeProvider: vi.fn(() => undefined),
       getApiKeyForProvider: vi.fn(async () => undefined),
       isUsingOAuth: vi.fn(() => false),
     } as unknown as ModelRegistry;
     const runtime = {
-      registerProvider: vi.fn(),
+      registerNativeProvider: vi.fn(),
       setRuntimeApiKey: vi.fn(async () => undefined),
     } as unknown as ModelRuntime;
 
@@ -51,18 +50,18 @@ describe("createSubagentModelRuntime", () => {
       async () => runtime,
     );
 
-    expect(runtime.registerProvider).not.toHaveBeenCalled();
+    expect(runtime.registerNativeProvider).not.toHaveBeenCalled();
     expect(runtime.setRuntimeApiKey).not.toHaveBeenCalled();
   });
 
   it("preserves OAuth credentials for OAuth-backed providers", async () => {
     const registry = {
-      getRegisteredProviderConfig: vi.fn(() => undefined),
+      getRegisteredNativeProvider: vi.fn(() => undefined),
       getApiKeyForProvider: vi.fn(async () => "oauth-access-token"),
       isUsingOAuth: vi.fn(() => true),
     } as unknown as ModelRegistry;
     const runtime = {
-      registerProvider: vi.fn(),
+      registerNativeProvider: vi.fn(),
       setRuntimeApiKey: vi.fn(async () => undefined),
     } as unknown as ModelRuntime;
 
@@ -77,12 +76,12 @@ describe("createSubagentModelRuntime", () => {
 
   it("tolerates a committed credential whose local sync failed", async () => {
     const registry = {
-      getRegisteredProviderConfig: vi.fn(() => undefined),
+      getRegisteredNativeProvider: vi.fn(() => undefined),
       getApiKeyForProvider: vi.fn(async () => "secret"),
       isUsingOAuth: vi.fn(() => false),
     } as unknown as ModelRegistry;
     const runtime = {
-      registerProvider: vi.fn(),
+      registerNativeProvider: vi.fn(),
       setRuntimeApiKey: vi.fn(async () => {
         throw new CredentialSynchronizationError(
           "neuralwatt",
@@ -108,12 +107,12 @@ describe("createSubagentModelRuntime", () => {
 
   it("rethrows other setRuntimeApiKey failures", async () => {
     const registry = {
-      getRegisteredProviderConfig: vi.fn(() => undefined),
+      getRegisteredNativeProvider: vi.fn(() => undefined),
       getApiKeyForProvider: vi.fn(async () => "secret"),
       isUsingOAuth: vi.fn(() => false),
     } as unknown as ModelRegistry;
     const runtime = {
-      registerProvider: vi.fn(),
+      registerNativeProvider: vi.fn(),
       setRuntimeApiKey: vi.fn(async () => {
         throw new Error("boom");
       }),

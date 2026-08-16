@@ -17,9 +17,13 @@ export async function createSubagentModelRuntime(
   createRuntime: CreateModelRuntime = ModelRuntime.create,
 ): Promise<ModelRuntime> {
   const runtime = await createRuntime();
-  const providerConfig = registry.getRegisteredProviderConfig(model.provider);
-  if (providerConfig) {
-    runtime.registerProvider(model.provider, providerConfig);
+  // All first-party providers register natively (pi.registerProvider(provider)
+  // routes to registerNativeProvider), so copying the native registration is
+  // the single inheritance path. It also carries aperture-wrapped providers
+  // (gateway baseUrls, placeholder apiKey resolve) as-is.
+  const nativeProvider = registry.getRegisteredNativeProvider(model.provider);
+  if (nativeProvider) {
+    runtime.registerNativeProvider(nativeProvider);
   }
 
   const apiKey = await registry.getApiKeyForProvider(model.provider);
