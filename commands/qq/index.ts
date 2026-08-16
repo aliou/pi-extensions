@@ -42,6 +42,13 @@ export default async function (pi: ExtensionAPI): Promise<void> {
     },
   });
 
+  pi.registerCommand("qq:dismiss", {
+    description: "Dismiss the qq widget",
+    handler: async (_args, ctx) => {
+      clearQqWidget(ctx);
+    },
+  });
+
   once(pi, AD_HEADER_COLLECT_EVENT, () => {
     pi.events.emit(AD_HEADER_REGISTER_COMMAND_EVENT, {
       name: "qq",
