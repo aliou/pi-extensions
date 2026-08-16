@@ -45,7 +45,10 @@ export const sessionOverview = defineTool({
   description:
     "Get compact metadata for a session. Does not return full message content.",
   promptSnippet: "Compact session metadata and main leaf preview",
-  promptGuidelines: ["Always start with get_session_overview."],
+  promptGuidelines: [
+    "Always start with get_session_overview.",
+    "If branchCount is greater than 1 or compactionCount is greater than 0, use get_session_map for branch/checkpoint orientation before range reads.",
+  ],
   parameters: Type.Object({}),
   execute: async (_toolCallId, _params, _signal, _onUpdate, ctx) => {
     const targetSessionPath = await getTargetSessionPath(ctx);

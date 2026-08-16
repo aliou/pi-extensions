@@ -16,6 +16,7 @@ import { entriesBetween } from "./entries-between";
 import { findEntries } from "./find-entries";
 import { labels } from "./labels";
 import { readEntry } from "./read-entry";
+import { sessionMap } from "./session-map";
 import { sessionOverview } from "./session-overview";
 import { treeOutline } from "./tree-outline";
 
@@ -40,6 +41,13 @@ export const tools: SubagentToolSpec[] = [
     spec: () => sessionOverview,
     render: (toolCall, _options, theme) =>
       renderSubagentToolLine(toolCall, theme, "Get Overview"),
+  },
+  {
+    type: "custom",
+    name: sessionMap.name,
+    spec: () => sessionMap,
+    render: (toolCall, _options, theme) =>
+      renderSubagentToolLine(toolCall, theme, "Get Session Map"),
   },
   {
     type: "custom",

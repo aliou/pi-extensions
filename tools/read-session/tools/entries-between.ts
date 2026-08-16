@@ -10,10 +10,11 @@ export const entriesBetween = defineTool({
   name: "get_entries_between",
   label: "Get Entries Between",
   description:
-    "Get compact entries on the main branch between two entry ids. Returns previews only.",
-  promptSnippet: "Compact entries on the main branch between two ids",
+    "Get compact entries between two entry ids on the same branch. Returns previews only.",
+  promptSnippet: "Compact entries between two ids on the same branch",
   promptGuidelines: [
     "Use get_entries_between to focus on a narrow id range around a relevant checkpoint.",
+    "Only call get_entries_between when startId and endId are on the same branch; Pi sessions are trees, not flat logs.",
   ],
   parameters: Type.Object({
     startId: Type.String({ description: "First entry id to include" }),

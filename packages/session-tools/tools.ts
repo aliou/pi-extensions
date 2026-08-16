@@ -5,6 +5,7 @@ import {
   fullEntryContent,
   truncate,
 } from "./content";
+import { flattenTree } from "./session-view";
 import type { SessionEntry, SessionTreeNode, SessionView } from "./types";
 
 const DEFAULT_BRANCH_LIMIT = 100;
@@ -12,6 +13,9 @@ const DEFAULT_TREE_LIMIT = 200;
 const DEFAULT_MAX_DEPTH = 4;
 const DEFAULT_SEARCH_LIMIT = 20;
 const DEFAULT_CHECKPOINT_LIMIT = 100;
+const DEFAULT_SESSION_MAP_BRANCH_LIMIT = 12;
+const DEFAULT_SESSION_MAP_CHECKPOINT_LIMIT = 20;
+const DEFAULT_SESSION_MAP_RECENT_LIMIT = 3;
 const MAX_LIMIT = 500;
 const SUMMARY_PREVIEW_LIMIT = 800;
 const DEFAULT_ENTRY_MAX_CHARS = 20_000;
@@ -62,6 +66,16 @@ const findNode = (
   }
   return undefined;
 };
+
+const getLeafEntries = (view: SessionView): SessionEntry[] =>
+  flattenTree(view.getTree()).filter(
+    (entry) => view.getChildren(entry.id).length === 0,
+  );
+
+const leafIdsContainingEntry = (view: SessionView, id: string): string[] =>
+  getLeafEntries(view)
+    .filter((leaf) => view.getBranch(leaf.id).some((entry) => entry.id === id))
+    .map((leaf) => leaf.id);
 
 export function getBranchEntries(
   view: SessionView,
@@ -185,8 +199,17 @@ export function getEntriesBetween(
   const branch = view.getBranch(endId).reverse();
   const startIndex = branch.findIndex((entry) => entry.id === params.startId);
   if (startIndex < 0) {
+    const containingLeafIds = leafIdsContainingEntry(view, params.startId);
+    const hint =
+      containingLeafIds.length > 0
+        ? ` Entry '${params.startId}' appears on branch leaf id(s): ${containingLeafIds
+            .slice(0, 5)
+            .join(
+              ", ",
+            )}. Retry with one of those as endId/leafId, or inspect that branch with get_branch_entries.`
+        : "";
     throw new Error(
-      `Start entry '${params.startId}' is not on branch '${endId}'`,
+      `Start entry '${params.startId}' is not on branch '${endId}'. Pi sessions are trees; ranges only work when startId and endId are on the same branch.${hint}`,
     );
   }
   const endIndex = branch.findIndex((entry) => entry.id === endId);
@@ -301,6 +324,101 @@ export function getTreeOutline(
   }
 
   return { entries, truncated: stack.length > 0, limit, maxDepth };
+}
+
+export function getSessionMap(
+  view: SessionView,
+  params: {
+    maxBranches?: number;
+    maxCheckpoints?: number;
+    maxRecentPerBranch?: number;
+  },
+) {
+  const maxBranches = boundedLimit(
+    params.maxBranches,
+    DEFAULT_SESSION_MAP_BRANCH_LIMIT,
+  );
+  const maxCheckpoints = boundedLimit(
+    params.maxCheckpoints,
+    DEFAULT_SESSION_MAP_CHECKPOINT_LIMIT,
+  );
+  const maxRecentPerBranch = boundedLimit(
+    params.maxRecentPerBranch,
+    DEFAULT_SESSION_MAP_RECENT_LIMIT,
+  );
+  const mainBranchIds = view.getMainBranchIds();
+  const leaves = getLeafEntries(view);
+  const mainLeafId = view.mainLeafId;
+
+  const branches = leaves
+    .map((leaf) => {
+      const branch = view.getBranch(leaf.id);
+      const rootToLeaf = [...branch].reverse();
+      const firstOffMain = rootToLeaf.find(
+        (entry) => !mainBranchIds.has(entry.id),
+      );
+      const branchPointId = firstOffMain?.parentId ?? undefined;
+      const branchPoint = branchPointId
+        ? view.getEntry(branchPointId)
+        : undefined;
+      const isMain = leaf.id === mainLeafId;
+
+      return {
+        leafId: leaf.id,
+        isMain,
+        depth: branch.length,
+        branchPointId,
+        branchPointPreview: branchPoint
+          ? compactEntry(
+              branchPoint,
+              view.getLabel(branchPoint.id),
+              view.getChildren(branchPoint.id).length,
+              mainBranchIds.has(branchPoint.id),
+            )
+          : undefined,
+        leafPreview: compactEntry(
+          leaf,
+          view.getLabel(leaf.id),
+          view.getChildren(leaf.id).length,
+          mainBranchIds.has(leaf.id),
+        ),
+        recentEntries: branch
+          .slice(0, maxRecentPerBranch)
+          .map((entry) =>
+            compactEntry(
+              entry,
+              view.getLabel(entry.id),
+              view.getChildren(entry.id).length,
+              mainBranchIds.has(entry.id),
+            ),
+          ),
+      };
+    })
+    .sort((a, b) => {
+      if (a.isMain) return -1;
+      if (b.isMain) return 1;
+      return (
+        new Date(b.leafPreview.timestamp).getTime() -
+        new Date(a.leafPreview.timestamp).getTime()
+      );
+    });
+
+  const checkpoints = getCheckpoints(view, {
+    fromEnd: true,
+    limit: maxCheckpoints,
+  }).checkpoints;
+
+  return {
+    mainLeafId,
+    entryCount: view.entries.length,
+    branchCount: leaves.length,
+    branches: branches.slice(0, maxBranches),
+    branchesTruncated: branches.length > maxBranches,
+    checkpoints,
+    checkpointsTruncated:
+      view.entries.filter(isCheckpoint).length > maxCheckpoints,
+    limits: { maxBranches, maxCheckpoints, maxRecentPerBranch },
+  };
 }
 
 export function getCheckpoints(
