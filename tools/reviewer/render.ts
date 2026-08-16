@@ -40,12 +40,7 @@ export function renderReviewerDetails(
   ].filter(isNotNil);
 
   if (!details.length) return undefined;
-  return new Markdown(
-    details.join("\n\n"),
-    0,
-    0,
-    getMarkdownTheme(),
-  );
+  return new Markdown(details.join("\n\n"), 0, 0, getMarkdownTheme());
 }
 
 function arg(toolCall: SubagentToolCall, name: string) {
