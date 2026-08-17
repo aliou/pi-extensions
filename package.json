@@ -26,8 +26,6 @@
     "format": "biome check --write .",
     "typecheck": "tsc --build",
     "test": "vitest run",
-    "test:patches": "node scripts/run-patch-tests.mjs",
-    "patches:sync": "node scripts/sync-patches.mjs",
     "test:watch": "vitest",
     "extensions:build": "nu scripts/publish-extensions.nu build",
     "extensions:publish": "nu scripts/publish-extensions.nu publish",
