@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AutocompleteProvider } from "@earendil-works/pi-tui";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { expandSkillReferences } from "./expand";
 import { createSkillAutocompleteProvider, extractSkillToken } from "./provider";
 import { listSkills, type SkillsRoot } from "./skills";
@@ -21,16 +21,13 @@ test("recognizes skill triggers with filter text", () => {
   });
 });
 
-test("shows a ?? prefix item for bare ?", async () => {
+test("shows nothing for bare ?", async () => {
   const provider = createSkillAutocompleteProvider(current, []);
   const suggestions = await provider.getSuggestions(["?"], 0, 1, {
     signal: new AbortController().signal,
   });
 
-  expect(suggestions).toEqual({
-    prefix: "?",
-    items: [{ value: "??", label: "??", description: "show all skills" }],
-  });
+  expect(suggestions).toBeNull();
 });
 
 test("closes completion after a literal ? followed by space", async () => {
@@ -118,6 +115,46 @@ test("shows filtered skills for ? token", async () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("applies a skill completion by replacing the ? token", () => {
+  const provider = createSkillAutocompleteProvider(current, []);
+  const result = provider.applyCompletion(
+    ["use ?alp"],
+    0,
+    8,
+    { value: "alpha", label: "alpha" },
+    "?alp",
+  );
+
+  expect(result).toEqual({
+    lines: ["use ?alpha "],
+    cursorLine: 0,
+    cursorCol: 11,
+  });
+});
+
+test("delegates applyCompletion when the prefix is not a skill token", () => {
+  const delegated = vi.fn(() => ({
+    lines: ["x"],
+    cursorLine: 0,
+    cursorCol: 1,
+  }));
+  const provider = createSkillAutocompleteProvider(
+    { ...current, applyCompletion: delegated },
+    [],
+  );
+
+  const result = provider.applyCompletion(
+    ["@foo"],
+    0,
+    4,
+    { value: "foo", label: "foo" },
+    "@foo",
+  );
+
+  expect(delegated).toHaveBeenCalledOnce();
+  expect(result).toEqual({ lines: ["x"], cursorLine: 0, cursorCol: 1 });
 });
 
 test("expands multiple skills and retains their names in prose", () => {

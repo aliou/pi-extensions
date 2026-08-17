@@ -3,8 +3,9 @@
  *
  * Uses `?` as a dedicated trigger character.
  *
- * - Bare `?`: shows a single `??` prefix item so typing the second `?`
- *   keeps autocomplete active without a custom editor.
+ * - Bare `?`: shows nothing. The editor re-queries once a filter character
+ *   is typed (`?a`), and the doubled-trigger pi-tui patch re-queries on the
+ *   second `?` (requires `@aliou/pi-patches`).
  * - `?<token>` or `??<token>` (at least one filter character): shows filtered skills;
  *   pressing Enter replaces `?<token>` with a stable inline skill reference.
  * - `??`: shows every skill without requiring filter text.
@@ -16,10 +17,7 @@ import type {
   AutocompleteProvider,
   AutocompleteSuggestions,
 } from "@earendil-works/pi-tui";
-import {
-  createPrefixCompletionItem,
-  replaceAutocompletePrefix,
-} from "@harness/completion";
+import { replaceAutocompletePrefix } from "@harness/completion";
 import { listSkills, type SkillsRoot } from "./skills";
 import { SKILL_TOKEN_RE, SKILL_TRIGGER_CONSUMED_RE } from "./types";
 
@@ -77,15 +75,7 @@ export function createSkillAutocompleteProvider(
       }
 
       if (skillToken.trigger === "?" && skillToken.token === "") {
-        return {
-          prefix: "?",
-          items: [
-            createPrefixCompletionItem({
-              value: "??",
-              description: "show all skills",
-            }),
-          ],
-        };
+        return null;
       }
 
       try {
@@ -133,16 +123,6 @@ export function createSkillAutocompleteProvider(
       item: AutocompleteItem,
       prefix: string,
     ) {
-      if (prefix === "?" && item.value === "??") {
-        return replaceAutocompletePrefix(
-          lines,
-          cursorLine,
-          cursorCol,
-          prefix,
-          "??",
-        );
-      }
-
       if (prefix.startsWith("?")) {
         return replaceAutocompletePrefix(
           lines,
