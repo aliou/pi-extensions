@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import { parseSkillDescription } from "@harness/utils";
 import { collapseHomePath } from "@harness/utils/path";
 
@@ -26,44 +27,118 @@ export interface SkillInfo {
 }
 
 /**
- * List skill directories under the given roots.
- * Only immediate subdirectories are included, sorted alphabetically.
+ * Read the `pi.skills` manifest from a package.json.
+ * Returns the declared skill paths (resolved against `packageRoot`) or `null`
+ * when the file is missing or has no `pi.skills` array.
+ *
+ * Mirrors pi's internal `readPiManifest` (not exported). pi's package manager
+ * uses this same field to enumerate skills in an installed package.
+ */
+function readPiSkills(packageJsonPath: string): string[] | null {
+  if (!existsSync(packageJsonPath)) return null;
+  let pkg: unknown;
+  try {
+    pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+  } catch {
+    return null;
+  }
+  const pi = (pkg as { pi?: unknown } | null)?.pi;
+  const skills = (pi as { skills?: unknown } | null)?.skills;
+  if (!Array.isArray(skills) || !skills.every((e) => typeof e === "string")) {
+    return null;
+  }
+  return skills;
+}
+
+/**
+ * Load a single skill from a directory that directly contains `SKILL.md`.
+ * Returns `null` when the dir is not a skill directory.
+ */
+function loadSkillFromDir(dir: string, sourceLabel: string): SkillInfo | null {
+  const fullPath = join(dir, "SKILL.md");
+  if (!existsSync(fullPath)) return null;
+  const description = parseSkillDescription(readFileSync(fullPath, "utf-8"));
+  return {
+    name: basename(dir),
+    description: description ?? undefined,
+    fullPath,
+    baseDir: dir,
+    directory: collapseHomePath(dir),
+    sourceLabel,
+  };
+}
+
+/**
+ * Register a skill, honoring first-root-wins dedup by skill name.
+ */
+function addSkill(
+  skills: SkillInfo[],
+  seen: Set<string>,
+  skill: SkillInfo,
+): void {
+  if (seen.has(skill.name)) return;
+  seen.add(skill.name);
+  skills.push(skill);
+}
+
+/**
+ * List skills under the given roots.
+ *
+ * For each root, scan immediate subdirectories:
+ * - an immediate subdir that directly contains `SKILL.md` is registered as a
+ *   skill (current behavior);
+ * - otherwise, if that subdir has a `package.json` declaring `pi.skills`,
+ *   each declared path is resolved against the subdir and loaded. This surfaces
+ *   nested wrapper packages (e.g. `obsidian/json-canvas`) without recursion.
+ *
+ * No descent beyond one level. Hidden directories and `node_modules` are
+ * skipped. The first root to claim a given skill name wins; later duplicates
+ * are skipped.
  */
 export function listSkills(skillsRoots: SkillsRoot[]): SkillInfo[] {
   const skills: SkillInfo[] = [];
   const seenNames = new Set<string>();
 
   for (const root of skillsRoots) {
-    let entries: string[];
+    let names: string[];
     try {
-      entries = readdirSync(root.path);
+      names = readdirSync(root.path);
     } catch (_error) {
       void _error;
       continue;
     }
 
-    for (const name of entries) {
-      if (seenNames.has(name)) continue;
+    for (const name of names) {
+      if (name.startsWith(".") || name === "node_modules") continue;
 
-      const absolutePath = `${root.path}/${name}`;
-      const fullPath = `${absolutePath}/SKILL.md`;
+      const dir = join(root.path, name);
+      let isDirectory: boolean;
       try {
-        if (statSync(absolutePath).isDirectory() && existsSync(fullPath)) {
-          seenNames.add(name);
-          const description = parseSkillDescription(
-            readFileSync(fullPath, "utf-8"),
-          );
-          skills.push({
-            name,
-            description: description ?? undefined,
-            fullPath,
-            baseDir: absolutePath,
-            directory: collapseHomePath(absolutePath),
-            sourceLabel: root.label,
-          });
-        }
+        isDirectory = statSync(dir).isDirectory();
       } catch (_error) {
         void _error;
+        continue;
+      }
+      if (!isDirectory) continue;
+
+      const direct = loadSkillFromDir(dir, root.label);
+      if (direct) {
+        addSkill(skills, seenNames, direct);
+        continue;
+      }
+
+      const manifest = readPiSkills(join(dir, "package.json"));
+      if (!manifest) continue;
+      for (const rel of manifest) {
+        const skillPath = resolve(dir, rel);
+        try {
+          if (!statSync(skillPath).isFile()) continue;
+        } catch (_error) {
+          void _error;
+          continue;
+        }
+        const skill = loadSkillFromDir(dirname(skillPath), root.label);
+        if (skill) addSkill(skills, seenNames, skill);
       }
     }
   }
